@@ -199,56 +199,6 @@
                     </div>
                 </div>
             </div>
-
-            {{-- Bento Grid Footer: Developed By --}}
-            <div class="pt-20 border-t border-slate-200" data-aos="fade-up">
-                <div class="flex flex-col lg:flex-row gap-12">
-                    <div class="lg:w-1/4">
-                        <div class="sticky top-24">
-                            <h3 class="text-slate-900 font-black uppercase tracking-tighter text-2xl mb-4">The Creative<br><span class="text-[#1d6fa5]">Minds.</span></h3>
-                            <p class="text-slate-400 text-sm leading-relaxed mb-6">Sistem ini dikembangkan oleh talenta muda melalui program kolaborasi industri dan pendidikan vokasi.</p>
-                            <div class="flex gap-2">
-                                <div class="w-8 h-1 bg-[#1d6fa5] rounded-full"></div>
-                                <div class="w-2 h-1 bg-slate-200 rounded-full"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="lg:w-3/4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                        @php
-                            $devs = [
-                                ['name' => 'Mohammad Dirgo Marchellino', 'school' => 'SMKN 1 KRAKSAAN', 'role' => 'Backend Developer'],
-                                ['name' => 'Moh. Romsi Ramadani', 'school' => 'SMKN 1 KRAKSAAN', 'role' => 'UI/UX Designer'],
-                                ['name' => 'Ardan Ramadhan P.H', 'school' => 'SMKN 1 PURWOSARI', 'role' => 'Frontend Developer'],
-                                ['name' => 'Syafiq Labib', 'school' => 'SMKN 1 PURWOSARI', 'role' => 'UI/UX Designer'],
-                                ['name' => 'Muhammad Farchan', 'school' => 'SMKN 8 MALANG', 'role' => 'Backend Developer'],
-                                ['name' => 'Feriska Agustina Fitria', 'school' => 'SMKN 8 MALANG', 'role' => 'UI/UX Designer'],
-                            ];
-                        @endphp
-
-                        @foreach($devs as $dev)
-                        <div class="group relative p-6 bg-white border border-slate-100 rounded-[2rem] transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:border-[#1d6fa5]/20">
-                            <div class="flex flex-col h-full">
-                                <div class="flex items-center gap-4 mb-4">
-                                    <div class="w-12 h-12 bg-slate-50 text-[#1d6fa5] rounded-2xl flex items-center justify-center group-hover:bg-[#1d6fa5] group-hover:text-white transition-all duration-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                    </div>
-                                    <div class="flex-1">
-                                        {{-- Teks Role Tetap Terlihat (Tanpa Hover) --}}
-                                        <p class="text-xs font-bold text-[#1d6fa5] mb-1 uppercase tracking-tighter">{{ $dev['role'] }}</p>
-                                        <div class="h-px bg-slate-100 w-full"></div>
-                                    </div>
-                                </div>
-                                <h4 class="text-[14px] font-black text-slate-800 uppercase leading-tight mb-1">{{ $dev['name'] }}</h4>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{{ $dev['school'] }}</p>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
         </div>
     </section>
 
