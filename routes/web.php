@@ -33,9 +33,16 @@ Route::get('/schedule_booking', [ScheduleController::class, 'index'])->name('sch
 Route::get('/schedule_booking/data', [KontrolJadwalController::class, 'publicCalendarData'])->name('schedule_booking.data');
 
 // Bagian Admin
-Route::get('/admin/formLogin', function () {
-    return view('admin.formLogin');
-})->name('formLogin');
+// -- form login
+// ambil kode rahasia dari config (yang terhubung ke .env)
+$secretUrl = config('services.admin.secret');
+
+// mendaftarkan route langsung menggunakan kode rahasia tersebut
+if ($secretUrl) {
+    Route::get('/' . $secretUrl, function () {
+        return view('admin.formLogin');
+    })->name('formLogin');
+}
 
 // Auth Admin
 Route::post('/admin/login', [AdminsController::class, 'login'])->name('admin.login');
