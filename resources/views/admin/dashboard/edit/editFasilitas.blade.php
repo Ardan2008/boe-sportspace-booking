@@ -58,6 +58,73 @@
         .dropzone-error {
             border-color: #ef4444 !important;
         }
+
+        /* ── Stepper Jumlah Kamar ── */
+        .kamar-stepper-wrap {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .kamar-stepper-wrap:focus-within {
+            border-color: #1265A8;
+            box-shadow: 0 0 0 4px rgba(18,101,168,.10);
+        }
+        .kamar-stepper-btn {
+            flex-shrink: 0;
+            width: 52px;
+            height: 56px;
+            background: #f8fafc;
+            border: none;
+            font-size: 22px;
+            font-weight: 900;
+            color: #1265A8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .15s, color .15s, transform .1s;
+            user-select: none;
+        }
+        .kamar-stepper-btn:hover  { background: #dbeafe; color: #1558a0; }
+        .kamar-stepper-btn:active { transform: scale(.90); }
+        .kamar-stepper-btn:disabled { color: #cbd5e1; cursor: not-allowed; background: #f8fafc; }
+        .kamar-stepper-input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            border-left: 1.5px solid #e2e8f0;
+            border-right: 1.5px solid #e2e8f0;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 900;
+            color: #0f172a;
+            background: transparent;
+            outline: none;
+            padding: 0;
+            height: 56px;
+            -moz-appearance: textfield;
+        }
+        .kamar-stepper-input::-webkit-outer-spin-button,
+        .kamar-stepper-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .kamar-badge-edit {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            padding: 5px 12px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .05em;
+            background: #f0f9ff;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+        }
     </style>
 </head>
 <body class="bg-[#F8FAFC] font-sans antialiased text-slate-800">
@@ -145,6 +212,40 @@
                             </div>
                         </div>
 
+                        {{-- ══════════════════════════════
+                            JUMLAH KAMAR — hanya asrama
+                        ══════════════════════════════ --}}
+                        <div x-show="tipe === 'asrama'">
+                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                                Jumlah Kamar Tersedia
+                            </label>
+                            <div class="kamar-stepper-wrap" id="kamarStepperWrap">
+                                <button type="button" id="btnKamarMinus"
+                                    class="kamar-stepper-btn"
+                                    onclick="window.editKamarStep(-1)"
+                                    aria-label="Kurangi kamar">−</button>
+                                <input type="number"
+                                    name="jumlah_kamar"
+                                    id="jumlahKamar"
+                                    min="1" max="999"
+                                    value="{{ old('jumlah_kamar', $fasilitas->jumlah_kamar ?? 1) }}"
+                                    class="kamar-stepper-input"
+                                    oninput="window.editKamarOnInput(this)"
+                                    aria-label="Jumlah kamar">
+                                <button type="button" id="btnKamarPlus"
+                                    class="kamar-stepper-btn"
+                                    onclick="window.editKamarStep(1)"
+                                    aria-label="Tambah kamar">+</button>
+                            </div>
+                            <div class="kamar-badge-edit">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                </svg>
+                                <span id="kamarBadgeText">{{ $fasilitas->jumlah_kamar ?? 1 }} kamar tersedia</span>
+                            </div>
+                        </div>
+
                         {{-- Cap Dewasa + Anak (Asrama only) --}}
                         <div x-show="tipe === 'asrama'" class="grid grid-cols-2 gap-4">
                             <div>
@@ -159,14 +260,16 @@
                             </div>
                         </div>
 
-                        {{-- Labels --}}
+                        {{-- Labels / Fitur --}}
                         <div class="group">
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Labels / Fitur</label>
                             <div class="flex flex-wrap gap-2 mb-3">
                                 <template x-for="label in labels[tipe]" :key="label">
                                     <label class="cursor-pointer">
                                         <input type="checkbox" name="labels[]" :value="label" x-model="selectedLabels" class="hidden">
-                                        <span :class="selectedLabels.includes(label) ? 'bg-[#1265A8] text-white border-[#1265A8]' : 'bg-white text-slate-400 border-slate-200'" class="px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all duration-300 block" x-text="label"></span>
+                                        <span :class="selectedLabels.includes(label) ? 'bg-[#1265A8] text-white border-[#1265A8]' : 'bg-white text-slate-400 border-slate-200'"
+                                            class="px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all duration-300 block"
+                                            x-text="label"></span>
                                     </label>
                                 </template>
                             </div>
@@ -288,6 +391,39 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        /* ══════════════════════════════════════════
+        STEPPER JUMLAH KAMAR (Edit)
+        Harus di window scope agar onclick HTML bisa akses
+        ══════════════════════════════════════════ */
+        window.editKamarStep = function (delta) {
+            const input = document.getElementById('jumlahKamar');
+            if (!input) return;
+            const next = Math.min(999, Math.max(1, (parseInt(input.value) || 1) + delta));
+            input.value = next;
+            window.editKamarSyncUI(next);
+        };
+
+        window.editKamarOnInput = function (el) {
+            let val = parseInt(el.value);
+            if (isNaN(val) || val < 1) val = 1;
+            if (val > 999) val = 999;
+            el.value = val;
+            window.editKamarSyncUI(val);
+        };
+
+        window.editKamarSyncUI = function (val) {
+            const btnMin = document.getElementById('btnKamarMinus');
+            const badge  = document.getElementById('kamarBadgeText');
+            if (btnMin) btnMin.disabled = (val <= 1);
+            if (badge)  badge.textContent = val + ' kamar tersedia';
+        };
+
+        // Inisialisasi saat halaman load
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('jumlahKamar');
+            if (input) window.editKamarSyncUI(parseInt(input.value) || 1);
+        });
+        
         /* ══════════════════════════════════════════
            Alpine Component
         ══════════════════════════════════════════ */
@@ -552,7 +688,7 @@
                     showCancelButton: true,
                     confirmButtonColor: '#ef4444',
                     cancelButtonColor: '#94a3b8',
-                    confirmButtonText: 'Ya, Keluar',
+                    confirmButtonText: 'Ya, Batalkan',
                     cancelButtonText: 'Tetap di Sini',
                     reverseButtons: true,
                     customClass: { popup: 'rounded-[2.5rem] p-8' }

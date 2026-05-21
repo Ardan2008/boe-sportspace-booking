@@ -20,6 +20,7 @@ class Fasilitas extends Model
         'max_dewasa',
         'max_anak',
         'max_durasi_harian',
+        'jumlah_kamar',
         'jam_operasional',
         'image',
         'gallery',

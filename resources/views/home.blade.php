@@ -251,7 +251,7 @@
                             <span class="text-[#1d6fa5]">{{ $item->nama }}</span>
                         </h2>
                         
-                        <p class="text-gray-500 text-sm leading-relaxed mb-8 line-clamp-2">
+                        <p class="text-gray-500 text-sm leading-relaxed mb-4 line-clamp-2">
                             {{ $item->deskripsi }}
                         </p>
 
@@ -269,7 +269,8 @@
                                     {{ json_encode($item->tipe) }},
                                     {{ json_encode($item->max_dewasa) }},
                                     {{ json_encode($item->max_anak) }},
-                                    {{ json_encode($item->jam_operasional) }}
+                                    {{ json_encode($item->jam_operasional) }},
+                                    {{ json_encode($item->jumlah_kamar ?? 0) }}
                                 )'
                                 class="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-600 py-4 rounded-2xl font-bold text-xs transition-all duration-200 active:scale-95 border border-gray-100"
                             >
@@ -455,7 +456,7 @@
     let currentPreviewImg = "";
 
     // Logika Modal Deskripsi & Preview Gambar
-    function openDescription(title, body, imgUrl, detail, gallery, labels, tipe, max_dewasa, max_anak, jam_operasional) {
+    function openDescription(title, body, imgUrl, detail, gallery, labels, tipe, max_dewasa, max_anak, jam_operasional, jumlahKamar) {
         const modal = document.getElementById('descModal');
         const modalContent = document.getElementById('modalContent');
         
@@ -465,9 +466,34 @@
         document.getElementById('modalTypeLabel').innerText = 'Informasi ' + (tipe ? (tipe.charAt(0).toUpperCase() + tipe.slice(1)) : 'Fasilitas');
         
         // Capacity & Hours
-        document.getElementById('modalMaxDewasa').innerText = max_dewasa || '-';
-        document.getElementById('modalMaxAnak').innerText = max_anak || '-';
+        // Capacity & Hours — label berbeda tergantung tipe
         document.getElementById('modalHours').innerText = jam_operasional || '-';
+
+        const labelDewasa = document.getElementById('labelCapDewasa');
+        const labelAnak   = document.getElementById('labelCapAnak');
+        const rowAnak     = document.getElementById('rowCapAnak');
+
+        if (tipe === 'aula') {
+            if (labelDewasa) labelDewasa.textContent = 'Cap. Orang';
+            if (rowAnak)     rowAnak.classList.add('hidden');
+            document.getElementById('modalMaxDewasa').innerText = max_dewasa || '-';
+        } else {
+            if (labelDewasa) labelDewasa.textContent = 'Cap. Dewasa';
+            if (rowAnak)     rowAnak.classList.remove('hidden');
+            document.getElementById('modalMaxDewasa').innerText = max_dewasa || '-';
+            document.getElementById('modalMaxAnak').innerText   = max_anak   || '-';
+}
+
+        // kamar logic
+        const kamarEl = document.getElementById('modal-jumlah-kamar');
+        if (kamarEl) {
+            if (tipe === 'asrama' && jumlahKamar > 0) {
+                kamarEl.textContent = jumlahKamar + ' Kamar Tersedia';
+                kamarEl.closest('[data-kamar-wrap]').classList.remove('hidden');
+            } else {
+                kamarEl.closest('[data-kamar-wrap]').classList.add('hidden');
+            }
+        }
         
         // Gallery logic
         const galleryContainer = document.getElementById('modalGallery');
@@ -680,11 +706,18 @@
                     <div>
                         <h4 class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-3">Informasi Operasional</h4>
                         <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
+
+                            {{-- Jumlah Kamar — hanya muncul jika asrama --}}
+                            <div data-kamar-wrap class="hidden flex items-center justify-between">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Jumlah Kamar</span>
+                                <span id="modal-jumlah-kamar" class="text-xs font-black text-[#1d6fa5]"></span>
+                            </div>
+
                             <div class="flex items-center justify-between">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Cap. Dewasa</span>
+                                <span id="labelCapDewasa" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Cap. Dewasa</span>
                                 <span id="modalMaxDewasa" class="text-xs font-black text-slate-800"></span>
                             </div>
-                            <div class="flex items-center justify-between">
+                            <div id="rowCapAnak" class="flex items-center justify-between">
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Cap. Anak</span>
                                 <span id="modalMaxAnak" class="text-xs font-black text-slate-800"></span>
                             </div>

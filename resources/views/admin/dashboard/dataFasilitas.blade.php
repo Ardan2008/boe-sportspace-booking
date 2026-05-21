@@ -247,11 +247,18 @@
                                     </span>
                                 </div>
                                 
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" {{ $item->is_maintenance ? 'checked' : '' }}
-                                        @click.prevent="handleMaintenanceToggle({{ $item->id }}, '{{ addslashes($item->nama) }}', {{ $item->is_maintenance ? 'true' : 'false' }})">
-                                    <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500 transition-all"></div>
-                                </label>
+                                <div x-data="{ active: {{ $item->is_maintenance ? 'true' : 'false' }} }"
+                                    class="relative inline-flex items-center cursor-pointer"
+                                    @click="active = !active; handleMaintenanceToggle({{ $item->id }}, '{{ addslashes($item->nama) }}', !active)">
+                                    
+                                    {{-- Track --}}
+                                    <div class="w-10 h-5 rounded-full transition-all duration-300 relative"
+                                        :class="active ? 'bg-red-500' : 'bg-slate-200'">
+                                        {{-- Thumb --}}
+                                        <div class="absolute top-[2px] left-[2px] w-4 h-4 bg-white rounded-full shadow transition-all duration-300"
+                                            :class="active ? 'translate-x-5' : 'translate-x-0'"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -300,74 +307,282 @@
             {{-- MODAL PREVIEW (Akan muncul saat gambar diklik) --}}
             </div>
 
+            <style>
+                [x-cloak] { display: none !important; }
 
+                /* ── Progress bar alasan ── */
+                .reason-progress {
+                    height: 3px;
+                    border-radius: 99px;
+                    transition: width .3s ease, background-color .3s ease;
+                }
 
-        <style>
-            [x-cloak] { display: none !important; }
-        </style>
-        {{-- MODAL MAINTENANCE --}}
-        <div x-show="maintenanceModal" x-cloak
-            class="fixed inset-0 z-[100] overflow-y-auto"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0">
-            
-            <div class="flex items-center justify-center min-h-screen p-4">
-                <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="maintenanceModal = false"></div>
-                
-                <div class="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100"
-                    x-transition:enter="transition ease-out duration-300 transform"
-                    x-transition:enter-start="scale-90 opacity-0"
-                    x-transition:enter-end="scale-100 opacity-100">
-                    
-                    <div class="bg-red-600 p-8 text-white relative">
-                        <div class="absolute top-0 right-0 p-8 opacity-10">
-                            <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.45L19.55 19H4.45L12 5.45zM11 16h2v2h-2v-2zm0-7h2v5h-2V9z"/></svg>
+                /* ── Date field valid/error ── */
+                .date-valid {
+                    border-color: #22c55e !important;
+                    background-color: #f0fdf4 !important;
+                    box-shadow: 0 0 0 3px rgba(34,197,94,.12) !important;
+                }
+                .date-error {
+                    border-color: #ef4444 !important;
+                    background-color: #fff5f5 !important;
+                    box-shadow: 0 0 0 3px rgba(239,68,68,.12) !important;
+                    animation: maintShake .35s ease;
+                }
+                @keyframes maintShake {
+                    0%,100% { transform: translateX(0); }
+                    20%      { transform: translateX(-5px); }
+                    40%      { transform: translateX(5px); }
+                    60%      { transform: translateX(-4px); }
+                    80%      { transform: translateX(4px); }
+                }
+
+                /* ── Duration pill ── */
+                .duration-pill {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 5px;
+                    padding: 4px 12px;
+                    border-radius: 99px;
+                    font-size: 10px;
+                    font-weight: 800;
+                    letter-spacing: .05em;
+                    transition: all .2s;
+                }
+            </style>
+
+            {{-- MODAL MAINTENANCE --}}
+            <div x-show="maintenanceModal" x-cloak
+                class="fixed inset-0 z-[100] overflow-y-auto"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                x-data="{
+                    reasonLen: 0,
+                    reasonMax: 255,
+                    dateStartErr: '',
+                    dateEndErr: '',
+                    reasonErr: '',
+                    durationDays: 0,
+
+                    get reasonLeft()   { return this.reasonMax - this.reasonLen; },
+                    get reasonPct()    { return Math.min(this.reasonLen / this.reasonMax * 100, 100); },
+                    get reasonColor()  {
+                        if (this.reasonLen === 0)              return '#e2e8f0';
+                        if (this.reasonLen < 20)               return '#f97316';
+                        if (this.reasonLeft < 30)              return '#ef4444';
+                        return '#22c55e';
+                    },
+
+                    validateStart() {
+                        const today = new Date(); today.setHours(0,0,0,0);
+                        const val   = new Date(this.maintData.start_date);
+                        if (!this.maintData.start_date) {
+                            this.dateStartErr = 'Tanggal mulai wajib diisi.'; return false;
+                        }
+                        if (val < today) {
+                            this.dateStartErr = 'Tanggal mulai tidak boleh di masa lalu.'; return false;
+                        }
+                        this.dateStartErr = '';
+                        this.calcDuration();
+                        return true;
+                    },
+
+                    validateEnd() {
+                        if (!this.maintData.end_date) {
+                            this.dateEndErr = 'Tanggal selesai wajib diisi.'; return false;
+                        }
+                        const start = new Date(this.maintData.start_date);
+                        const end   = new Date(this.maintData.end_date);
+                        if (end < start) {
+                            this.dateEndErr = 'Tanggal selesai tidak boleh sebelum tanggal mulai.'; return false;
+                        }
+                        this.dateEndErr = '';
+                        this.calcDuration();
+                        return true;
+                    },
+
+                    validateReason() {
+                        if (this.maintData.reason.trim().length < 10) {
+                            this.reasonErr = 'Alasan minimal 10 karakter.'; return false;
+                        }
+                        this.reasonErr = '';
+                        return true;
+                    },
+
+                    calcDuration() {
+                        if (this.maintData.start_date && this.maintData.end_date) {
+                            const s = new Date(this.maintData.start_date);
+                            const e = new Date(this.maintData.end_date);
+                            const d = Math.ceil((e - s) / (1000 * 60 * 60 * 24)) + 1;
+                            this.durationDays = d > 0 ? d : 0;
+                        }
+                    },
+
+                    submitWithValidation() {
+                        const s = this.validateStart();
+                        const e = this.validateEnd();
+                        const r = this.validateReason();
+                        if (s && e && r) this.submitMaintenance();
+                    }
+                }">
+
+                <div class="flex items-center justify-center min-h-screen p-4">
+                    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="maintenanceModal = false"></div>
+
+                    <div class="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100"
+                        x-transition:enter="transition ease-out duration-300 transform"
+                        x-transition:enter-start="scale-90 opacity-0"
+                        x-transition:enter-end="scale-100 opacity-100">
+
+                        {{-- Header --}}
+                        <div class="bg-red-600 p-8 text-white relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-8 opacity-10">
+                                <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2L1 21h22L12 2zm0 3.45L19.55 19H4.45L12 5.45zM11 16h2v2h-2v-2zm0-7h2v5h-2V9z"/>
+                                </svg>
+                            </div>
+                            <div class="relative z-10">
+                                <h3 class="text-2xl font-black mb-1">Mode Perbaikan</h3>
+                                <p class="text-red-100 text-sm font-medium">
+                                    Fasilitas: <span x-text="maintData.name" class="font-bold underline text-white"></span>
+                                </p>
+
+                                {{-- Duration pill — muncul setelah kedua tanggal diisi --}}
+                                <div class="mt-3" x-show="durationDays > 0">
+                                    <span class="duration-pill bg-white/20 text-white border border-white/30">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        <span x-text="durationDays + ' hari diblokir'"></span>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <h3 class="text-2xl font-black mb-1">Mode Perbaikan</h3>
-                        <p class="text-red-100 text-sm font-medium">Fasilitas: <span x-text="maintData.name" class="font-bold underline text-white"></span></p>
+
+                        {{-- Form --}}
+                        <form class="p-8 space-y-5" @submit.prevent="submitWithValidation">
+
+                            {{-- Tanggal --}}
+                            <div class="grid grid-cols-2 gap-4">
+
+                                {{-- Mulai --}}
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Mulai Dari</label>
+                                    <input type="date"
+                                        x-model="maintData.start_date"
+                                        @change="validateStart(); validateEnd()"
+                                        name="tgl_mulai"
+                                        :class="dateStartErr ? 'date-error' : (maintData.start_date && !dateStartErr ? 'date-valid' : '')"
+                                        class="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none transition-all">
+
+                                    {{-- Error hint --}}
+                                    <p class="text-[10px] font-bold text-red-500 px-1 min-h-[14px]" x-text="dateStartErr"></p>
+                                </div>
+
+                                {{-- Selesai --}}
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Sampai Dengan</label>
+                                    <input type="date"
+                                        x-model="maintData.end_date"
+                                        @change="validateEnd()"
+                                        name="tgl_selesai"
+                                        :class="dateEndErr ? 'date-error' : (maintData.end_date && !dateEndErr ? 'date-valid' : '')"
+                                        class="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none transition-all">
+
+                                    <p class="text-[10px] font-bold text-red-500 px-1 min-h-[14px]" x-text="dateEndErr"></p>
+                                </div>
+                            </div>
+
+                            {{-- Info durasi detail --}}
+                            <div x-show="durationDays > 0"
+                                class="flex items-center gap-3 p-3 bg-red-50 border border-red-100 rounded-2xl">
+                                <svg class="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                <p class="text-[11px] font-bold text-red-600">
+                                    Fasilitas akan diblokir selama <span class="underline" x-text="durationDays + ' hari'"></span>.
+                                    Semua booking yang bertabrakan akan ditolak otomatis.
+                                </p>
+                            </div>
+
+                            {{-- Alasan --}}
+                            <div class="space-y-1.5">
+                                <div class="flex items-center justify-between px-1">
+                                    <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest">Alasan Perbaikan</label>
+                                    {{-- Counter --}}
+                                    <span class="text-[10px] font-black transition-colors"
+                                        :class="reasonLeft < 30 ? 'text-red-500' : reasonLeft < 60 ? 'text-orange-400' : 'text-slate-400'"
+                                        x-text="reasonLen + ' / ' + reasonMax"></span>
+                                </div>
+
+                                <textarea
+                                    x-model="maintData.reason"
+                                    @input="reasonLen = maintData.reason.length; validateReason()"
+                                    @blur="validateReason()"
+                                    name="tujuan"
+                                    rows="3"
+                                    :maxlength="reasonMax"
+                                    placeholder="Contoh: Renovasi lantai, Perbaikan AC, Pengecatan ulang..."
+                                    :class="reasonErr ? 'border-red-400 bg-red-50/50 focus:ring-red-500/20 focus:border-red-400' : (maintData.reason.trim().length >= 10 ? 'border-green-400 bg-green-50/30 focus:ring-green-500/20 focus:border-green-400' : '')"
+                                    class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 transition-all resize-none"></textarea>
+
+                                {{-- Progress bar --}}
+                                <div class="h-[3px] bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="reason-progress"
+                                        :style="'width:' + reasonPct + '%; background-color:' + reasonColor"></div>
+                                </div>
+
+                                {{-- Error + tips --}}
+                                <div class="flex items-center justify-between px-1">
+                                    <p class="text-[10px] font-bold text-red-500 min-h-[14px]" x-text="reasonErr"></p>
+                                    <p class="text-[10px] text-slate-300 font-medium" x-show="!reasonErr && reasonLen < 10">
+                                        Min. 10 karakter
+                                    </p>
+                                </div>
+                            </div>
+
+                            {{-- Summary validasi — muncul jika ada error saat submit --}}
+                            <div x-show="dateStartErr || dateEndErr || reasonErr"
+                                class="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl">
+                                <svg class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                <div>
+                                    <p class="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1">Periksa kembali</p>
+                                    <ul class="space-y-0.5">
+                                        <li x-show="dateStartErr" class="text-[11px] text-red-500 font-semibold" x-text="'• ' + dateStartErr"></li>
+                                        <li x-show="dateEndErr"   class="text-[11px] text-red-500 font-semibold" x-text="'• ' + dateEndErr"></li>
+                                        <li x-show="reasonErr"    class="text-[11px] text-red-500 font-semibold" x-text="'• ' + reasonErr"></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            {{-- Action buttons --}}
+                            <div class="pt-2 flex items-center gap-3">
+                                <button type="button" @click="maintenanceModal = false; dateStartErr = ''; dateEndErr = ''; reasonErr = ''; durationDays = 0; reasonLen = 0;"
+                                    class="flex-1 px-6 py-4 bg-slate-100 text-slate-500 rounded-2xl border border-slate-200 font-bold text-sm hover:bg-slate-200 transition-all">
+                                    Batal
+                                </button>
+                                <button type="submit"
+                                    :disabled="!!(dateStartErr || dateEndErr || reasonErr)"
+                                    :class="(dateStartErr || dateEndErr || reasonErr) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-red-700 hover:shadow-lg hover:shadow-red-600/30'"
+                                    class="flex-[2] px-6 py-4 bg-red-600 text-white rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    Blokir Jadwal
+                                </button>
+                            </div>
+                        </form>
                     </div>
-
-                    <form id="maintForm" @submit.prevent="submitMaintenance" class="p-8 space-y-6">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Mulai Dari</label>
-                                <input type="date" x-model="maintData.start_date" name="tgl_mulai" required
-                                    class="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all">
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Sampai Dengan</label>
-                                <input type="date" x-model="maintData.end_date" name="tgl_selesai" required
-                                    class="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all">
-                            </div>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Alasan Perbaikan</label>
-                            <textarea x-model="maintData.reason" name="tujuan" required rows="3" placeholder="Contoh: Renovasi lantai atau Perbaikan AC..."
-                                class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all resize-none"></textarea>
-                        </div>
-
-                        <div class="pt-4 flex items-center gap-3">
-                            <button type="button" @click="maintenanceModal = false" 
-                                class="flex-1 px-6 py-4 bg-slate-100 text-slate-500 rounded-2x border border-slate-200 font-bold text-sm hover:bg-slate-200 transition-all">
-                                Batal
-                            </button>
-                            <button type="submit" 
-                                class="flex-[2] px-6 py-4 bg-red-600 text-white rounded-2xl font-black text-sm hover:bg-red-700 hover:shadow-lg hover:shadow-red-600/30 transition-all flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                Blokir Jadwal
-                            </button>
-                        </div>
-                    </form>
                 </div>
             </div>
-        </div>
-    </section>
-</main>
+        </section>
+    </main>
 
     {{-- Back to Top Button --}}
     <button id="backToTop" 

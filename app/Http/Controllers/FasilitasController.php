@@ -47,6 +47,7 @@ class FasilitasController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'paket_harian' => 'nullable|string',
+            'jumlah_kamar' => 'nullable|integer|min:1',
             'labels' => 'nullable|array',
         ]);
 
@@ -96,6 +97,7 @@ class FasilitasController extends Controller
             'max_anak' => $request->max_anak,
             'max_durasi_harian' => $request->max_durasi_harian,
             'jam_operasional' => $request->jam_operasional,
+            'jumlah_kamar' => $request->jumlah_kamar ? (int) $request->jumlah_kamar : $fasilitas->jumlah_kamar,
             'paket_harian' => $paket_harian,
             'labels' => $request->labels ?? [],
             'harga_thumbnail' => $harga_thumbnail,
@@ -179,9 +181,11 @@ class FasilitasController extends Controller
                 'detail' => 'nullable',
                 'harga' => 'required|numeric',
                 'harga_bulanan' => 'nullable|numeric',
-                'max_dewasa' => 'nullable|integer',
+                'max_dewasa_asrama' => 'nullable|integer',
+                'max_dewasa_aula' => 'nullable|integer',
                 'max_anak' => 'nullable|integer',
                 'max_durasi_harian' => 'nullable|integer',
+                'jumlah_kamar'     => 'required|integer|min:1',
                 'jam_operasional' => 'nullable|string',
                 'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
                 'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
@@ -236,9 +240,12 @@ class FasilitasController extends Controller
                 'detail' => $request->detail,
                 'harga' => $h_harian,
                 'harga_bulanan' => $h_bulanan,
-                'max_dewasa' => $request->max_dewasa,
+                'max_dewasa' => $request->tipe === 'asrama'
+                    ? (int) $request->max_dewasa_asrama
+                    : (int) $request->max_dewasa_aula,
                 'max_anak' => $request->max_anak,
                 'max_durasi_harian' => $request->max_durasi_harian,
+                'jumlah_kamar'     => (int) $request->jumlah_kamar, 
                 'jam_operasional' => $request->jam_operasional,
                 'image' => $imageName, 
                 'gallery' => $gallery,

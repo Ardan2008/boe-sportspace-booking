@@ -172,7 +172,7 @@
         .v-toast.toast-warning .v-toast-progress { background: #EF9F27; }
         .v-toast.toast-warning .v-toast-title    { color: #854F0B; }
 
-        /* ── Confirm dialog (pengganti Swal untuk konfirmasi submit & batal) ── */
+        /* ── Confirm dialog ── */
         #v-confirm-overlay {
             position: fixed; inset: 0;
             background: rgba(15,23,42,.45);
@@ -223,6 +223,89 @@
         #dropzone.v-dz-error { border-color: #E24B4A !important; box-shadow: 0 0 0 4px rgba(226,75,74,.10); }
 
         .swal2-shown { padding-right: 0 !important; }
+
+        /* ══════════════════════════════
+           Stepper Jumlah Kamar
+        ══════════════════════════════ */
+        .kamar-stepper-wrap {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .kamar-stepper-wrap:focus-within {
+            border-color: #1d6fa5;
+            box-shadow: 0 0 0 4px rgba(29,111,165,.10);
+        }
+        /* Error state pada wrap */
+        .kamar-stepper-wrap.v-error {
+            border-color: #E24B4A !important;
+            box-shadow: 0 0 0 4px rgba(226,75,74,.10) !important;
+            animation: vShake .35s ease;
+        }
+        .kamar-stepper-btn {
+            flex-shrink: 0;
+            width: 52px;
+            height: 56px;
+            background: #f8fafc;
+            border: none;
+            font-size: 22px;
+            font-weight: 900;
+            color: #1d6fa5;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .15s, color .15s, transform .1s;
+            user-select: none;
+            line-height: 1;
+        }
+        .kamar-stepper-btn:hover  { background: #dbeafe; color: #1558a0; }
+        .kamar-stepper-btn:active { transform: scale(.90); }
+        .kamar-stepper-btn:disabled {
+            color: #cbd5e1;
+            cursor: not-allowed;
+            background: #f8fafc;
+        }
+        .kamar-stepper-input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            border-left: 1.5px solid #e2e8f0;
+            border-right: 1.5px solid #e2e8f0;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 900;
+            color: #0f172a;
+            background: transparent;
+            outline: none;
+            padding: 0;
+            height: 56px;
+            -moz-appearance: textfield;
+        }
+        .kamar-stepper-input::-webkit-outer-spin-button,
+        .kamar-stepper-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        /* Badge info kamar */
+        .kamar-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            padding: 5px 12px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .05em;
+            background: #f0f9ff;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+            transition: all .2s;
+        }
     </style>
 </head>
 <body class="bg-[#F8FAFC] font-sans antialiased text-slate-800">
@@ -288,7 +371,9 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
-                    {{-- ── Kolom Kiri ── --}}
+                    {{-- ══════════════════════════════
+                         KOLOM KIRI
+                    ══════════════════════════════ --}}
                     <div class="space-y-6">
 
                         {{-- Nama Fasilitas --}}
@@ -298,7 +383,6 @@
                                 <input type="text" name="nama" id="namaFasilitas" maxlength="60"
                                     class="v-field w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
                                     required>
-                                {{-- Status icons --}}
                                 <svg id="icon-nama-ok" class="v-icon text-green-500 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                                 </svg>
@@ -306,11 +390,9 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                                 </svg>
                             </div>
-                            {{-- Progress bar --}}
                             <div class="v-progress-wrap" id="pb-nama-wrap">
                                 <div class="v-progress-bar" id="pb-nama"></div>
                             </div>
-                            {{-- Hint --}}
                             <p class="v-hint" id="hint-nama"></p>
                         </div>
 
@@ -365,10 +447,64 @@
                             </div>
                         </div>
 
+                        {{-- ══════════════════════════════
+                            JUMLAH KAMAR 
+                        ══════════════════════════════ --}}
+                        <div x-show="tipe === 'asrama'" x-cloak>
+                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                                Jumlah Kamar Tersedia
+                            </label>
+
+                            <div class="kamar-stepper-wrap" id="kamarStepperWrap">
+
+                                {{-- Tombol Kurangi --}}
+                                <button type="button"
+                                    id="btnKamarMinus"
+                                    class="kamar-stepper-btn"
+                                    onclick="window.kamarStep(-1)"
+                                    aria-label="Kurangi kamar">
+                                    −
+                                </button>
+
+                                {{-- Input Angka --}}
+                                <input
+                                    type="number"
+                                    name="jumlah_kamar"
+                                    id="jumlahKamar"
+                                    min="1"
+                                    max="999"
+                                    value="1"
+                                    class="kamar-stepper-input"
+                                    oninput="window.kamarOnInput(this)"
+                                    aria-label="Jumlah kamar">
+
+                                {{-- Tombol Tambah --}}
+                                <button type="button"
+                                    id="btnKamarPlus"
+                                    class="kamar-stepper-btn"
+                                    onclick="window.kamarStep(1)"
+                                    aria-label="Tambah kamar">
+                                    +
+                                </button>
+
+                            </div>
+
+                            {{-- Badge info --}}
+                            <div class="kamar-badge">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                </svg>
+                                <span id="kamarBadgeText">1 kamar tersedia</span>
+                            </div>
+
+                            <p class="v-hint" id="hint-kamar"></p>
+                        </div>
+
                         {{-- Kapasitas Asrama --}}
                         <div x-show="tipe === 'asrama'" x-cloak class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Kapasitas Dewasa (Kamar)</label>
+                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Cap. Dewasa (Kamar)</label>
                                 <div class="relative">
                                     <input type="number" name="max_dewasa_asrama" id="maxDewasaAsrama" min="1"
                                         class="v-field w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
@@ -377,10 +513,12 @@
                                 <p class="v-hint" id="hint-kap-dewasa"></p>
                             </div>
                             <div>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Kapasitas Anak (Kamar)</label>
-                                <input type="number" name="max_anak" min="0"
-                                    class="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
-                                    :required="tipe === 'asrama'">
+                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Cap. Anak (Kamar)</label>
+                                <div class="relative">
+                                    <input type="number" name="max_anak" min="0"
+                                        class="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
+                                        :required="tipe === 'asrama'">
+                                </div>
                             </div>
                         </div>
 
@@ -407,7 +545,9 @@
                         </div>
                     </div>
 
-                    {{-- ── Kolom Kanan ── --}}
+                    {{-- ══════════════════════════════
+                         KOLOM KANAN
+                    ══════════════════════════════ --}}
                     <div class="space-y-6">
 
                         {{-- Biaya --}}
@@ -571,6 +711,48 @@
     </div>
 
     <script>
+    /* ═══════════════════════════════════════════════════════════════
+       STEPPER JUMLAH KAMAR
+       Didefinisikan di window scope (LUAR DOMContentLoaded)
+       agar bisa dipanggil dari onclick="window.kamarStep()" di HTML.
+    ═══════════════════════════════════════════════════════════════ */
+
+    window.kamarStep = function (delta) {
+        const input  = document.getElementById('jumlahKamar');
+        if (!input) return;
+        const cur  = parseInt(input.value) || 1;
+        const next = Math.min(999, Math.max(1, cur + delta));
+        input.value = next;
+        window.kamarSyncUI(next);
+    };
+
+    window.kamarOnInput = function (el) {
+        let val = parseInt(el.value);
+        if (isNaN(val) || val < 1) val = 1;
+        if (val > 999) val = 999;
+        el.value = val;
+        window.kamarSyncUI(val);
+    };
+
+    window.kamarSyncUI = function (val) {
+        const btnMin = document.getElementById('btnKamarMinus');
+        const badge  = document.getElementById('kamarBadgeText');
+        const hint   = document.getElementById('hint-kamar');
+        const wrap   = document.getElementById('kamarStepperWrap');
+
+        if (btnMin) btnMin.disabled = (val <= 1);
+        if (badge)  badge.textContent = val + ' kamar tersedia';
+
+        // Hapus error state jika nilai sudah valid
+        if (wrap && val >= 1) {
+            wrap.classList.remove('v-error');
+        }
+        if (hint && val >= 1) {
+            hint.className = 'v-hint';
+        }
+    };
+
+
     document.addEventListener('DOMContentLoaded', () => {
 
         /* ═══════════════════════════════════════
@@ -597,6 +779,9 @@
             }
             return total;
         }
+
+        // Inisialisasi state awal stepper kamar setelah DOM siap
+        window.kamarSyncUI(1);
 
 
         /* ═══════════════════════════════════════
@@ -642,7 +827,6 @@
                 const overlay  = $('v-confirm-overlay');
                 const iconWrap = $('v-confirm-icon-wrap');
 
-                // Icon SVGs
                 const svgs = {
                     question: `<svg width="28" height="28" fill="none" stroke="${iconColor}" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="${iconColor}"/></svg>`,
                     warning:  `<svg width="28" height="28" fill="none" stroke="${iconColor}" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
@@ -798,7 +982,7 @@
 
 
         /* ═══════════════════════════════════════
-            BIAYA BULANAN — currency masking + real-time
+           BIAYA BULANAN — currency masking + real-time
         ═══════════════════════════════════════ */
 
         const hargaBulananDisplay = $('hargaBulananDisplay');
@@ -886,7 +1070,7 @@
             const currentTipe = this.querySelector('input[name="tipe"]').value;
             let errors = [];
 
-            // Nama
+            // ── Nama ──
             const namaVal = namaInput.value.trim();
             if (!namaVal || !rgxNama.test(namaVal) || namaVal.length < 2) {
                 const msg = !namaVal ? 'Nama wajib diisi.'
@@ -896,13 +1080,13 @@
                 errors.push('Nama Fasilitas');
             }
 
-            // Deskripsi
+            // ── Deskripsi ──
             if (!descInput.value.trim()) {
                 setFieldState(descInput, 'error', hintDesc, 'Deskripsi singkat wajib diisi.', 'hint-error', null, null);
                 errors.push('Deskripsi Singkat');
             }
 
-            // Jam Operasional
+            // ── Jam Operasional ──
             const jamInput = $('jamOperasional');
             const hintJam  = $('hint-jam');
             if (!jamInput.value.trim()) {
@@ -912,26 +1096,46 @@
                 setFieldState(jamInput, 'success', hintJam, '', '');
             }
 
-            // Biaya Harian
+            // ── Biaya Harian ──
             if (!hargaReal.value || parseInt(hargaReal.value) < 1000) {
                 const msg = !hargaReal.value ? 'Biaya harian wajib diisi.' : 'Biaya harian minimal Rp 1.000.';
                 setFieldState(hargaDisplay, 'error', hintHarga, msg, 'hint-error', iconHargaOk, iconHargaErr);
                 errors.push('Biaya Harian');
             }
 
-            // Kapasitas sesuai tipe
+            // ── Kapasitas & Kamar (khusus Asrama) ──
             if (currentTipe === 'asrama') {
-                const kdInput  = $('maxDewasaAsrama');
-                const hintKd   = $('hint-kap-dewasa');
+
+                // Kapasitas dewasa
+                const kdInput = $('maxDewasaAsrama');
+                const hintKd  = $('hint-kap-dewasa');
                 if (!kdInput || !kdInput.value || parseInt(kdInput.value) < 1) {
                     setFieldState(kdInput, 'error', hintKd, 'Kapasitas dewasa minimal 1.', 'hint-error', null, null);
                     errors.push('Kapasitas Dewasa');
                 } else {
                     setFieldState(kdInput, 'success', hintKd, '', '');
                 }
-            } else if (currentTipe === 'aula') {
-                const kaInput  = $('maxDewasaAula');
-                const hintKa   = $('hint-kap-aula');
+
+                // Jumlah kamar — validasi pada wrap bukan input
+                // agar animasi shake terlihat di seluruh stepper
+                const kamarInput = $('jumlahKamar');
+                const kamarWrap  = $('kamarStepperWrap');
+                const hintKamar  = $('hint-kamar');
+                const kamarVal   = parseInt(kamarInput?.value);
+                if (!kamarInput || isNaN(kamarVal) || kamarVal < 1) {
+                    kamarWrap.classList.add('v-error');
+                    if (hintKamar) {
+                        hintKamar.textContent = 'Jumlah kamar minimal 1.';
+                        hintKamar.className   = 'v-hint show hint-error';
+                    }
+                    errors.push('Jumlah Kamar');
+                }
+            }
+
+            // ── Kapasitas Aula ──
+            if (currentTipe === 'aula') {
+                const kaInput = $('maxDewasaAula');
+                const hintKa  = $('hint-kap-aula');
                 if (!kaInput || !kaInput.value || parseInt(kaInput.value) < 1) {
                     setFieldState(kaInput, 'error', hintKa, 'Kapasitas orang minimal 1.', 'hint-error', null, null);
                     errors.push('Kapasitas Aula');
@@ -940,14 +1144,14 @@
                 }
             }
 
-            // Foto utama
+            // ── Foto utama ──
             if (!fileInput.files[0]) {
                 dropzone.classList.add('v-dz-error');
                 setFieldState(dropzone, 'error', hintThumb, 'Foto utama (thumbnail) wajib diunggah.', 'hint-error', null, null);
                 errors.push('Foto Utama');
             }
 
-            // Total ukuran file
+            // ── Total ukuran file ──
             const totalSize = checkTotalSize();
             if (totalSize > MAX_POST_SIZE) {
                 showToast('error', 'Total file terlalu besar',
@@ -955,18 +1159,17 @@
                 errors.push('Ukuran File');
             }
 
-            // Jika ada error → tampilkan satu toast ringkasan
+            // ── Tampilkan ringkasan error ──
             if (errors.length > 0) {
                 showToast('error',
                     `${errors.length} field belum valid`,
                     'Periksa: ' + errors.join(', ') + '.');
-                // Scroll ke field pertama yang error
                 const firstErr = document.querySelector('.v-error, .v-dz-error');
                 if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
 
-            // Konfirmasi simpan
+            // ── Konfirmasi simpan ──
             const confirmed = await showConfirm({
                 icon: 'question',
                 iconBg: '#e6f1fb',
@@ -986,15 +1189,14 @@
         ═══════════════════════════════════════ */
 
         function eksekusiSimpanData() {
-            const form     = $('mainForm');
-            const formData = new FormData(form);
-            const overlay  = $('loadingOverlay');
+            const form      = $('mainForm');
+            const formData  = new FormData(form);
+            const overlay   = $('loadingOverlay');
             const btnSimpan = $('btnSimpan');
-            const btnText  = $('btnText');
-            const btnIcon  = $('btnIcon');
-            const spinner  = $('spinner');
+            const btnText   = $('btnText');
+            const btnIcon   = $('btnIcon');
+            const spinner   = $('spinner');
 
-            // Loading state
             overlay.classList.remove('hidden');
             btnSimpan.disabled = true;
             spinner.classList.remove('hidden');
@@ -1025,7 +1227,6 @@
             .catch(error => {
                 overlay.classList.add('hidden');
                 showToast('error', 'Gagal menyimpan', error.message || 'Terjadi kesalahan sistem.', 6000);
-                // Reset button
                 btnSimpan.disabled = false;
                 spinner.classList.add('hidden');
                 btnText.textContent = 'Simpan Data';
@@ -1073,7 +1274,7 @@
             });
         }
 
-    }); 
+    });
     </script>
 </body>
 </html>
