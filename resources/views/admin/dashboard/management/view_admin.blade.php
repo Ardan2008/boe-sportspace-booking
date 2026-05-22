@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="icon" href="/image/logo/tutwuri-logo.svg">
-    <title>Boe-Space Reserve | Detail Admin</title>
+    <title>Boe-Sport Space | Detail Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script src="https://cdn.tailwindcss.com"></script>

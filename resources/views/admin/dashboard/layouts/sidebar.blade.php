@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>BOE-Space Reserve | Admin Dashboard</title>
+    <title>BOE-Sport Space | Admin Dashboard</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -59,7 +59,7 @@
     <aside id="sidebar-container" class="w-64 bg-white border-r border-slate-100 flex flex-col fixed h-full z-40 transition-transform duration-300 ease-in-out -translate-x-full md:translate-x-0" id="sidebar">
         <div class="p-8 relative">
             <h1 class="text-2xl font-black text-[#1265A8] leading-tight tracking-tighter">
-                BOE-Space<br><span class="text-slate-400">Reserve</span>
+                BOE-Sport<br><span class="text-slate-400">Space</span>
             </h1>
 
             <button onclick="toggleSidebar()" 

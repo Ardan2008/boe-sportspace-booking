@@ -71,7 +71,7 @@
             animation: pulse-slow 6s infinite ease-in-out;
         }
     </style>
-    <title>BOE-Space Reserve</title>
+    <title>BOE-Sport Space</title>
 </head>
 <body class="bg-[#FFFFFF]">
     <x-layout.navbar />
@@ -92,7 +92,7 @@
         <div class="relative z-10 flex flex-col items-center">
             <h1 data-aos="fade-down" data-aos-delay="200" class="text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] text-[45px] lg:text-[72px] font-extrabold leading-[1.05] uppercase tracking-tighter mb-6 font-sans">
                 <span class="block">SELAMAT DATANG</span>
-                <span class="block mt-1">DI <span class="text-blue-400 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-200">BOE-SPACE RESERVE</span></span>
+                <span class="block mt-1">DI <span class="text-blue-400 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-200">BOE-SPORT SPACE</span></span>
             </h1>
 
             <p data-aos="fade-up" data-aos-delay="400" class="text-white/95 text-[18px] lg:text-[22px] drop-shadow-lg font-medium max-w-4xl leading-relaxed mb-10">
@@ -185,16 +185,16 @@
                         <span class="bg-gradient-to-r from-[#1d6fa5] to-blue-400 bg-clip-text text-transparent">
                             About
                         </span> 
-                        Space.
+                        Sport.
                     </h2>
                     
                     <div class="space-y-8">
                         <p class="text-xl leading-relaxed text-slate-600 font-medium border-l-4 border-[#1d6fa5] pl-6">
                             BBPPMPV BOE Malang tidak hanya berperan sebagai pusat pengembangan pendidikan vokasi, 
-                            tetapi juga menyediakan <span class="text-slate-900 font-bold italic decoration-[#1d6fa5] underline-offset-4 decoration-2">layanan premium booking</span> untuk kebutuhan profesional Anda.
+                            tetapi juga menyediakan <span class="text-slate-900 font-bold italic decoration-[#1d6fa5] underline-offset-4 decoration-2">layanan premium booking lapangan</span> untuk kebutuhan olahraga dan rekreasi Anda.
                         </p>
                         <p class="text-lg leading-relaxed text-slate-500 font-light">
-                            Layanan ini dirancang untuk mendukung ekosistem kolaborasi melalui seminar, pelatihan, dan rapat formal. Kami berkomitmen memberikan pengalaman penggunaan ruang yang <span class="font-semibold text-slate-700">representatif, efisien, dan berstandar internasional.</span>
+                            Layanan ini dirancang untuk mendukung gaya hidup sehat dan aktivitas kebugaran fisik melalui penyediaan fasilitas olahraga yang memadai, baik untuk latihan rutin maupun pertandingan persahabatan. Kami berkomitmen memberikan pengalaman penggunaan lapangan yang <span class="font-semibold text-slate-700">representatif, terawat, dan berstandar terbaik.</span>
                         </p>
                     </div>
                 </div>
@@ -311,7 +311,7 @@
                     </div>
                     
                     <p class="text-blue-50/80 leading-relaxed text-lg font-light max-w-md">
-                        Bukan sekadar pusat keunggulan vokasi, kami menyediakan ekosistem pendukung performa terbaik bagi para peserta pelatihan dan komunitas. Kami percaya bahwa ketajaman pikiran di bidang otomotif dan elektronika harus didukung oleh kebugaran fisik yang prima.
+                        Bukan sekadar pusat keunggulan vokasi, kami menyediakan fasilitas lapangan olahraga untuk mendukung performa terbaik bagi para peserta pelatihan dan komunitas. Kami percaya bahwa ketajaman pikiran di bidang otomotif dan elektronika harus selalu diimbangi dengan kebugaran fisik yang prima.
                     </p>
 
                     <div class="flex gap-4 pt-4">
