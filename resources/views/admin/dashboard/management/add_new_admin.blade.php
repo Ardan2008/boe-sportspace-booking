@@ -57,6 +57,50 @@
             transition: width 0.3s, background-color 0.3s;
             width: 0%;
         }
+
+        /* ── Toggle Switch ─────────────────────────────────────── */
+        .toggle-track {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            width: 52px;
+            height: 28px;
+            border-radius: 999px;
+            background-color: #CBD5E1; /* slate-300 */
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            flex-shrink: 0;
+        }
+        .toggle-track:has(.toggle-input:checked) {
+            background-color: #1265A8;
+        }
+        .toggle-input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-thumb {
+            position: absolute;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+        }
+        .toggle-input:checked ~ .toggle-thumb {
+            transform: translateX(24px);
+        }
+        /* Fallback for browsers without :has() support */
+        .toggle-track.is-checked {
+            background-color: #1265A8;
+        }
+        .toggle-track.is-checked .toggle-thumb {
+            transform: translateX(24px);
+        }
     </style>
 </head>
 <body class="bg-[#F8FAFC] font-sans antialiased text-slate-800">
@@ -162,23 +206,28 @@
 
                     {{-- Can Edit Toggle --}}
                     <div class="group md:col-span-2 p-6 bg-slate-50 border border-slate-200 rounded-[2rem]">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between gap-4">
                             <div>
                                 <h4 class="text-sm font-black text-slate-800 uppercase tracking-wider">Izin Edit (Can Edit)</h4>
                                 <p class="text-[11px] text-slate-500 mt-1">Jika aktif, admin ini dapat mengunggah dan mengubah data fasilitas, harga, dll.</p>
                             </div>
-                            <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
-                                <input type="checkbox" name="can_edit" id="toggle"
-                                    class="absolute block w-6 h-6 rounded-full bg-white border-4 border-slate-300 appearance-none cursor-pointer z-10 transition-transform duration-300 ease-in-out left-0"
-                                    onchange="this.classList.toggle('right-0'); this.classList.toggle('left-0'); this.classList.toggle('border-[#1265A8]'); this.nextElementSibling.classList.toggle('bg-[#1265A8]');"
-                                    value="1">
-                                <label for="toggle" class="block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer transition-colors duration-300"></label>
-                            </div>
+                            {{-- Toggle switch baru: smooth, reliable, CSS-driven --}}
+                            <label class="toggle-track" id="toggle-track">
+                                <input
+                                    type="checkbox"
+                                    name="can_edit"
+                                    id="toggle"
+                                    class="toggle-input"
+                                    value="1"
+                                >
+                                <span class="toggle-thumb"></span>
+                            </label>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row-reverse gap-4 pt-6 mt-4 border-t border-slate-100/50">
+                {{-- Tambah mt-8 agar garis tidak mepet ke password --}}
+                <div class="flex flex-col sm:flex-row-reverse gap-4 pt-6 mt-8 border-t border-slate-100/50">
                     <button type="submit" class="group relative w-full sm:w-2/3 overflow-hidden rounded-2xl bg-[#1265A8] px-8 py-5 transition-all duration-300 hover:bg-[#0d548a] hover:shadow-[0_20px_40px_-12px_rgba(18,101,168,0.35)] active:scale-[0.98]">
                         <div class="relative flex items-center justify-center gap-3">
                             <span class="text-sm font-black uppercase tracking-[0.2em] text-white">Buat Admin</span>
@@ -196,6 +245,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         const BACK_URL = document.getElementById('back-url').value;
+
+        /* ─── Toggle fallback untuk browser tanpa :has() ──────── */
+        const toggleInput = document.getElementById('toggle');
+        const toggleTrack = document.getElementById('toggle-track');
+        toggleInput.addEventListener('change', function () {
+            toggleTrack.classList.toggle('is-checked', this.checked);
+        });
 
         /* ─── Helpers ─────────────────────────────────────────── */
         function liveErr(id, msg) {
@@ -356,7 +412,6 @@
                         showConfirmButton: false,
                         customClass: { popup: 'rounded-[2rem]' }
                     }).then(() => {
-                        // Kembali ke halaman asal (dashboard atau admin active list)
                         window.location.href = data.redirect || BACK_URL;
                     });
                 } else {
