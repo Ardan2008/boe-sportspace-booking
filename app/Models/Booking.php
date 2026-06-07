@@ -9,6 +9,9 @@ class Booking extends Model
     protected $fillable = [
         'penyewa_id',
         'fasilitas_id',
+        'tipe_kamar_id',
+        'nomor_kamar',
+        'allocated_rooms',
         'tgl_mulai',
         'tgl_selesai',
         'package_type',
@@ -21,8 +24,10 @@ class Booking extends Model
     ];
 
     protected $casts = [
-        'expired_at' => 'datetime',
-        'checkin_at' => 'datetime',
+        'expired_at'      => 'datetime',
+        'checkin_at'      => 'datetime',
+        'allocated_rooms' => 'array',
+        'nomor_kamar'     => 'array',
     ];
 
     public function penyewa()

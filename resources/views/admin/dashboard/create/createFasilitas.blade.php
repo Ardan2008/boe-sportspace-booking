@@ -8,9 +8,9 @@
     <title>BOE-Space Reserve | Add Fasilitas</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        /* ── Shake animation (error field) ── */
         @keyframes vShake {
             0%,100% { transform: translateX(0); }
             20%      { transform: translateX(-5px); }
@@ -19,7 +19,6 @@
             80%      { transform: translateX(4px); }
         }
 
-        /* ── Toast slide-in / slide-out ── */
         @keyframes toastIn {
             from { transform: translateX(110%); opacity: 0; }
             to   { transform: translateX(0);    opacity: 1; }
@@ -33,7 +32,6 @@
             to   { width: 0;    }
         }
 
-        /* ── Field states ── */
         .v-field {
             transition: border-color .2s, box-shadow .2s, background-color .2s;
         }
@@ -49,7 +47,6 @@
             box-shadow: 0 0 0 4px rgba(97,196,89,.10) !important;
         }
 
-        /* ── Inline hint (slide-down) ── */
         .v-hint {
             display: flex;
             align-items: center;
@@ -71,7 +68,6 @@
         .v-hint.hint-warning { color: #854F0B; }
         .v-hint.hint-success { color: #3B6D11; }
 
-        /* ── Field status icon ── */
         .v-icon {
             position: absolute;
             right: 16px;
@@ -84,7 +80,6 @@
         }
         .v-icon.show { opacity: 1; }
 
-        /* ── Progress bar (nama) ── */
         .v-progress-wrap {
             height: 3px;
             border-radius: 99px;
@@ -102,7 +97,6 @@
             transition: width .3s ease, background-color .3s ease;
         }
 
-        /* ── Character counter ── */
         .v-char-counter {
             position: absolute;
             right: 14px;
@@ -116,7 +110,6 @@
         .v-char-counter.warn   { color: #BA7517; }
         .v-char-counter.danger { color: #E24B4A; }
 
-        /* ── Toast stack ── */
         #v-toast-stack {
             position: fixed;
             bottom: 24px;
@@ -172,7 +165,6 @@
         .v-toast.toast-warning .v-toast-progress { background: #EF9F27; }
         .v-toast.toast-warning .v-toast-title    { color: #854F0B; }
 
-        /* ── Confirm dialog ── */
         #v-confirm-overlay {
             position: fixed; inset: 0;
             background: rgba(15,23,42,.45);
@@ -219,14 +211,10 @@
         .v-confirm-btn-ok.danger { background: #E24B4A; }
         .v-confirm-btn-ok.danger:hover { background: #A32D2D; }
 
-        /* Dropzone error ring */
         #dropzone.v-dz-error { border-color: #E24B4A !important; box-shadow: 0 0 0 4px rgba(226,75,74,.10); }
 
         .swal2-shown { padding-right: 0 !important; }
 
-        /* ══════════════════════════════
-           Stepper Jumlah Kamar
-        ══════════════════════════════ */
         .kamar-stepper-wrap {
             display: flex;
             align-items: center;
@@ -241,7 +229,6 @@
             border-color: #1d6fa5;
             box-shadow: 0 0 0 4px rgba(29,111,165,.10);
         }
-        /* Error state pada wrap */
         .kamar-stepper-wrap.v-error {
             border-color: #E24B4A !important;
             box-shadow: 0 0 0 4px rgba(226,75,74,.10) !important;
@@ -290,7 +277,6 @@
         .kamar-stepper-input::-webkit-outer-spin-button,
         .kamar-stepper-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-        /* Badge info kamar */
         .kamar-badge {
             display: inline-flex;
             align-items: center;
@@ -306,6 +292,165 @@
             border: 1px solid #bae6fd;
             transition: all .2s;
         }
+
+        /* ── Room Slider ── */
+        .room-section {
+            border-radius: 2rem;
+            border: 2px dashed #e2e8f0;
+            background: #fafcff;
+            padding: 2rem;
+            transition: border-color .3s, box-shadow .3s;
+        }
+        .room-section:hover {
+            border-color: #bae6fd;
+            box-shadow: 0 4px 24px rgba(29,111,165,0.04);
+        }
+        .room-slider-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .room-nav-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 1rem;
+            border: 1.5px solid #e2e8f0;
+            background: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            color: #1d6fa5;
+            cursor: pointer;
+            transition: all .2s;
+            user-select: none;
+            white-space: nowrap;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+        .room-nav-btn:hover:not(:disabled) {
+            background: #dbeafe;
+            border-color: #93c5fd;
+        }
+        .room-nav-btn:active:not(:disabled) { transform: scale(.96); }
+        .room-nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .room-dots {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .room-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #dbe0e8;
+            transition: all .3s;
+            cursor: pointer;
+        }
+        .room-dot.active {
+            width: 28px;
+            border-radius: 99px;
+            background: #1d6fa5;
+        }
+        .room-dot:hover:not(.active) {
+            background: #94a3b8;
+        }
+        .room-card {
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 1.5rem;
+            padding: 1.75rem;
+            transition: all .3s;
+        }
+        .room-card:focus-within {
+            border-color: #1d6fa5;
+            box-shadow: 0 0 0 4px rgba(29,111,165,.06);
+        }
+
+        /* Hybrid dropdown */
+        .room-type-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0.875rem 1.25rem;
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 1rem;
+            font-size: 14px;
+            font-weight: 600;
+            color: #0f172a;
+            cursor: pointer;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .room-type-btn:hover {
+            border-color: #93c5fd;
+        }
+        .room-type-btn:focus {
+            outline: none;
+            border-color: #1d6fa5;
+            box-shadow: 0 0 0 4px rgba(29,111,165,.10);
+        }
+        .room-type-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 1rem;
+            box-shadow: 0 12px 32px rgba(0,0,0,.08);
+            z-index: 50;
+            overflow: hidden;
+        }
+        .room-type-option {
+            display: block;
+            width: 100%;
+            padding: 0.75rem 1.25rem;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            cursor: pointer;
+            text-align: left;
+            transition: background .1s;
+        }
+        .room-type-option:hover {
+            background: #f1f5f9;
+        }
+        .room-type-option:not(:last-child) {
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .room-type-option.lainnya {
+            border-top: 1.5px dashed #e2e8f0;
+            color: #1d6fa5;
+            font-weight: 800;
+        }
+
+        /* Room foto grid */
+        .room-foto-slot {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1rem;
+            border: 2px dashed #e2e8f0;
+            background: #fafafa;
+            height: 8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: border-color .3s;
+        }
+        .room-foto-slot:hover {
+            border-color: #1d6fa5;
+        }
     </style>
 </head>
 <body class="bg-[#F8FAFC] font-sans antialiased text-slate-800">
@@ -316,24 +461,7 @@
         <div class="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-indigo-100 blur-[120px] rounded-full opacity-50"></div>
     </div>
 
-    <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex justify-center items-center" x-data="{
-        tipe: 'asrama',
-        labels: {
-            asrama: ['Shower', 'AC', 'Wifi', 'Parkir', 'TV', 'Lemari'],
-            aula:   ['Wifi', 'Sound System', 'AC', 'Kursi', 'Meja', 'Panggung', 'Proyektor']
-        },
-        selectedLabels: [],
-        customLabel: '',
-        galleryPreviews: [null, null, null],
-        addCustomLabel() {
-            if (this.customLabel.trim() !== '') {
-                const label = this.customLabel.trim();
-                if (!this.labels[this.tipe].includes(label)) this.labels[this.tipe].push(label);
-                if (!this.selectedLabels.includes(label))    this.selectedLabels.push(label);
-                this.customLabel = '';
-            }
-        }
-    }">
+    <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex justify-center items-center" x-data="facilityCreator()">
         <div class="w-full max-w-5xl bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-[0_32px_64px_-15px_rgba(0,0,0,0.08)] border border-white overflow-hidden transition-all duration-500 hover:shadow-blue-200/40">
 
             {{-- Header --}}
@@ -365,311 +493,873 @@
 
             {{-- Form --}}
             <form id="mainForm" action="/admin/fasilitas/store" method="POST" enctype="multipart/form-data"
-                  class="p-8 lg:p-12 pt-6" novalidate>
+                  class="p-8 lg:p-12 pt-6 space-y-8" novalidate>
                 @csrf
                 <input type="hidden" name="tipe" :value="tipe">
+                <input type="hidden" name="paket_harian" id="paketHarianInput" value="">
+                <input type="hidden" name="rooms_data" id="roomsDataInput" value="">
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                {{-- ═══════════════════════════════════════════════════════════════
+                     SECTION 1 — MAIN FACILITY INFO (single column)
+                ═══════════════════════════════════════════════════════════════ --}}
 
-                    {{-- ══════════════════════════════
-                         KOLOM KIRI
-                    ══════════════════════════════ --}}
-                    <div class="space-y-6">
+                {{-- 1. Nama Fasilitas --}}
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nama Fasilitas</label>
+                    <div class="relative">
+                        <input type="text" name="nama" id="namaFasilitas" maxlength="60"
+                            class="v-field w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
+                            required>
+                        <svg id="icon-nama-ok" class="v-icon text-green-500 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <svg id="icon-nama-err" class="v-icon text-red-500 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        </svg>
+                    </div>
+                    <div class="v-progress-wrap" id="pb-nama-wrap">
+                        <div class="v-progress-bar" id="pb-nama"></div>
+                    </div>
+                    <p class="v-hint" id="hint-nama"></p>
+                </div>
 
-                        {{-- Nama Fasilitas --}}
-                        <div>
-                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nama Fasilitas</label>
-                            <div class="relative">
-                                <input type="text" name="nama" id="namaFasilitas" maxlength="60"
-                                    class="v-field w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
-                                    required>
-                                <svg id="icon-nama-ok" class="v-icon text-green-500 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                {{-- 2. Deskripsi Singkat --}}
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Deskripsi Singkat</label>
+                    <div class="relative">
+                        <textarea name="deskripsi" id="deskripsiFasilitas" rows="3" maxlength="200"
+                            class="v-field w-full px-6 py-4 pb-8 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm resize-none font-medium leading-relaxed"
+                            required></textarea>
+                        <span class="v-char-counter" id="cc-desc">200</span>
+                    </div>
+                    <p class="v-hint" id="hint-desc"></p>
+                </div>
+
+                {{-- 3. Detail Fasilitas --}}
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Detail Fasilitas</label>
+                    <textarea name="detail" rows="5"
+                        class="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm resize-none font-medium leading-relaxed"></textarea>
+                </div>
+
+                {{-- 4. Jam Operasional --}}
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Jam Operasional</label>
+                    <div class="relative">
+                        <input type="text" name="jam_operasional" id="jamOperasional"
+                            placeholder="08.00 - 22.00"
+                            class="v-field w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
+                            required>
+                    </div>
+                    <p class="v-hint" id="hint-jam"></p>
+                </div>
+
+                {{-- 5. Thumbnail --}}
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Thumbnail Cards</label>
+                    <div id="dropzone"
+                        class="relative overflow-hidden rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#1d6fa5] transition-all duration-500 h-48 flex items-center justify-center group/drop cursor-pointer">
+                        <img id="preview" class="absolute inset-0 w-full h-full object-cover hidden z-10" src="" alt="Preview thumbnail">
+                        <div id="ui-content" class="relative z-20 flex flex-col items-center transition-opacity duration-300">
+                            <div class="p-4 bg-white/90 backdrop-blur rounded-2xl shadow-lg mb-2 transform group-hover/drop:scale-110 transition-all duration-500">
+                                <svg class="w-6 h-6 text-[#1d6fa5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                 </svg>
-                                <svg id="icon-nama-err" class="v-icon text-red-500 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                                </svg>
                             </div>
-                            <div class="v-progress-wrap" id="pb-nama-wrap">
-                                <div class="v-progress-bar" id="pb-nama"></div>
-                            </div>
-                            <p class="v-hint" id="hint-nama"></p>
+                            <p class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Pilih Foto Utama</p>
                         </div>
+                        <input type="file" id="fileInput" name="image" accept="image/*"
+                            class="absolute inset-0 opacity-0 cursor-pointer z-30" required>
+                    </div>
+                    <p class="v-hint" id="hint-thumb"></p>
+                </div>
 
-                        {{-- Deskripsi Singkat --}}
-                        <div>
-                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Deskripsi Singkat</label>
-                            <div class="relative">
-                                <textarea name="deskripsi" id="deskripsiFasilitas" rows="3" maxlength="200"
-                                    class="v-field w-full px-6 py-4 pb-8 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm resize-none font-medium leading-relaxed"
-                                    required></textarea>
-                                <span class="v-char-counter" id="cc-desc">200</span>
-                            </div>
-                            <p class="v-hint" id="hint-desc"></p>
-                        </div>
-
-                        {{-- Detail Fasilitas --}}
-                        <div>
-                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Detail Fasilitas</label>
-                            <textarea name="detail" rows="5"
-                                class="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm resize-none font-medium leading-relaxed"></textarea>
-                        </div>
-
-                        {{-- Jam Operasional + Durasi/Kapasitas --}}
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Jam Operasional</label>
-                                <div class="relative">
-                                    <input type="text" name="jam_operasional" id="jamOperasional"
-                                        placeholder="08.00 - 22.00"
-                                        class="v-field w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
-                                        required>
+                {{-- 6. Gallery (3 Foto) --}}
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Preview Gallery (3 Foto)</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <template x-for="i in [0, 1, 2]" :key="i">
+                            <div class="relative overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#1d6fa5] transition-all duration-500 h-32 flex items-center justify-center group/gal cursor-pointer">
+                                <img :src="galleryPreviews[i]" class="absolute inset-0 w-full h-full object-cover z-10" x-show="galleryPreviews[i]" alt="">
+                                <div class="relative z-20 flex flex-col items-center" x-show="!galleryPreviews[i]">
+                                    <svg class="w-5 h-5 text-slate-300 group-hover/gal:text-[#1d6fa5] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                                    </svg>
                                 </div>
-                                <p class="v-hint" id="hint-jam"></p>
+                                <input :id="'galleryInput' + i" :name="'gallery[' + i + ']'"
+                                    type="file" accept="image/*"
+                                    class="absolute inset-0 opacity-0 cursor-pointer z-30"
+                                    @change="
+                                        if (window.validateGalleryFile($event.target, i)) {
+                                            const file = $event.target.files[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onload = (e) => galleryPreviews[i] = e.target.result;
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }
+                                    ">
                             </div>
-                            <div x-show="tipe === 'asrama'" x-cloak>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Max Durasi (Hari)</label>
-                                <div class="relative">
-                                    <input type="number" name="max_durasi_harian" id="maxDurasi" min="1"
-                                        class="v-field w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
-                                        :required="tipe === 'asrama'">
-                                </div>
-                                <p class="v-hint" id="hint-durasi"></p>
-                            </div>
-                            <div x-show="tipe === 'aula'" x-cloak>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Kapasitas (Orang)</label>
-                                <div class="relative">
-                                    <input type="number" name="max_dewasa_aula" id="maxDewasaAula" min="1" placeholder="Total"
-                                        class="v-field w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
-                                        :required="tipe === 'aula'">
-                                </div>
-                                <p class="v-hint" id="hint-kap-aula"></p>
-                            </div>
-                        </div>
+                        </template>
+                    </div>
+                </div>
 
-                        {{-- ══════════════════════════════
-                            JUMLAH KAMAR 
-                        ══════════════════════════════ --}}
-                        <div x-show="tipe === 'asrama'" x-cloak>
-                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                                Jumlah Kamar Tersedia
-                            </label>
+                {{-- 7. Jumlah Kamar Tersedia — stepper --}}
+                <div x-show="tipe === 'asrama'" x-cloak>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                        Jumlah Kamar Tersedia
+                    </label>
 
-                            <div class="kamar-stepper-wrap" id="kamarStepperWrap">
+                    <div class="kamar-stepper-wrap" id="kamarStepperWrap">
 
-                                {{-- Tombol Kurangi --}}
-                                <button type="button"
-                                    id="btnKamarMinus"
-                                    class="kamar-stepper-btn"
-                                    onclick="window.kamarStep(-1)"
-                                    aria-label="Kurangi kamar">
-                                    −
-                                </button>
+                        <button type="button"
+                            id="btnKamarMinus"
+                            class="kamar-stepper-btn"
+                            onclick="window.kamarStep(-1)"
+                            aria-label="Kurangi kamar">
+                            −
+                        </button>
 
-                                {{-- Input Angka --}}
-                                <input
-                                    type="number"
-                                    name="jumlah_kamar"
-                                    id="jumlahKamar"
-                                    min="1"
-                                    max="999"
-                                    value="1"
-                                    class="kamar-stepper-input"
-                                    oninput="window.kamarOnInput(this)"
-                                    aria-label="Jumlah kamar">
+                        <input
+                            type="number"
+                            name="jumlah_kamar"
+                            id="jumlahKamar"
+                            min="1"
+                            max="999"
+                            value="1"
+                            class="kamar-stepper-input"
+                            oninput="window.kamarOnInput(this)"
+                            aria-label="Jumlah kamar">
 
-                                {{-- Tombol Tambah --}}
-                                <button type="button"
-                                    id="btnKamarPlus"
-                                    class="kamar-stepper-btn"
-                                    onclick="window.kamarStep(1)"
-                                    aria-label="Tambah kamar">
-                                    +
-                                </button>
+                        <button type="button"
+                            id="btnKamarPlus"
+                            class="kamar-stepper-btn"
+                            onclick="window.kamarStep(1)"
+                            aria-label="Tambah kamar">
+                            +
+                        </button>
 
-                            </div>
-
-                            {{-- Badge info --}}
-                            <div class="kamar-badge">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                                </svg>
-                                <span id="kamarBadgeText">1 kamar tersedia</span>
-                            </div>
-
-                            <p class="v-hint" id="hint-kamar"></p>
-                        </div>
-
-                        {{-- Kapasitas Asrama --}}
-                        <div x-show="tipe === 'asrama'" x-cloak class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Cap. Dewasa (Kamar)</label>
-                                <div class="relative">
-                                    <input type="number" name="max_dewasa_asrama" id="maxDewasaAsrama" min="1"
-                                        class="v-field w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
-                                        :required="tipe === 'asrama'">
-                                </div>
-                                <p class="v-hint" id="hint-kap-dewasa"></p>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Cap. Anak (Kamar)</label>
-                                <div class="relative">
-                                    <input type="number" name="max_anak" min="0"
-                                        class="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
-                                        :required="tipe === 'asrama'">
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Labels / Fitur --}}
-                        <div>
-                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Labels / Fitur</label>
-                            <div class="flex flex-wrap gap-2 mb-3">
-                                <template x-for="label in labels[tipe]" :key="label">
-                                    <label class="cursor-pointer">
-                                        <input type="checkbox" name="labels[]" :value="label" x-model="selectedLabels" class="hidden">
-                                        <span :class="selectedLabels.includes(label) ? 'bg-[#1d6fa5] text-white border-[#1d6fa5]' : 'bg-white text-slate-400 border-slate-200'"
-                                            class="px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all duration-300 block"
-                                            x-text="label"></span>
-                                    </label>
-                                </template>
-                            </div>
-                            <div class="flex gap-2">
-                                <input type="text" x-model="customLabel" @keydown.enter.prevent="addCustomLabel()"
-                                    placeholder="Tambah fitur custom..."
-                                    class="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold outline-none focus:border-[#1d6fa5] transition-all">
-                                <button type="button" @click="addCustomLabel()"
-                                    class="px-4 py-2 bg-[#1d6fa5] text-white rounded-xl hover:bg-slate-800 transition-all font-black text-sm">+</button>
-                            </div>
-                        </div>
                     </div>
 
-                    {{-- ══════════════════════════════
-                         KOLOM KANAN
-                    ══════════════════════════════ --}}
-                    <div class="space-y-6">
+                    <div class="kamar-badge">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        <span id="kamarBadgeText">1 kamar tersedia</span>
+                    </div>
 
-                        {{-- Biaya --}}
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Biaya Harian</label>
-                                <div class="relative">
-                                    <span class="absolute left-5 top-1/2 -translate-y-1/2 font-black text-[#1d6fa5] text-sm pointer-events-none">Rp</span>
-                                    <input type="text" id="hargaDisplay"
-                                        class="v-field w-full pl-12 pr-10 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold"
-                                        required>
-                                    <input type="hidden" name="harga" id="hargaReal">
-                                    <svg id="icon-harga-ok" class="v-icon text-green-500 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                                    </svg>
-                                    <svg id="icon-harga-err" class="v-icon text-red-500 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </div>
-                                <p class="v-hint" id="hint-harga"></p>
-                            </div>
-                            {{-- Biaya Bulanan --}}
-                            <div x-show="tipe === 'asrama'" x-cloak>
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Biaya Bulanan</label>
-                                <div class="relative">
-                                    <span class="absolute left-5 top-1/2 -translate-y-1/2 font-black text-[#1d6fa5] text-sm pointer-events-none">Rp</span>
-                                    <input type="text" id="hargaBulananDisplay"
-                                        class="v-field w-full pl-12 pr-10 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold">
-                                    <input type="hidden" name="harga_bulanan" id="hargaBulananReal">
-                                    <svg id="icon-bulanan-ok" class="v-icon text-green-500 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                                    </svg>
-                                    <svg id="icon-bulanan-err" class="v-icon text-red-500 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </div>
-                                <p class="v-hint" id="hint-bulanan"></p>
-                            </div>
-                        </div>
+                    <p class="v-hint" id="hint-kamar"></p>
+                </div>
 
-                        {{-- Thumbnail --}}
-                        <div>
-                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Thumbnail Cards</label>
-                            <div id="dropzone"
-                                class="relative overflow-hidden rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#1d6fa5] transition-all duration-500 h-48 flex items-center justify-center group/drop cursor-pointer">
-                                <img id="preview" class="absolute inset-0 w-full h-full object-cover hidden z-10" src="" alt="Preview thumbnail">
-                                <div id="ui-content" class="relative z-20 flex flex-col items-center transition-opacity duration-300">
-                                    <div class="p-4 bg-white/90 backdrop-blur rounded-2xl shadow-lg mb-2 transform group-hover/drop:scale-110 transition-all duration-500">
-                                        <svg class="w-6 h-6 text-[#1d6fa5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                        </svg>
-                                    </div>
-                                    <p class="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Pilih Foto Utama</p>
-                                </div>
-                                <input type="file" id="fileInput" name="image" accept="image/*"
-                                    class="absolute inset-0 opacity-0 cursor-pointer z-30" required>
-                            </div>
-                            <p class="v-hint" id="hint-thumb"></p>
-                        </div>
+                {{-- ═══════════════════════════════════════════════════════════════
+                     SECTION 2 — ROOM SPECIFICATIONS (conditional)
+                ═══════════════════════════════════════════════════════════════ --}}
 
-                        {{-- Gallery --}}
-                        <div>
-                            <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Preview Gallery (3 Foto)</label>
-                            <div class="grid grid-cols-3 gap-3">
-                                <template x-for="i in [0, 1, 2]" :key="i">
-                                    <div class="relative overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#1d6fa5] transition-all duration-500 h-32 flex items-center justify-center group/gal cursor-pointer">
-                                        <img :src="galleryPreviews[i]" class="absolute inset-0 w-full h-full object-cover z-10" x-show="galleryPreviews[i]" alt="">
-                                        <div class="relative z-20 flex flex-col items-center" x-show="!galleryPreviews[i]">
-                                            <svg class="w-5 h-5 text-slate-300 group-hover/gal:text-[#1d6fa5] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                                            </svg>
+                <div x-show="tipe === 'asrama' && jumlahKamar >= 1" x-cloak class="room-section w-full">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-black uppercase tracking-[0.15em] text-slate-400">
+                            Spesifikasi Kamar
+                        </h3>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-[#1d6fa5] bg-blue-50 px-3 py-1 rounded-full border border-blue-100"
+                            x-text="'Total ' + jumlahKamar + ' kamar'"></span>
+                    </div>
+
+                    {{-- Single room — no slider --}}
+                    <div x-show="jumlahKamar === 1">
+                        <template x-for="(room, rIdx) in rooms" :key="rIdx">
+                            <div class="room-card space-y-5">
+                                {{-- Room header --}}
+                                <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Kamar</span>
+                                    <span class="text-xs font-black text-[#1d6fa5]">1</span>
+                                </div>
+
+                                {{-- Tipe Kamar — global dropdown --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipe Kamar</label>
+                                    @include('admin.dashboard.partials._room_type_dropdown', ['roomIndex' => 'rIdx', 'roomsVar' => 'rooms'])
+                                </div>
+
+                                {{-- Keunggulan Tipe Kamar --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Keunggulan Tipe Kamar</label>
+                                    <textarea x-model="room.keunggulan" rows="2"
+                                        placeholder="Deskripsi singkat keunggulan tipe kamar ini..."
+                                        class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-medium text-sm resize-none"></textarea>
+                                </div>
+
+                                {{-- Ukuran (Panjang × Lebar) & Konfigurasi Ranjang --}}
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Ukuran Kamar</label>
+                                        <div class="flex items-center gap-2">
+                                            <div class="relative flex-1">
+                                                <input type="number" x-model="room.panjang" min="0" step="0.1"
+                                                    placeholder="0"
+                                                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm text-center">
+                                            </div>
+                                            <span class="text-lg font-black text-slate-400 flex-shrink-0">×</span>
+                                            <div class="relative flex-1">
+                                                <input type="number" x-model="room.lebar" min="0" step="0.1"
+                                                    placeholder="0"
+                                                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm text-center">
+                                            </div>
+                                            <span class="text-xs font-black text-slate-400 flex-shrink-0 whitespace-nowrap">m²</span>
                                         </div>
-                                        <input :id="'galleryInput' + i" :name="'gallery[' + i + ']'"
-                                            type="file" accept="image/*"
-                                            class="absolute inset-0 opacity-0 cursor-pointer z-30"
-                                            @change="
-                                                if (window.validateGalleryFile($event.target, i)) {
-                                                    const file = $event.target.files[0];
-                                                    if (file) {
-                                                        const reader = new FileReader();
-                                                        reader.onload = (e) => galleryPreviews[i] = e.target.result;
-                                                        reader.readAsDataURL(file);
-                                                    }
-                                                }
-                                            ">
                                     </div>
-                                </template>
-                            </div>
-                        </div>
-
-                        {{-- Action buttons --}}
-                        <div class="flex flex-col sm:flex-row-reverse gap-4 pt-6 mt-4 border-t border-slate-100/50">
-                            <button type="submit" id="btnSimpan"
-                                class="group relative w-full sm:w-2/3 overflow-hidden rounded-2xl bg-[#1d6fa5] px-8 py-5 transition-all duration-300 hover:bg-slate-800 hover:shadow-[0_20px_40px_-12px_rgba(29,111,165,0.35)] active:scale-[0.98]">
-                                <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-500 group-hover:translate-x-full"></div>
-                                <div class="relative flex items-center justify-center gap-3">
-                                    <svg id="spinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    <span id="btnText" class="text-sm font-black uppercase tracking-[0.2em] text-white">Simpan Data</span>
-                                    <svg id="btnIcon" class="h-5 w-5 text-blue-400 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-                                    </svg>
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Konfigurasi Ranjang</label>
+                                        <input type="text" x-model="room.ranjang"
+                                            placeholder="Contoh: 1 King Bed"
+                                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                    </div>
                                 </div>
+
+                                {{-- Jumlah Kamar + Kode Blok/Lantai --}}
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Jumlah Kamar</label>
+                                        <input type="number" x-model.number="room.jumlah" min="1"
+                                            :name="'rooms[' + rIdx + '][jumlah]'"
+                                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                    </div>
+                                </div>
+
+                                {{-- Nomor Kamar Tagging --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Nomor Kamar</label>
+                                    <div class="flex gap-2">
+                                        <input type="text"
+                                            x-model="rooms[rIdx].temp_input"
+                                            @keydown.enter.prevent="addNomorKamar(rIdx)"
+                                            :disabled="rooms[rIdx].nomor_kamar.length >= rooms[rIdx].jumlah"
+                                            :class="rooms[rIdx].nomor_kamar.length >= rooms[rIdx].jumlah ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'bg-white'"
+                                            placeholder="Ketik nomor lalu Enter..."
+                                            class="flex-1 px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm transition-all">
+                                        <button type="button"
+                                            @click="addNomorKamar(rIdx)"
+                                            :disabled="rooms[rIdx].nomor_kamar.length >= rooms[rIdx].jumlah"
+                                            :class="rooms[rIdx].nomor_kamar.length >= rooms[rIdx].jumlah ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'bg-[#1d6fa5] text-white hover:bg-slate-800'"
+                                            class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all font-black text-lg">
+                                            +
+                                        </button>
+                                    </div>
+                                    <div class="mt-1.5 text-[10px] font-bold">
+                                        <span x-show="rooms[rIdx].nomor_kamar.length < rooms[rIdx].jumlah" class="text-red-500">
+                                            🔴 Input Belum Selesai (<span x-text="rooms[rIdx].nomor_kamar.length"></span> dari <span x-text="rooms[rIdx].jumlah"></span>)
+                                        </span>
+                                        <span x-show="rooms[rIdx].nomor_kamar.length >= rooms[rIdx].jumlah && rooms[rIdx].jumlah > 0" class="text-green-600">
+                                            🟢 Semua Nomor Kamar Telah Di-input (<span x-text="rooms[rIdx].jumlah"></span> dari <span x-text="rooms[rIdx].jumlah"></span>)
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-1.5 mt-2">
+                                        <template x-for="(tag, tagIdx) in rooms[rIdx].nomor_kamar" :key="tagIdx">
+                                            <span @click="removeNomorKamar(rIdx, tagIdx)"
+                                                class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#1d6fa5] text-[10px] font-black cursor-pointer hover:bg-red-50 hover:border-red-200 hover:text-red-500 transition-all select-none">
+                                                <span x-text="tag"></span>
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                {{-- Cap. Dewasa + Anak --}}
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Cap. Dewasa (Kamar)</label>
+                                        <input type="number" x-model.number="room.max_dewasa" min="1"
+                                            :name="'rooms[' + rIdx + '][max_dewasa]'"
+                                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Cap. Anak (Kamar)</label>
+                                        <input type="number" x-model.number="room.max_anak" min="0"
+                                            :name="'rooms[' + rIdx + '][max_anak]'"
+                                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                    </div>
+                                </div>
+
+                                {{-- Foto Kamar (maks 3) --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Foto Kamar (maks 3)</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <template x-for="fIdx in [0, 1, 2]" :key="fIdx">
+                                            <div class="room-foto-slot">
+                                                <img :src="room.fotoPreviews[fIdx]" class="absolute inset-0 w-full h-full object-cover z-10 rounded-[inherit]" x-show="room.fotoPreviews[fIdx]" alt="">
+                                                <div class="relative z-20 flex flex-col items-center" x-show="!room.fotoPreviews[fIdx]">
+                                                    <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                                                    </svg>
+                                                </div>
+                                                <input type="file" accept="image/*"
+                                                    :name="'rooms[' + rIdx + '][foto_' + fIdx + ']'"
+                                                    class="room-foto-input absolute inset-0 opacity-0 cursor-pointer z-30"
+                                                    @change="
+                                                        if (window.validateRoomFoto($event.target, fIdx)) {
+                                                            const file = $event.target.files[0];
+                                                            if (file) {
+                                                                const reader = new FileReader();
+                                                                reader.onload = (e) => { rooms[rIdx].fotoPreviews[fIdx] = e.target.result; };
+                                                                reader.readAsDataURL(file);
+                                                            }
+                                                        }
+                                                    ">
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                {{-- Fasilitas Kamar — 10 icon cards with micro-inputs --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Fasilitas Kamar</label>
+                                    <div class="grid grid-cols-5 sm:grid-cols-5 gap-2">
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3-3m0 0l3 3m-3-3v8M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">AC</span>
+                                            <input type="number" x-model.number="room.fasilitas.ac" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5m0-5l-2 1m2-1l-2-1m2 1v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5m0 5l-2-1m2 1l2-1"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Kipas Angin</span>
+                                            <input type="number" x-model.number="room.fasilitas.kipas_angin" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a1 1 0 001 1h16a1 1 0 001-1V7a1 1 0 00-1-1H4a1 1 0 00-1 1zm0 0l8 5 8-5M12 12l-8 5m8-5l8 5"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Meja & Kursi</span>
+                                            <input type="number" x-model.number="room.fasilitas.meja_kursi" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Lemari / Locker</span>
+                                            <input type="number" x-model.number="room.fasilitas.lemari_locker" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Stopkontak</span>
+                                            <input type="number" x-model.number="room.fasilitas.stopkontak" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16M4 20V4a2 2 0 012-2h12a2 2 0 012 2v16M4 20h16M8 12h8M8 8h8M8 16h4"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">K. Mandi Dalam</span>
+                                            <input type="number" x-model.number="room.fasilitas.kamar_mandi_dalam" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Water Heater</span>
+                                            <input type="number" x-model.number="room.fasilitas.water_heater" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Bantal & Sprei</span>
+                                            <input type="number" x-model.number="room.fasilitas.bantal_set_sprei" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m0 4v1m-6-7a2 2 0 00-2 2m0 4v1M6 21h6m-3-3v3"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Gantungan Baju</span>
+                                            <input type="number" x-model.number="room.fasilitas.gantungan_baju" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Kaca Rias</span>
+                                            <input type="number" x-model.number="room.fasilitas.kaca_rias" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Harga — 2x2 grid --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Harga</label>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        {{-- Harian --}}
+                                        <div>
+                                            <span class="block text-[9px] font-bold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Harian</span>
+                                            <div class="relative">
+                                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-[#1d6fa5] text-xs pointer-events-none">Rp</span>
+                                                <input type="text"
+                                                    @input="
+                                                        const raw = $event.target.value.replace(/\D/g, '');
+                                                        room.harga_harian = raw;
+                                                        $event.target.value = raw ? new Intl.NumberFormat('id-ID').format(raw) : '';
+                                                    "
+                                                    class="w-full pl-9 pr-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                                <input type="hidden" :name="'rooms[' + rIdx + '][harga_harian]'" :value="room.harga_harian">
+                                            </div>
+                                        </div>
+                                        {{-- Mingguan --}}
+                                        <div>
+                                            <span class="block text-[9px] font-bold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Mingguan</span>
+                                            <div class="relative">
+                                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-[#1d6fa5] text-xs pointer-events-none">Rp</span>
+                                                <input type="text"
+                                                    @input="
+                                                        const raw = $event.target.value.replace(/\D/g, '');
+                                                        room.harga_mingguan = raw;
+                                                        $event.target.value = raw ? new Intl.NumberFormat('id-ID').format(raw) : '';
+                                                    "
+                                                    class="w-full pl-9 pr-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                                <input type="hidden" :name="'rooms[' + rIdx + '][harga_mingguan]'" :value="room.harga_mingguan">
+                                            </div>
+                                        </div>
+                                        {{-- Bulanan --}}
+                                        <div>
+                                            <span class="block text-[9px] font-bold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Bulanan</span>
+                                            <div class="relative">
+                                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-[#1d6fa5] text-xs pointer-events-none">Rp</span>
+                                                <input type="text"
+                                                    @input="
+                                                        const raw = $event.target.value.replace(/\D/g, '');
+                                                        room.harga_bulanan = raw;
+                                                        $event.target.value = raw ? new Intl.NumberFormat('id-ID').format(raw) : '';
+                                                    "
+                                                    class="w-full pl-9 pr-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                                <input type="hidden" :name="'rooms[' + rIdx + '][harga_bulanan]'" :value="room.harga_bulanan">
+                                            </div>
+                                        </div>
+                                        {{-- Tahunan --}}
+                                        <div>
+                                            <span class="block text-[9px] font-bold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Tahunan</span>
+                                            <div class="relative">
+                                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-[#1d6fa5] text-xs pointer-events-none">Rp</span>
+                                                <input type="text"
+                                                    @input="
+                                                        const raw = $event.target.value.replace(/\D/g, '');
+                                                        room.harga_tahunan = raw;
+                                                        $event.target.value = raw ? new Intl.NumberFormat('id-ID').format(raw) : '';
+                                                    "
+                                                    class="w-full pl-9 pr-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                                <input type="hidden" :name="'rooms[' + rIdx + '][harga_tahunan]'" :value="room.harga_tahunan">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    {{-- Slider — multiple rooms --}}
+                    <div x-show="jumlahKamar > 1">
+                        {{-- Slider Navigation --}}
+                        <div class="room-slider-nav">
+                            <button type="button" @click="prevRoom()" :disabled="currentRoomIndex === 0" class="room-nav-btn">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                                Previous
                             </button>
 
-                            <div class="w-full sm:w-1/3">
-                                <a href="#" id="btn-batal-venue"
-                                    class="group w-full flex items-center justify-center gap-2 py-5 px-8 rounded-2xl border-2 border-slate-100 bg-white transition-all duration-300 hover:border-red-100 hover:bg-red-50 active:scale-[0.98] relative overflow-hidden cursor-pointer no-underline">
-                                    <div id="loader-batal-venue" class="absolute inset-0 flex items-center justify-center bg-red-50 opacity-0 invisible transition-all duration-300">
-                                        <svg class="animate-spin h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                    </div>
-                                    <div id="text-batal-venue" class="flex items-center gap-2 transition-all duration-300">
-                                        <span class="text-xs font-black uppercase tracking-widest text-slate-400 group-hover:text-red-500">Batal</span>
-                                    </div>
-                                </a>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-black text-slate-500 whitespace-nowrap" x-text="'Kamar ' + (currentRoomIndex + 1) + ' / ' + rooms.length"></span>
+                                <div class="room-dots">
+                                    <template x-for="(_, dIdx) in rooms" :key="dIdx">
+                                        <button type="button"
+                                            @click="currentRoomIndex = dIdx; showTypeDropdown = false"
+                                            :class="dIdx === currentRoomIndex ? 'active' : ''"
+                                            class="room-dot"></button>
+                                    </template>
+                                </div>
                             </div>
+
+                            <button type="button" @click="nextRoom()" :disabled="currentRoomIndex === rooms.length - 1" class="room-nav-btn">
+                                Next
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
                         </div>
+
+                        {{-- Room cards --}}
+                        <template x-for="(room, rIdx) in rooms" :key="rIdx">
+                            <div x-show="currentRoomIndex === rIdx" class="room-card space-y-5">
+                                {{-- Room header --}}
+                                <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Kamar</span>
+                                    <span class="text-xs font-black text-[#1d6fa5]" x-text="rIdx + 1"></span>
+                                </div>
+
+                                {{-- Tipe Kamar --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipe Kamar</label>
+                                    @include('admin.dashboard.partials._room_type_dropdown', ['roomIndex' => 'rIdx', 'roomsVar' => 'rooms'])
+                                </div>
+
+                                {{-- Keunggulan Tipe Kamar --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Keunggulan Tipe Kamar</label>
+                                    <textarea x-model="room.keunggulan" rows="2"
+                                        placeholder="Deskripsi singkat keunggulan tipe kamar ini..."
+                                        class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-medium text-sm resize-none"></textarea>
+                                </div>
+
+                                {{-- Ukuran (Panjang × Lebar) & Konfigurasi Ranjang --}}
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Ukuran Kamar</label>
+                                        <div class="flex items-center gap-2">
+                                            <div class="relative flex-1">
+                                                <input type="number" x-model="room.panjang" min="0" step="0.1"
+                                                    placeholder="0"
+                                                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm text-center">
+                                            </div>
+                                            <span class="text-lg font-black text-slate-400 flex-shrink-0">×</span>
+                                            <div class="relative flex-1">
+                                                <input type="number" x-model="room.lebar" min="0" step="0.1"
+                                                    placeholder="0"
+                                                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm text-center">
+                                            </div>
+                                            <span class="text-xs font-black text-slate-400 flex-shrink-0 whitespace-nowrap">m²</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Konfigurasi Ranjang</label>
+                                        <input type="text" x-model="room.ranjang"
+                                            placeholder="Contoh: 1 King Bed"
+                                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                    </div>
+                                </div>
+
+                                {{-- Jumlah --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Jumlah Kamar</label>
+                                    <input type="number" x-model.number="room.jumlah" min="1"
+                                        :name="'rooms[' + rIdx + '][jumlah]'"
+                                        class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                </div>
+
+                                {{-- Nomor Kamar Tagging --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Nomor Kamar</label>
+                                    <div class="flex gap-2">
+                                        <input type="text"
+                                            x-model="rooms[rIdx].temp_input"
+                                            @keydown.enter.prevent="addNomorKamar(rIdx)"
+                                            :disabled="rooms[rIdx].nomor_kamar.length >= rooms[rIdx].jumlah"
+                                            :class="rooms[rIdx].nomor_kamar.length >= rooms[rIdx].jumlah ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'bg-white'"
+                                            placeholder="Ketik nomor lalu Enter..."
+                                            class="flex-1 px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm transition-all">
+                                        <button type="button"
+                                            @click="addNomorKamar(rIdx)"
+                                            :disabled="rooms[rIdx].nomor_kamar.length >= rooms[rIdx].jumlah"
+                                            :class="rooms[rIdx].nomor_kamar.length >= rooms[rIdx].jumlah ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'bg-[#1d6fa5] text-white hover:bg-slate-800'"
+                                            class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all font-black text-lg">
+                                            +
+                                        </button>
+                                    </div>
+                                    <div class="mt-1.5 text-[10px] font-bold">
+                                        <span x-show="rooms[rIdx].nomor_kamar.length < rooms[rIdx].jumlah" class="text-red-500">
+                                            🔴 Input Belum Selesai (<span x-text="rooms[rIdx].nomor_kamar.length"></span> dari <span x-text="rooms[rIdx].jumlah"></span>)
+                                        </span>
+                                        <span x-show="rooms[rIdx].nomor_kamar.length >= rooms[rIdx].jumlah && rooms[rIdx].jumlah > 0" class="text-green-600">
+                                            🟢 Semua Nomor Kamar Telah Di-input (<span x-text="rooms[rIdx].jumlah"></span> dari <span x-text="rooms[rIdx].jumlah"></span>)
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-1.5 mt-2">
+                                        <template x-for="(tag, tagIdx) in rooms[rIdx].nomor_kamar" :key="tagIdx">
+                                            <span @click="removeNomorKamar(rIdx, tagIdx)"
+                                                class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#1d6fa5] text-[10px] font-black cursor-pointer hover:bg-red-50 hover:border-red-200 hover:text-red-500 transition-all select-none">
+                                                <span x-text="tag"></span>
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                {{-- Cap. Dewasa + Anak --}}
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Cap. Dewasa (Kamar)</label>
+                                        <input type="number" x-model.number="room.max_dewasa" min="1"
+                                            :name="'rooms[' + rIdx + '][max_dewasa]'"
+                                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Cap. Anak (Kamar)</label>
+                                        <input type="number" x-model.number="room.max_anak" min="0"
+                                            :name="'rooms[' + rIdx + '][max_anak]'"
+                                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                    </div>
+                                </div>
+
+                                {{-- Foto Kamar --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Foto Kamar (maks 3)</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <template x-for="fIdx in [0, 1, 2]" :key="fIdx">
+                                            <div class="room-foto-slot">
+                                                <img :src="room.fotoPreviews[fIdx]" class="absolute inset-0 w-full h-full object-cover z-10 rounded-[inherit]" x-show="room.fotoPreviews[fIdx]" alt="">
+                                                <div class="relative z-20 flex flex-col items-center" x-show="!room.fotoPreviews[fIdx]">
+                                                    <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                                                    </svg>
+                                                </div>
+                                                <input type="file" accept="image/*"
+                                                    :name="'rooms[' + rIdx + '][foto_' + fIdx + ']'"
+                                                    class="room-foto-input absolute inset-0 opacity-0 cursor-pointer z-30"
+                                                    @change="
+                                                        if (window.validateRoomFoto($event.target, fIdx)) {
+                                                            const file = $event.target.files[0];
+                                                            if (file) {
+                                                                const reader = new FileReader();
+                                                                reader.onload = (e) => { rooms[rIdx].fotoPreviews[fIdx] = e.target.result; };
+                                                                reader.readAsDataURL(file);
+                                                            }
+                                                        }
+                                                    ">
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                {{-- Fasilitas Kamar — 10 icon cards with micro-inputs --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Fasilitas Kamar</label>
+                                    <div class="grid grid-cols-5 sm:grid-cols-5 gap-2">
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3-3m0 0l3 3m-3-3v8M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">AC</span>
+                                            <input type="number" x-model.number="room.fasilitas.ac" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5m0-5l-2 1m2-1l-2-1m2 1v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5m0 5l-2-1m2 1l2-1"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Kipas Angin</span>
+                                            <input type="number" x-model.number="room.fasilitas.kipas_angin" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a1 1 0 001 1h16a1 1 0 001-1V7a1 1 0 00-1-1H4a1 1 0 00-1 1zm0 0l8 5 8-5M12 12l-8 5m8-5l8 5"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Meja & Kursi</span>
+                                            <input type="number" x-model.number="room.fasilitas.meja_kursi" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Lemari / Locker</span>
+                                            <input type="number" x-model.number="room.fasilitas.lemari_locker" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Stopkontak</span>
+                                            <input type="number" x-model.number="room.fasilitas.stopkontak" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16M4 20V4a2 2 0 012-2h12a2 2 0 012 2v16M4 20h16M8 12h8M8 8h8M8 16h4"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">K. Mandi Dalam</span>
+                                            <input type="number" x-model.number="room.fasilitas.kamar_mandi_dalam" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Water Heater</span>
+                                            <input type="number" x-model.number="room.fasilitas.water_heater" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Bantal & Sprei</span>
+                                            <input type="number" x-model.number="room.fasilitas.bantal_set_sprei" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m0 4v1m-6-7a2 2 0 00-2 2m0 4v1M6 21h6m-3-3v3"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Gantungan Baju</span>
+                                            <input type="number" x-model.number="room.fasilitas.gantungan_baju" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-xs">
+                                        </div>
+                                        <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-2 py-3 transition-all duration-200 hover:border-[#1d6fa5] hover:shadow-sm">
+                                            <svg class="w-5 h-5 text-[#1d6fa5] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center">Kaca Rias</span>
+                                            <input type="number" x-model.number="room.fasilitas.kaca_rias" min="0" placeholder="0"
+                                                class="w-12 h-7 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1d6fa5] outset-none font-bold text-xs">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Harga 2x2 --}}
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Harga</label>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        {{-- Harian --}}
+                                        <div>
+                                            <span class="block text-[9px] font-bold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Harian</span>
+                                            <div class="relative">
+                                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-[#1d6fa5] text-xs pointer-events-none">Rp</span>
+                                                <input type="text"
+                                                    @input="
+                                                        const raw = $event.target.value.replace(/\D/g, '');
+                                                        room.harga_harian = raw;
+                                                        $event.target.value = raw ? new Intl.NumberFormat('id-ID').format(raw) : '';
+                                                    "
+                                                    class="w-full pl-9 pr-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                                <input type="hidden" :name="'rooms[' + rIdx + '][harga_harian]'" :value="room.harga_harian">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="block text-[9px] font-bold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Mingguan</span>
+                                            <div class="relative">
+                                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-[#1d6fa5] text-xs pointer-events-none">Rp</span>
+                                                <input type="text"
+                                                    @input="
+                                                        const raw = $event.target.value.replace(/\D/g, '');
+                                                        room.harga_mingguan = raw;
+                                                        $event.target.value = raw ? new Intl.NumberFormat('id-ID').format(raw) : '';
+                                                    "
+                                                    class="w-full pl-9 pr-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                                <input type="hidden" :name="'rooms[' + rIdx + '][harga_mingguan]'" :value="room.harga_mingguan">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="block text-[9px] font-bold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Bulanan</span>
+                                            <div class="relative">
+                                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-[#1d6fa5] text-xs pointer-events-none">Rp</span>
+                                                <input type="text"
+                                                    @input="
+                                                        const raw = $event.target.value.replace(/\D/g, '');
+                                                        room.harga_bulanan = raw;
+                                                        $event.target.value = raw ? new Intl.NumberFormat('id-ID').format(raw) : '';
+                                                    "
+                                                    class="w-full pl-9 pr-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                                <input type="hidden" :name="'rooms[' + rIdx + '][harga_bulanan]'" :value="room.harga_bulanan">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="block text-[9px] font-bold text-slate-500 mb-1 ml-1 uppercase tracking-wider">Tahunan</span>
+                                            <div class="relative">
+                                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-[#1d6fa5] text-xs pointer-events-none">Rp</span>
+                                                <input type="text"
+                                                    @input="
+                                                        const raw = $event.target.value.replace(/\D/g, '');
+                                                        room.harga_tahunan = raw;
+                                                        $event.target.value = raw ? new Intl.NumberFormat('id-ID').format(raw) : '';
+                                                    "
+                                                    class="w-full pl-9 pr-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none font-bold text-sm">
+                                                <input type="hidden" :name="'rooms[' + rIdx + '][harga_tahunan]'" :value="room.harga_tahunan">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                {{-- ═══════════════════════════════════════════════════════════════
+                     ADDITIONAL FIELDS
+                ═══════════════════════════════════════════════════════════════ --}}
+
+                {{-- Max Durasi / Kapasitas --}}
+                {{-- Max Durasi Sewa (4-column grid, asrama only) --}}
+                <div x-show="tipe === 'asrama'" x-cloak>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Max Durasi Sewa</label>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+
+                        {{-- Max Durasi Hari --}}
+                        <div>
+                            <label class="block text-[10px] font-black text-[#1265A8] uppercase tracking-widest mb-2 ml-1">Hari</label>
+                            <input type="number" name="max_durasi_hari" min="0" value="0"
+                                class="w-full px-6 py-3 text-center bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold text-gray-800 transition-all duration-300">
+                        </div>
+
+                        {{-- Max Durasi Minggu --}}
+                        <div>
+                            <label class="block text-[10px] font-black text-[#1265A8] uppercase tracking-widest mb-2 ml-1">Minggu</label>
+                            <input type="number" name="max_durasi_minggu" min="0" value="0"
+                                class="w-full px-6 py-3 text-center bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold text-gray-800 transition-all duration-300">
+                        </div>
+
+                        {{-- Max Durasi Bulan --}}
+                        <div>
+                            <label class="block text-[10px] font-black text-[#1265A8] uppercase tracking-widest mb-2 ml-1">Bulan</label>
+                            <input type="number" name="max_durasi_bulan" min="0" value="0"
+                                class="w-full px-6 py-3 text-center bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold text-gray-800 transition-all duration-300">
+                        </div>
+
+                        {{-- Max Durasi Tahun --}}
+                        <div>
+                            <label class="block text-[10px] font-black text-[#1265A8] uppercase tracking-widest mb-2 ml-1">Tahun</label>
+                            <input type="number" name="max_durasi_tahun" min="0" value="0"
+                                class="w-full px-6 py-3 text-center bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold text-gray-800 transition-all duration-300">
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div x-show="tipe === 'aula'" x-cloak>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Kapasitas (Orang)</label>
+                        <div class="relative">
+                            <input type="number" name="max_dewasa_aula" id="maxDewasaAula" min="1" placeholder="Total"
+                                class="v-field w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1d6fa5] outline-none shadow-sm font-semibold"
+                                :required="tipe === 'aula'">
+                        </div>
+                        <p class="v-hint" id="hint-kap-aula"></p>
+                    </div>
+                </div>
+
+                {{-- Labels / Fitur --}}
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Labels / Fitur</label>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <template x-for="label in labels[tipe]" :key="label">
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="labels[]" :value="label" x-model="selectedLabels" class="hidden">
+                                <span :class="selectedLabels.includes(label) ? 'bg-[#1d6fa5] text-white border-[#1d6fa5]' : 'bg-white text-slate-400 border-slate-200'"
+                                    class="px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all duration-300 block"
+                                    x-text="label"></span>
+                            </label>
+                        </template>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" x-model="customLabel" @keydown.enter.prevent="addCustomLabel()"
+                            placeholder="Tambah fitur custom..."
+                            class="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold outline-none focus:border-[#1d6fa5] transition-all">
+                        <button type="button" @click="addCustomLabel()"
+                            class="px-4 py-2 bg-[#1d6fa5] text-white rounded-xl hover:bg-slate-800 transition-all font-black text-sm">+</button>
+                    </div>
+                </div>
+
+                {{-- Action buttons --}}
+                <div class="flex flex-col sm:flex-row-reverse gap-4 pt-6 mt-4 border-t border-slate-100/50">
+                    <button type="submit" id="btnSimpan"
+                        class="group relative w-full sm:w-2/3 overflow-hidden rounded-2xl bg-[#1d6fa5] px-8 py-5 transition-all duration-300 hover:bg-slate-800 hover:shadow-[0_20px_40px_-12px_rgba(29,111,165,0.35)] active:scale-[0.98]">
+                        <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-500 group-hover:translate-x-full"></div>
+                        <div class="relative flex items-center justify-center gap-3">
+                            <svg id="spinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span id="btnText" class="text-sm font-black uppercase tracking-[0.2em] text-white">Simpan Data</span>
+                            <svg id="btnIcon" class="h-5 w-5 text-blue-400 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                            </svg>
+                        </div>
+                    </button>
+
+                    <div class="w-full sm:w-1/3">
+                        <a href="#" id="btn-batal-venue"
+                            class="group w-full flex items-center justify-center gap-2 py-5 px-8 rounded-2xl border-2 border-slate-100 bg-white transition-all duration-300 hover:border-red-100 hover:bg-red-50 active:scale-[0.98] relative overflow-hidden cursor-pointer no-underline">
+                            <div id="loader-batal-venue" class="absolute inset-0 flex items-center justify-center bg-red-50 opacity-0 invisible transition-all duration-300">
+                                <svg class="animate-spin h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                            <div id="text-batal-venue" class="flex items-center gap-2 transition-all duration-300">
+                                <span class="text-xs font-black uppercase tracking-widest text-slate-400 group-hover:text-red-500">Batal</span>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </form>
@@ -711,12 +1401,6 @@
     </div>
 
     <script>
-    /* ═══════════════════════════════════════════════════════════════
-       STEPPER JUMLAH KAMAR
-       Didefinisikan di window scope (LUAR DOMContentLoaded)
-       agar bisa dipanggil dari onclick="window.kamarStep()" di HTML.
-    ═══════════════════════════════════════════════════════════════ */
-
     window.kamarStep = function (delta) {
         const input  = document.getElementById('jumlahKamar');
         if (!input) return;
@@ -743,24 +1427,20 @@
         if (btnMin) btnMin.disabled = (val <= 1);
         if (badge)  badge.textContent = val + ' kamar tersedia';
 
-        // Hapus error state jika nilai sudah valid
         if (wrap && val >= 1) {
             wrap.classList.remove('v-error');
         }
         if (hint && val >= 1) {
             hint.className = 'v-hint';
         }
-    };
 
+        document.dispatchEvent(new CustomEvent('kamar-changed', { detail: { value: val } }));
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
 
-        /* ═══════════════════════════════════════
-           UTILITIES
-        ═══════════════════════════════════════ */
-
-        const MAX_FILE_SIZE = 2 * 1024 * 1024;  // 2 MB
-        const MAX_POST_SIZE = 8 * 1024 * 1024;  // 8 MB
+        const MAX_FILE_SIZE = 2 * 1024 * 1024;
+        const MAX_POST_SIZE = 8 * 1024 * 1024;
 
         const $ = id => document.getElementById(id);
 
@@ -777,16 +1457,13 @@
                 const g = $('galleryInput' + i);
                 if (g && g.files[0]) total += g.files[0].size;
             }
+            document.querySelectorAll('.room-foto-input').forEach(el => {
+                if (el.files[0]) total += el.files[0].size;
+            });
             return total;
         }
 
-        // Inisialisasi state awal stepper kamar setelah DOM siap
         window.kamarSyncUI(1);
-
-
-        /* ═══════════════════════════════════════
-           TOAST SYSTEM
-        ═══════════════════════════════════════ */
 
         function showToast(type, title, msg, duration = 4500) {
             const stack = $('v-toast-stack');
@@ -816,11 +1493,6 @@
             t.querySelector('.v-toast-close').onclick = close;
             setTimeout(close, duration);
         }
-
-
-        /* ═══════════════════════════════════════
-           CONFIRM DIALOG SYSTEM
-        ═══════════════════════════════════════ */
 
         function showConfirm({ icon, iconBg, iconColor, title, text, okLabel, okDanger, cancelLabel }) {
             return new Promise(resolve => {
@@ -862,11 +1534,6 @@
             });
         }
 
-
-        /* ═══════════════════════════════════════
-           FIELD STATE HELPERS
-        ═══════════════════════════════════════ */
-
         function setFieldState(inputEl, state, hintEl, hintText, hintClass, iconOkEl, iconErrEl) {
             inputEl.classList.remove('v-error', 'v-success');
             if (iconOkEl) iconOkEl.classList.remove('show');
@@ -896,11 +1563,7 @@
             if (iconErrEl) iconErrEl.classList.remove('show');
         }
 
-
-        /* ═══════════════════════════════════════
-           NAMA FASILITAS — real-time + progress bar
-        ═══════════════════════════════════════ */
-
+        /* ── NAMA FASILITAS ── */
         const namaInput   = $('namaFasilitas');
         const hintNama    = $('hint-nama');
         const iconNamaOk  = $('icon-nama-ok');
@@ -934,11 +1597,7 @@
             }
         });
 
-
-        /* ═══════════════════════════════════════
-           DESKRIPSI — char counter
-        ═══════════════════════════════════════ */
-
+        /* ── DESKRIPSI ── */
         const descInput = $('deskripsiFasilitas');
         const hintDesc  = $('hint-desc');
         const ccDesc    = $('cc-desc');
@@ -955,61 +1614,7 @@
             }
         });
 
-
-        /* ═══════════════════════════════════════
-           BIAYA HARIAN — currency masking + real-time
-        ═══════════════════════════════════════ */
-
-        const hargaDisplay = $('hargaDisplay');
-        const hargaReal    = $('hargaReal');
-        const hintHarga    = $('hint-harga');
-        const iconHargaOk  = $('icon-harga-ok');
-        const iconHargaErr = $('icon-harga-err');
-
-        hargaDisplay.addEventListener('input', function () {
-            const raw = this.value.replace(/\D/g, '');
-            hargaReal.value = raw;
-            this.value = raw ? new Intl.NumberFormat('id-ID').format(raw) : '';
-
-            if (!raw) {
-                clearField(hargaDisplay, hintHarga, iconHargaOk, iconHargaErr);
-            } else if (parseInt(raw) < 1000) {
-                setFieldState(hargaDisplay, 'error', hintHarga, 'Biaya terlalu kecil, minimal Rp 1.000.', 'hint-warning', iconHargaOk, iconHargaErr);
-            } else {
-                setFieldState(hargaDisplay, 'success', hintHarga, 'Rp ' + new Intl.NumberFormat('id-ID').format(raw), 'hint-success', iconHargaOk, iconHargaErr);
-            }
-        });
-
-
-        /* ═══════════════════════════════════════
-           BIAYA BULANAN — currency masking + real-time
-        ═══════════════════════════════════════ */
-
-        const hargaBulananDisplay = $('hargaBulananDisplay');
-        const hargaBulananReal    = $('hargaBulananReal');
-        const hintBulanan         = $('hint-bulanan');
-        const iconBulananOk       = $('icon-bulanan-ok');
-        const iconBulananErr      = $('icon-bulanan-err');
-
-        hargaBulananDisplay.addEventListener('input', function () {
-            const raw = this.value.replace(/\D/g, '');
-            hargaBulananReal.value = raw;
-            this.value = raw ? new Intl.NumberFormat('id-ID').format(raw) : '';
-
-            if (!raw) {
-                clearField(hargaBulananDisplay, hintBulanan, iconBulananOk, iconBulananErr);
-            } else if (parseInt(raw) < 1000) {
-                setFieldState(hargaBulananDisplay, 'error', hintBulanan, 'Biaya terlalu kecil, minimal Rp 1.000.', 'hint-warning', iconBulananOk, iconBulananErr);
-            } else {
-                setFieldState(hargaBulananDisplay, 'success', hintBulanan, 'Rp ' + new Intl.NumberFormat('id-ID').format(raw), 'hint-success', iconBulananOk, iconBulananErr);
-            }
-        });
-
-
-        /* ═══════════════════════════════════════
-           THUMBNAIL UPLOAD — preview + dropzone
-        ═══════════════════════════════════════ */
-
+        /* ── THUMBNAIL ── */
         const fileInput  = $('fileInput');
         const preview    = $('preview');
         const uiContent  = $('ui-content');
@@ -1043,11 +1648,7 @@
             reader.readAsDataURL(file);
         });
 
-
-        /* ═══════════════════════════════════════
-           GALLERY FILE VALIDATION (global)
-        ═══════════════════════════════════════ */
-
+        /* ── GALLERY VALIDATION ── */
         window.validateGalleryFile = function (input, index) {
             const file = input.files[0];
             if (file && file.size > MAX_FILE_SIZE) {
@@ -1059,18 +1660,26 @@
             return true;
         };
 
+        /* ── ROOM FOTO VALIDATION ── */
+        window.validateRoomFoto = function (input, fotoIndex) {
+            const file = input.files[0];
+            if (file && file.size > MAX_FILE_SIZE) {
+                showToast('warning', `Foto kamar ${fotoIndex + 1} terlalu besar`,
+                    `Ukuran (${formatBytes(file.size)}) melebihi batas 2MB.`);
+                input.value = '';
+                return false;
+            }
+            return true;
+        };
 
-        /* ═══════════════════════════════════════
-           FORM SUBMIT — validasi + konfirmasi
-        ═══════════════════════════════════════ */
-
+        /* ── FORM SUBMIT ── */
         $('mainForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const currentTipe = this.querySelector('input[name="tipe"]').value;
             let errors = [];
 
-            // ── Nama ──
+            // Nama
             const namaVal = namaInput.value.trim();
             if (!namaVal || !rgxNama.test(namaVal) || namaVal.length < 2) {
                 const msg = !namaVal ? 'Nama wajib diisi.'
@@ -1080,13 +1689,13 @@
                 errors.push('Nama Fasilitas');
             }
 
-            // ── Deskripsi ──
+            // Deskripsi
             if (!descInput.value.trim()) {
                 setFieldState(descInput, 'error', hintDesc, 'Deskripsi singkat wajib diisi.', 'hint-error', null, null);
                 errors.push('Deskripsi Singkat');
             }
 
-            // ── Jam Operasional ──
+            // Jam Operasional
             const jamInput = $('jamOperasional');
             const hintJam  = $('hint-jam');
             if (!jamInput.value.trim()) {
@@ -1096,28 +1705,9 @@
                 setFieldState(jamInput, 'success', hintJam, '', '');
             }
 
-            // ── Biaya Harian ──
-            if (!hargaReal.value || parseInt(hargaReal.value) < 1000) {
-                const msg = !hargaReal.value ? 'Biaya harian wajib diisi.' : 'Biaya harian minimal Rp 1.000.';
-                setFieldState(hargaDisplay, 'error', hintHarga, msg, 'hint-error', iconHargaOk, iconHargaErr);
-                errors.push('Biaya Harian');
-            }
-
-            // ── Kapasitas & Kamar (khusus Asrama) ──
+            // Kapasitas & Kamar (khusus Asrama)
             if (currentTipe === 'asrama') {
 
-                // Kapasitas dewasa
-                const kdInput = $('maxDewasaAsrama');
-                const hintKd  = $('hint-kap-dewasa');
-                if (!kdInput || !kdInput.value || parseInt(kdInput.value) < 1) {
-                    setFieldState(kdInput, 'error', hintKd, 'Kapasitas dewasa minimal 1.', 'hint-error', null, null);
-                    errors.push('Kapasitas Dewasa');
-                } else {
-                    setFieldState(kdInput, 'success', hintKd, '', '');
-                }
-
-                // Jumlah kamar — validasi pada wrap bukan input
-                // agar animasi shake terlihat di seluruh stepper
                 const kamarInput = $('jumlahKamar');
                 const kamarWrap  = $('kamarStepperWrap');
                 const hintKamar  = $('hint-kamar');
@@ -1132,7 +1722,7 @@
                 }
             }
 
-            // ── Kapasitas Aula ──
+            // Kapasitas Aula
             if (currentTipe === 'aula') {
                 const kaInput = $('maxDewasaAula');
                 const hintKa  = $('hint-kap-aula');
@@ -1144,14 +1734,14 @@
                 }
             }
 
-            // ── Foto utama ──
+            // Foto utama
             if (!fileInput.files[0]) {
                 dropzone.classList.add('v-dz-error');
                 setFieldState(dropzone, 'error', hintThumb, 'Foto utama (thumbnail) wajib diunggah.', 'hint-error', null, null);
                 errors.push('Foto Utama');
             }
 
-            // ── Total ukuran file ──
+            // Total ukuran file
             const totalSize = checkTotalSize();
             if (totalSize > MAX_POST_SIZE) {
                 showToast('error', 'Total file terlalu besar',
@@ -1159,7 +1749,19 @@
                 errors.push('Ukuran File');
             }
 
-            // ── Tampilkan ringkasan error ──
+            // Room nomor kamar completeness (asrama only)
+            if (currentTipe === 'asrama') {
+                const alpineRoot = window.__alpineRoot;
+                if (alpineRoot && alpineRoot.rooms) {
+                    const incomplete = alpineRoot.rooms.filter(r => r.nomor_kamar.length < r.jumlah);
+                    if (incomplete.length > 0) {
+                        showToast('error', 'Nomor Kamar Belum Lengkap',
+                            `${incomplete.length} tipe kamar masih memiliki nomor kamar yang belum di-input.`);
+                        errors.push('Nomor Kamar');
+                    }
+                }
+            }
+
             if (errors.length > 0) {
                 showToast('error',
                     `${errors.length} field belum valid`,
@@ -1169,7 +1771,6 @@
                 return;
             }
 
-            // ── Konfirmasi simpan ──
             const confirmed = await showConfirm({
                 icon: 'question',
                 iconBg: '#e6f1fb',
@@ -1182,11 +1783,6 @@
 
             if (confirmed) eksekusiSimpanData();
         });
-
-
-        /* ═══════════════════════════════════════
-           EKSEKUSI FETCH + LOADING
-        ═══════════════════════════════════════ */
 
         function eksekusiSimpanData() {
             const form      = $('mainForm');
@@ -1234,11 +1830,7 @@
             });
         }
 
-
-        /* ═══════════════════════════════════════
-           TOMBOL BATAL
-        ═══════════════════════════════════════ */
-
+        /* ── TOMBOL BATAL ── */
         const btnBatal = $('btn-batal-venue');
 
         if (btnBatal) {
@@ -1274,6 +1866,310 @@
             });
         }
 
+    });
+
+    document.addEventListener('alpine:init', () => {
+
+        Alpine.data('facilityCreator', () => ({
+            tipe: 'asrama',
+            labels: {
+                asrama: ['Shower', 'AC', 'Wifi', 'Parkir', 'TV', 'Lemari'],
+                aula:   ['Wifi', 'Sound System', 'AC', 'Kursi', 'Meja', 'Panggung', 'Proyektor']
+            },
+            selectedLabels: [],
+            customLabel: '',
+            galleryPreviews: [null, null, null],
+
+            jumlahKamar: 1,
+            rooms: [{ tipe: '', jumlah: 1, nomor_kamar: [], temp_input: '', kode_blok: '', max_dewasa: 1, max_anak: 0, fotoPreviews: [null, null, null], harga_harian: '', harga_mingguan: '', harga_bulanan: '', harga_tahunan: '', keunggulan: '', panjang: '', lebar: '', ranjang: '', fasilitas: { ac: 0, kipas_angin: 0, meja_kursi: 0, lemari_locker: 0, stopkontak: 0, kamar_mandi_dalam: 0, water_heater: 0, bantal_set_sprei: 0, gantungan_baju: 0, kaca_rias: 0 } }],
+            currentRoomIndex: 0,
+            roomTypes: @json($roomTypes->toArray()),
+
+            init() {
+                window.__alpineRoot = this;
+                this.$watch('tipe', (newVal) => {
+                    if (newVal === 'asrama') {
+                        this.$nextTick(() => {
+                            const kamarInput = document.getElementById('jumlahKamar');
+                            if (kamarInput) {
+                                this.jumlahKamar = parseInt(kamarInput.value) || 1;
+                                this.initRooms();
+                            }
+                        });
+                    }
+                });
+                // Auto-trim nomor_kamar tags when per-room jumlah is decreased
+                this.$watch('rooms', () => {
+                    this.rooms.forEach(r => {
+                        if (r.nomor_kamar.length > r.jumlah) {
+                            r.nomor_kamar.splice(r.jumlah);
+                        }
+                    });
+                }, { deep: true });
+                document.addEventListener('kamar-changed', (e) => {
+                    this.jumlahKamar = e.detail.value;
+                    this.initRooms();
+                });
+                this.$nextTick(() => {
+                    const kamarInput = document.getElementById('jumlahKamar');
+                    if (kamarInput) {
+                        this.jumlahKamar = parseInt(kamarInput.value) || 1;
+                        this.initRooms();
+                    }
+                });
+            },
+
+            initRooms() {
+                const target = this.jumlahKamar;
+                while (this.rooms.length < target) {
+                    this.rooms.push({ tipe: '', jumlah: 1, nomor_kamar: [], temp_input: '', kode_blok: '', max_dewasa: 1, max_anak: 0, fotoPreviews: [null, null, null], harga_harian: '', harga_mingguan: '', harga_bulanan: '', harga_tahunan: '', keunggulan: '', panjang: '', lebar: '', ranjang: '', fasilitas: { ac: 0, kipas_angin: 0, meja_kursi: 0, lemari_locker: 0, stopkontak: 0, kamar_mandi_dalam: 0, water_heater: 0, bantal_set_sprei: 0, gantungan_baju: 0, kaca_rias: 0 } });
+                }
+                while (this.rooms.length > target) {
+                    this.rooms.pop();
+                }
+                if (this.currentRoomIndex >= this.rooms.length) {
+                    this.currentRoomIndex = Math.max(0, this.rooms.length - 1);
+                }
+                this.syncPaketHarian();
+            },
+
+            syncPaketHarian() {
+                const payload = this.rooms.map(r => {
+                    const { fotoPreviews, ...rest } = r;
+                    return rest;
+                });
+                const el = document.getElementById('paketHarianInput');
+                if (el) el.value = JSON.stringify(payload);
+                const rd = document.getElementById('roomsDataInput');
+                if (rd) rd.value = JSON.stringify(payload);
+                // Update submit guard
+                const btnSimpan = document.getElementById('btnSimpan');
+                if (btnSimpan && this.tipe === 'asrama') {
+                    const hasMismatch = this.rooms.some(r => r.nomor_kamar.length < r.jumlah);
+                    btnSimpan.disabled = hasMismatch;
+                    btnSimpan.title = hasMismatch ? 'Lengkapi semua nomor kamar terlebih dahulu.' : '';
+                }
+            },
+
+            prevRoom() {
+                if (this.currentRoomIndex > 0) {
+                    this.currentRoomIndex--;
+                }
+            },
+
+            nextRoom() {
+                if (this.currentRoomIndex < this.rooms.length - 1) {
+                    this.currentRoomIndex++;
+                }
+            },
+
+            addCustomLabel() {
+                if (this.customLabel.trim() !== '') {
+                    const label = this.customLabel.trim();
+                    if (!this.labels[this.tipe].includes(label)) this.labels[this.tipe].push(label);
+                    if (!this.selectedLabels.includes(label))    this.selectedLabels.push(label);
+                    this.customLabel = '';
+                }
+            },
+
+            addNomorKamar(ri) {
+                const room = this.rooms[ri];
+                if (!room) return;
+                const val = (room.temp_input || '').trim();
+                if (!val) return;
+                if (room.nomor_kamar.includes(val)) return;
+                if (room.nomor_kamar.length >= room.jumlah) return;
+                room.nomor_kamar.push(val);
+                room.temp_input = '';
+                this.syncPaketHarian();
+            },
+
+            removeNomorKamar(ri, idx) {
+                const room = this.rooms[ri];
+                if (!room) return;
+                const removed = room.nomor_kamar.splice(idx, 1);
+                if (removed.length > 0) {
+                    room.temp_input = removed[0];
+                }
+                this.syncPaketHarian();
+            },
+        }));
+
+        Alpine.data('roomTypeDropdown', function () {
+            const el   = this.$el;
+            const csrf = '{{ csrf_token() }}';
+
+            return {
+                // ── State ──────────────────────────────────────────────────────
+                open:         false,   // dropdown panel visibility
+                addMode:      false,   // add-new-type form visibility
+                editingId:    null,    // ID of type being edited (null = none)
+                editingName:  '',      // input value during edit
+                newTypeName:  '',      // input value during add
+                saving:       false,   // POST/PUT in flight
+                deleting:     null,    // ID of type being deleted (null = none)
+                errorMessage: '',      // inline error shown inside dropdown
+                // Local reactive copy of the selected tipe — keeps button text
+                // in sync without depending on window.__alpineRoot reactivity.
+                selectedTipe: '',
+
+                // ── Data bridge ────────────────────────────────────────────────
+                get rVar()  { return el.dataset.roomsVar; },
+                get rIdx()  { return parseInt(el.dataset.roomIndex); },
+                get hiddenName() { return `${this.rVar}[${this.rIdx}][tipe]`; },
+
+                init() {
+                    // Seed selectedTipe from the parent rooms array on mount
+                    const arr = window.__alpineRoot?.[this.rVar];
+                    this.selectedTipe = arr?.[this.rIdx]?.tipe ?? '';
+
+                    // Observe attribute changes so selectedTipe stays correct
+                    // when the room slider changes the active slot (ri changes).
+                    const obs = new MutationObserver(() => {
+                        const a2 = window.__alpineRoot?.[this.rVar];
+                        this.selectedTipe = a2?.[this.rIdx]?.tipe ?? '';
+                    });
+                    obs.observe(el, { attributes: true, attributeFilter: ['data-room-index'] });
+                },
+
+                // ── Core access ────────────────────────────────────────────────
+                allTypes() {
+                    return window.__alpineRoot?.roomTypes ?? [];
+                },
+
+                currentTipe() {
+                    return this.selectedTipe;
+                },
+
+                setTipe(val) {
+                    // Update local reactive copy first (triggers DOM re-render immediately)
+                    this.selectedTipe = val;
+                    // Then sync to the parent rooms array
+                    const arr = window.__alpineRoot?.[this.rVar];
+                    if (arr?.[this.rIdx] !== undefined) {
+                        arr[this.rIdx].tipe = val;
+                        // Notify parent to re-run syncPaketHarian
+                        if (window.__alpineRoot?.syncPaketHarian) {
+                            window.__alpineRoot.syncPaketHarian();
+                        }
+                    }
+                },
+
+                // ── Panel control ──────────────────────────────────────────────
+
+                toggle() {
+                    this.open = !this.open;
+                    if (!this.open) { this.addMode = false; this.editingId = null; this.errorMessage = ''; }
+                },
+
+                close() {
+                    this.open = false; this.addMode = false; this.editingId = null; this.errorMessage = '';
+                },
+
+                selectType(name) { this.setTipe(name); this.close(); },
+
+                handleEscape() { this.close(); },
+
+                // ── Add mode ───────────────────────────────────────────────────
+
+                startAdd() {
+                    this.addMode = true; this.newTypeName = ''; this.errorMessage = '';
+                    this.$nextTick(() => this.$refs.newInput?.focus());
+                },
+
+                async saveNew() {
+                    const name = this.newTypeName.trim();
+                    if (!name || this.saving) return;
+                    this.saving = true; this.errorMessage = '';
+                    try {
+                        const res  = await fetch('/admin/room-types', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                            body: JSON.stringify({ name }),
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            window.__alpineRoot?.roomTypes.push({ id: data.id, name: data.name });
+                            this.selectType(data.name);
+                            this.newTypeName = ''; this.addMode = false;
+                        } else if (res.status === 422) {
+                            const errors = data.errors?.name ?? [];
+                            this.errorMessage = errors.some(m => String(m).toLowerCase().includes('unique'))
+                                ? 'Tipe kamar ini sudah ada.' : (data.message || 'Validasi gagal.');
+                        } else {
+                            this.errorMessage = data.message || 'Gagal menyimpan tipe kamar.';
+                        }
+                    } catch { this.errorMessage = 'Terjadi kesalahan jaringan.'; }
+                    finally  { this.saving = false; }
+                },
+
+                // ── Edit mode ──────────────────────────────────────────────────
+
+                startEdit(id, name) { this.editingId = id; this.editingName = name; this.errorMessage = ''; },
+
+                async saveEdit(id) {
+                    const name = this.editingName.trim();
+                    if (!name || this.saving) return;
+                    this.saving = true; this.errorMessage = '';
+                    try {
+                        const res  = await fetch('/admin/room-types/' + id, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                            body: JSON.stringify({ name }),
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            const types = window.__alpineRoot?.roomTypes ?? [];
+                            const idx   = types.findIndex(t => t.id === id);
+                            if (idx !== -1) {
+                                const old = types[idx].name;
+                                types[idx].name = data.name;
+                                if (this.currentTipe() === old) this.setTipe(data.name);
+                            }
+                            this.editingId = null;
+                        } else if (res.status === 422) {
+                            this.errorMessage = String(data.message || '').toLowerCase().includes('unique')
+                                ? 'Nama sudah digunakan.' : (data.message || 'Validasi gagal.');
+                        } else {
+                            this.errorMessage = data.message || 'Gagal mengubah tipe kamar.';
+                        }
+                    } catch { this.errorMessage = 'Terjadi kesalahan jaringan.'; }
+                    finally  { this.saving = false; }
+                },
+
+                // ── Delete ─────────────────────────────────────────────────────
+
+                async deleteType(index) {
+                    const types = window.__alpineRoot?.roomTypes ?? [];
+                    const t     = types[index];
+                    if (!t) return;
+                    const result = await Swal.fire({
+                        title: `Hapus "${t.name}"?`,
+                        text: `Tipe kamar "${t.name}" akan dihapus permanen.`,
+                        icon: 'warning', showCancelButton: true,
+                        confirmButtonColor: '#E24B4A', cancelButtonColor: '#94a3b8',
+                        confirmButtonText: 'Ya, Hapus', cancelButtonText: 'Batal',
+                        reverseButtons: true, customClass: { popup: 'rounded-[2.5rem] p-8' },
+                    });
+                    if (!result.isConfirmed) return;
+                    this.deleting = index;
+                    this.errorMessage = '';
+                    try {
+                        if (t.id) {
+                            await window.axios.delete(`/admin/room-types/${t.id}`, {
+                                headers: { 'X-CSRF-TOKEN': csrf },
+                            });
+                        }
+                        if (this.currentTipe() === t.name) this.setTipe('');
+                        types.splice(index, 1);
+                    } catch {
+                        this.errorMessage = 'Gagal menghapus tipe kamar.';
+                    } finally {
+                        this.deleting = null;
+                    }
+                },
+            };
+        });
     });
     </script>
 </body>

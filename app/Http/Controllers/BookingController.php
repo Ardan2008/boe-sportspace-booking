@@ -8,8 +8,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use App\Mail\BookingApprovedMail;
-use App\Mail\BookingRejectedMail;
+use App\Mail\ApproveBookingMail;
+use App\Mail\RejectBookingMail;
 use App\Models\AuditLog;
 
 class BookingController extends Controller
@@ -76,7 +76,7 @@ class BookingController extends Controller
 
         // --- VALIDASI OVERLAP ---
         $isOverlapping = \App\Models\Booking::where('fasilitas_id', $request->fasilitas_id)
-            ->whereIn('status', ['pending', 'confirmed'])
+            ->whereIn('status', ['pending', 'confirmed', 'booked'])
             ->where(function ($q) use ($tgl_mulai, $tgl_selesai) {
                 $q->whereBetween('tgl_mulai', [$tgl_mulai, $tgl_selesai])
                   ->orWhereBetween('tgl_selesai', [$tgl_mulai, $tgl_selesai])
@@ -112,6 +112,60 @@ class BookingController extends Controller
             $identitasPath = $file->storeAs('identitas', $filename, 'public');
         }
 
+        // --- RESOLVE TIPE KAMAR ID ---
+        // The form sends tipe_kamar_id (preferred) or selected_tipe (name fallback)
+        $tipeKamarId = null;
+        if ($request->filled('tipe_kamar_id')) {
+            $tipeKamarId = (int) $request->tipe_kamar_id;
+        } elseif ($request->filled('selected_tipe')) {
+            $rt = \App\Models\GlobalRoomType::where('name', $request->selected_tipe)->first();
+            $tipeKamarId = $rt?->id;
+        }
+
+        // --- AUTO-ALLOCATE ROOMS at submission time ---
+        // Prefer rooms sent by the frontend (already fetched from availability API),
+        // fall back to server-side allocation to be safe.
+        $allocatedRooms = [];
+        $frontendAllocated = $request->input('allocated_rooms', []);
+
+        if (!empty($frontendAllocated) && is_array($frontendAllocated)) {
+            // Trust the frontend's allocation (it already did the availability check)
+            $roomsNeeded    = (int) $request->rooms_count;
+            $allocatedRooms = array_slice($frontendAllocated, 0, $roomsNeeded);
+        } elseif ($tipeKamarId && $fasilitas->paket_harian) {
+            // Server-side allocation fallback
+            $globalType = \App\Models\GlobalRoomType::find($tipeKamarId);
+            $typeName   = $globalType?->name ?? $request->selected_tipe ?? '';
+
+            $matchingPaket = null;
+            foreach ($fasilitas->paket_harian as $item) {
+                if (strtolower(trim($item['tipe'] ?? '')) === strtolower(trim($typeName))) {
+                    $matchingPaket = $item;
+                    break;
+                }
+            }
+
+            if ($matchingPaket) {
+                $allRoomNumbers = $matchingPaket['nomor_kamar'] ?? [];
+
+                $alreadyAllocated = \App\Models\Booking::where('fasilitas_id', $request->fasilitas_id)
+                    ->where('tipe_kamar_id', $tipeKamarId)
+                    ->whereIn('status', ['pending', 'confirmed', 'booked'])
+                    ->where('tgl_mulai', '<', $tgl_selesai)
+                    ->where('tgl_selesai', '>', $tgl_mulai)
+                    ->whereNotNull('allocated_rooms')
+                    ->get()
+                    ->flatMap(fn ($b) => $b->allocated_rooms ?? [])
+                    ->unique()
+                    ->values()
+                    ->toArray();
+
+                $available      = array_values(array_diff($allRoomNumbers, $alreadyAllocated));
+                $roomsNeeded    = (int) $request->rooms_count;
+                $allocatedRooms = array_slice($available, 0, $roomsNeeded);
+            }
+        }
+
         // Create renter
         $penyewa = \App\Models\Penyewa::create([
             'nama' => $request->name,
@@ -123,21 +177,25 @@ class BookingController extends Controller
         ]);
 
         $booking = \App\Models\Booking::create([
-            'penyewa_id' => $penyewa->id,
-            'fasilitas_id' => $request->fasilitas_id,
-            'tgl_mulai' => $request->tgl_mulai,
-            'tgl_selesai' => $tgl_selesai,
-            'package_type' => $request->package_type,
-            // Store technical details in JSON or separate columns if needed
+            'penyewa_id'       => $penyewa->id,
+            'fasilitas_id'     => $request->fasilitas_id,
+            'tipe_kamar_id'    => $tipeKamarId,
+            'nomor_kamar'      => !empty($allocatedRooms) ? json_encode($allocatedRooms) : null,
+            'allocated_rooms'  => !empty($allocatedRooms) ? $allocatedRooms : null,
+            'tgl_mulai'        => $request->tgl_mulai,
+            'tgl_selesai'      => $tgl_selesai,
+            'package_type'     => $request->package_type,
             'selected_packages' => json_encode([
-                'duration' => $duration,
-                'adults' => $request->adults,
-                'children' => $request->children_count ?? 0,
-                'rooms' => $request->rooms_count,
-                'child_ages' => $request->child_age ?? []
+                'duration'    => $duration,
+                'adults'      => $request->adults,
+                'children'    => $request->children_count ?? 0,
+                'rooms'       => $request->rooms_count,
+                'child_ages'  => $request->child_age ?? [],
+                'tipe_kamar'  => $request->selected_tipe ?? null,
+                'kode_blok'   => $request->selected_kode_blok ?? null,
             ]),
             'total_harga' => $totalPrice,
-            'status' => 'pending',
+            'status'      => 'pending',
         ]);
 
         return response()->json([
@@ -149,28 +207,72 @@ class BookingController extends Controller
 
     public function approve($id)
     {
-        $booking = \App\Models\Booking::with('penyewa')->findOrFail($id);
-        
+        $booking = \App\Models\Booking::with(['penyewa', 'fasilitas'])->findOrFail($id);
+
+        // --- AUTO-ALLOCATE ROOMS on approval if not yet allocated ---
+        $updateData = [];
+        if (empty($booking->allocated_rooms) && $booking->tipe_kamar_id && $booking->fasilitas) {
+            $fasilitas   = $booking->fasilitas;
+            $tipeKamarId = $booking->tipe_kamar_id;
+            $globalType  = \App\Models\GlobalRoomType::find($tipeKamarId);
+            $typeName    = $globalType?->name ?? '';
+
+            $matchingPaket = null;
+            foreach (($fasilitas->paket_harian ?: []) as $item) {
+                if (strtolower(trim($item['tipe'] ?? '')) === strtolower(trim($typeName))) {
+                    $matchingPaket = $item;
+                    break;
+                }
+            }
+
+            if ($matchingPaket) {
+                $allRoomNumbers = $matchingPaket['nomor_kamar'] ?? [];
+
+                $alreadyAllocated = \App\Models\Booking::where('fasilitas_id', $booking->fasilitas_id)
+                    ->where('tipe_kamar_id', $tipeKamarId)
+                    ->where('id', '!=', $booking->id)
+                    ->whereIn('status', ['pending', 'confirmed', 'booked'])
+                    ->where('tgl_mulai', '<', $booking->tgl_selesai)
+                    ->where('tgl_selesai', '>', $booking->tgl_mulai)
+                    ->whereNotNull('allocated_rooms')
+                    ->get()
+                    ->flatMap(fn ($b) => $b->allocated_rooms ?? [])
+                    ->unique()
+                    ->values()
+                    ->toArray();
+
+                $available = array_values(array_diff($allRoomNumbers, $alreadyAllocated));
+
+                // Determine how many rooms are needed from selected_packages
+                $selectedPackages = json_decode($booking->selected_packages ?? '{}', true);
+                $roomsNeeded = (int) ($selectedPackages['rooms'] ?? 1);
+                $allocated   = array_slice($available, 0, $roomsNeeded);
+
+                if (!empty($allocated)) {
+                    $updateData['allocated_rooms'] = $allocated;
+                    $updateData['nomor_kamar']     = json_encode($allocated);
+                }
+            }
+        }
+
         // Calculate expiration based on province (JAWA TIMUR = 1 day, others = 3 days)
-        $isJatim = strtoupper($booking->penyewa->provinsi ?? '') === 'JAWA TIMUR';
+        $isJatim   = strtoupper($booking->penyewa->provinsi ?? '') === 'JAWA TIMUR';
         $expiredAt = $isJatim ? now()->addDays(1) : now()->addDays(3);
 
-        $booking->update([
-            'status' => 'confirmed',
-            'expired_at' => $expiredAt
-        ]);
+        $booking->update(array_merge($updateData, [
+            'status'     => 'confirmed',
+            'expired_at' => $expiredAt,
+        ]));
 
-        // Generate PDF attach data
-        $pdf = Pdf::loadView('pdf.receipt', compact('booking'));
-        $pdfOutput = $pdf->output();
+        $actionDate = \Carbon\Carbon::now()->translatedFormat('d F Y, H:i') . ' WIB';
 
         $penyewaEmail = $booking->penyewa->email ?? null;
-        $penyewaNama = $booking->penyewa->nama ?? 'Unknown';
+        $penyewaNama  = $booking->penyewa->nama ?? 'Unknown';
         
-        // Send Email using Mail facade safely
+        // Send Email real-time (not queued)
         if ($penyewaEmail) {
             try {
-                Mail::to($penyewaEmail)->send(new BookingApprovedMail($booking, $pdfOutput));
+                Mail::to($penyewaEmail)->send(new ApproveBookingMail($booking, $actionDate));
             } catch (\Exception $e) {
                 \Log::error("Failed to send approval email for booking #{$id}: " . $e->getMessage());
             }
@@ -212,13 +314,15 @@ class BookingController extends Controller
             'rejection_reason' => $request->reason
         ]);
 
+        $actionDate = \Carbon\Carbon::now()->translatedFormat('d F Y, H:i') . ' WIB';
+
         $penyewaEmail = $booking->penyewa->email ?? null;
         $penyewaNama = $booking->penyewa->nama ?? 'Unknown';
 
         // Send Email using Mail facade safely
         if ($penyewaEmail) {
             try {
-                Mail::to($penyewaEmail)->send(new BookingRejectedMail($booking, $request->reason));
+                Mail::to($penyewaEmail)->send(new RejectBookingMail($booking, $request->reason, $actionDate));
             } catch (\Exception $e) {
                 \Log::error("Failed to send rejection email for booking #{$id}: " . $e->getMessage());
             }
@@ -275,8 +379,12 @@ class BookingController extends Controller
 
             $foto_identitas_url = null;
             if ($booking->penyewa && $booking->penyewa->foto_identitas) {
-                // Menggunakan Storage::url agar path presisi sesuai filesystem_disk
-                $foto_identitas_url = Storage::disk('public')->url($booking->penyewa->foto_identitas);
+                $foto_identitas_url = asset('storage/' . $booking->penyewa->foto_identitas);
+            }
+
+            $rooms_data = null;
+            if ($booking->fasilitas && $booking->fasilitas->paket_harian) {
+                $rooms_data = $booking->fasilitas->paket_harian;
             }
 
             return response()->json([
@@ -291,12 +399,18 @@ class BookingController extends Controller
                 'tgl_mulai' => $booking->tgl_mulai ? \Carbon\Carbon::parse($booking->tgl_mulai)->format('Y-m-d') : null,
                 'tgl_selesai' => $booking->tgl_selesai ? \Carbon\Carbon::parse($booking->tgl_selesai)->format('Y-m-d') : null,
                 'fasilitas' => $booking->fasilitas?->nama ?? 'Fasilitas Hilang',
+                'fasilitas_tipe' => $booking->fasilitas?->tipe ?? '-',
                 'package' => $booking->package_type,
                 'status' => $booking->status,
                 'total' => 'Rp ' . number_format($booking->total_harga, 0, ',', '.'),
                 'details' => json_decode($booking->selected_packages, true) ?? [],
-                'created_at' => $booking->created_at?->format('d M Y, H:i \W\I\B') ?? '-',
-                'checkin_at' => $booking->checkin_at?->format('d M Y, H:i \W\I\B') ?? null,
+                'rooms_data' => $rooms_data,
+                'nomor_kamar' => is_array($booking->nomor_kamar)
+                    ? implode(', ', $booking->nomor_kamar)
+                    : ($booking->nomor_kamar ?? '-'),
+                'allocated_rooms' => $booking->allocated_rooms ?? [],
+                'created_at' => $booking->created_at?->format('d F Y, H:i') . ' WIB' ?? '-',
+                'checkin_at' => $booking->checkin_at?->format('d F Y, H:i') . ' WIB' ?? null,
                 'foto_identitas' => $foto_identitas_url
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {

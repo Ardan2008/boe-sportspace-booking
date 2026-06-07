@@ -243,6 +243,21 @@
                                 <p class="text-sm font-black text-gray-900 leading-none">{{ $item->harga_thumbnail }}</p>
                             </div>
                         </div>
+
+                        {{-- Availability Badge (asrama only) --}}
+                        @if($item->tipe === 'asrama' && isset($availableStok[$item->id]))
+                            <div class="absolute top-5 left-5 z-20">
+                                @if($availableStok[$item->id] === 0)
+                                    <span class="bg-red-500 text-white text-[9px] font-black px-3 py-1.5 rounded-xl shadow-md uppercase tracking-widest">
+                                        Kamar Penuh
+                                    </span>
+                                @else
+                                    <span class="bg-emerald-500 text-white text-[9px] font-black px-3 py-1.5 rounded-xl shadow-md uppercase tracking-widest">
+                                        {{ $availableStok[$item->id] }} Kamar Tersedia
+                                    </span>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                     
                     {{-- Content --}}
@@ -257,33 +272,32 @@
 
                         {{-- Actions --}}
                         <div class="mt-auto flex items-center gap-3">
-                            {{-- Kirim data ke modal detail --}}
-                            <button 
-                                onclick='openDescription(
-                                    {{ json_encode($item->nama) }}, 
-                                    {{ json_encode($item->deskripsi) }}, 
-                                    {{ json_encode(asset("storage/fasilitas/" . $item->image)) }},
-                                    {{ json_encode($item->detail) }},
-                                    @json($item->gallery),
-                                    @json($item->labels),
-                                    {{ json_encode($item->tipe) }},
-                                    {{ json_encode($item->max_dewasa) }},
-                                    {{ json_encode($item->max_anak) }},
-                                    {{ json_encode($item->jam_operasional) }},
-                                    {{ json_encode($item->jumlah_kamar ?? 0) }}
-                                )'
-                                class="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-600 py-4 rounded-2xl font-bold text-xs transition-all duration-200 active:scale-95 border border-gray-100"
-                            >
+                            {{-- Link langsung ke halaman detail fasilitas --}}
+                            <a href="{{ route('fasilitas.detail', $item->id) }}"
+                               class="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-600 py-4 rounded-2xl font-bold text-xs transition-all duration-200 active:scale-95 border border-gray-100 flex items-center justify-center">
                                 Lihat Detail
-                            </button>
-                            
-                            <a href="{{ route('formBooking', ['id' => $item->id]) }}" 
-                                class="relative flex-[1.2] bg-[#1d6fa5] hover:bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs transition-all duration-300 shadow-lg flex items-center justify-center gap-2 group/btn overflow-hidden">
-                                <span>Book Now</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform group-hover/btn:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                </svg>
                             </a>
+                            
+                            @if($item->tipe === 'asrama' && isset($availableStok[$item->id]) && $availableStok[$item->id] === 0)
+                                {{-- Kamar penuh: tombol dinonaktifkan --}}
+                                <button type="button"
+                                    onclick="alert('Maaf, semua kamar pada tipe ini sudah penuh untuk tanggal yang Anda pilih.')"
+                                    class="relative flex-[1.2] bg-gray-400 text-white py-4 rounded-2xl font-bold text-xs transition-all duration-300 shadow-lg flex items-center justify-center gap-2 overflow-hidden cursor-not-allowed opacity-80"
+                                    disabled>
+                                    <span>Kamar Penuh</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                    </svg>
+                                </button>
+                            @else
+                                <a href="{{ route('formBooking', ['id' => $item->id]) }}" 
+                                    class="relative flex-[1.2] bg-[#1d6fa5] hover:bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs transition-all duration-300 shadow-lg flex items-center justify-center gap-2 group/btn overflow-hidden">
+                                    <span>Book Now</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform group-hover/btn:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    </svg>
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -456,9 +470,13 @@
     let currentPreviewImg = "";
 
     // Logika Modal Deskripsi & Preview Gambar
-    function openDescription(title, body, imgUrl, detail, gallery, labels, tipe, max_dewasa, max_anak, jam_operasional, jumlahKamar) {
+    function openDescription(title, body, imgUrl, detail, gallery, labels, tipe, max_dewasa, max_anak, jam_operasional, jumlahKamar, paketHarian, facilityId) {
         const modal = document.getElementById('descModal');
         const modalContent = document.getElementById('modalContent');
+        // Store paket_harian for room cards
+        window.__modalPaketHarian = paketHarian || [];
+        window.__modalFacilityId  = facilityId  || null;
+        window.__modalTipe        = tipe        || '';
         
         document.getElementById('modalTitle').innerText = title || '-';
         document.getElementById('modalBody').innerText = body || '-';
@@ -529,6 +547,9 @@
         
         currentPreviewImg = imgUrl; // Default to main image
         
+        // Render horizontal room type cards for asrama modal
+        renderModalRoomCards();
+
         modal.classList.replace('hidden', 'flex');
         setTimeout(() => {
             modalContent.classList.remove('scale-95', 'opacity-0');
@@ -536,6 +557,199 @@
         }, 10);
         document.body.style.overflow = 'hidden';
     }
+
+    // ── Render horizontal room type cards inside the modal ──
+    function renderModalRoomCards() {
+        const container = document.getElementById('modalRoomCards');
+        const section   = document.getElementById('modalRoomCardsSection');
+        if (!container || !section) return;
+
+        const rooms  = window.__modalPaketHarian || [];
+        const fid    = window.__modalFacilityId;
+        const tipe   = window.__modalTipe;
+
+        if (tipe !== 'asrama' || rooms.length === 0) {
+            section.classList.add('hidden');
+            return;
+        }
+        section.classList.remove('hidden');
+        container.innerHTML = '';
+
+        const fmt = (n) => new Intl.NumberFormat('id-ID').format(n);
+
+        rooms.forEach((rt, idx) => {
+            const photos = (rt.foto && rt.foto.length)
+                ? rt.foto.filter(p => p).map(p => '/storage/fasilitas/rooms/' + p)
+                : [];
+
+            // Build fasilitas chips — unified slate theme
+            const fasMap = [
+                ['ac',               'AC',              'text-slate-600 bg-slate-100 border-slate-200'],
+                ['kipas_angin',       'Kipas Angin',     'text-slate-600 bg-slate-100 border-slate-200'],
+                ['meja_kursi',        'Meja & Kursi',    'text-slate-600 bg-slate-100 border-slate-200'],
+                ['lemari_locker',     'Lemari/Locker',   'text-slate-600 bg-slate-100 border-slate-200'],
+                ['stopkontak',        'Stopkontak',      'text-slate-600 bg-slate-100 border-slate-200'],
+                ['kamar_mandi_dalam', 'KM Dalam',        'text-slate-600 bg-slate-100 border-slate-200'],
+                ['water_heater',      'Water Heater',    'text-slate-600 bg-slate-100 border-slate-200'],
+                ['bantal_set_sprei',  'Bantal & Sprei',  'text-slate-600 bg-slate-100 border-slate-200'],
+                ['gantungan_baju',    'Gantungan',       'text-slate-600 bg-slate-100 border-slate-200'],
+                ['kaca_rias',         'Kaca Rias',       'text-slate-600 bg-slate-100 border-slate-200'],
+            ];
+            const fas = rt.fasilitas || {};
+            const chips = fasMap
+                .filter(([k]) => (fas[k] || 0) > 0)
+                .map(([k, label, cls]) =>
+                    `<span class="inline-flex items-center gap-1 text-[9px] font-bold ${cls} border px-2 py-0.5 rounded-full">${label} × ${fas[k]}</span>`
+                ).join('');
+
+            // Pricing — refined typography
+            const prices = [];
+            if (rt.harga_harian  > 0) prices.push(`<span class="inline-flex items-baseline gap-1"><span class="text-sm font-black text-slate-800">Rp ${fmt(rt.harga_harian)}</span><span class="text-[10px] font-medium text-slate-400">/hari</span></span>`);
+            if (rt.harga_mingguan > 0) prices.push(`<span class="inline-flex items-baseline gap-1"><span class="text-sm font-black text-slate-800">Rp ${fmt(rt.harga_mingguan)}</span><span class="text-[10px] font-medium text-slate-400">/minggu</span></span>`);
+            if (rt.harga_bulanan  > 0) prices.push(`<span class="inline-flex items-baseline gap-1"><span class="text-sm font-black text-slate-800">Rp ${fmt(rt.harga_bulanan)}</span><span class="text-[10px] font-medium text-slate-400">/bulan</span></span>`);
+            if (rt.harga_tahunan  > 0) prices.push(`<span class="inline-flex items-baseline gap-1"><span class="text-sm font-black text-slate-800">Rp ${fmt(rt.harga_tahunan)}</span><span class="text-[10px] font-medium text-slate-400">/tahun</span></span>`);
+
+            // Photo slider HTML
+            const sliderId  = `modal-slider-${idx}`;
+            const photosJson = JSON.stringify(photos);
+            const photoHtml = photos.length > 0
+                ? `<div id="${sliderId}-wrap" class="w-full h-full relative overflow-hidden">
+                    <div id="${sliderId}" class="slider-track h-full" style="width:${photos.length * 100}%">
+                        ${photos.map(src => `<div style="width:${100/photos.length}%;flex-shrink:0" class="h-full"><img src="${src}" class="w-full h-full object-cover modal-slider-img" data-sliderid="${sliderId}" style="transition:filter .3s,transform .3s"></div>`).join('')}
+                    </div>
+                    ${photos.length > 1 ? `<div class="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-10">
+                        ${photos.map((_, di) => `<div class="modal-dot w-1.5 h-1.5 rounded-full transition-all ${di===0?'bg-white scale-125':'bg-white/50'}" data-sliderid="${sliderId}" data-dotidx="${di}"></div>`).join('')}
+                    </div>` : ''}
+                    <div class="modal-lb-btn absolute inset-0 flex items-center justify-center z-20 opacity-0 pointer-events-none transition-opacity"
+                         data-photos='${photosJson}' data-slideidx="0">
+                        <button class="modal-lb-trigger pointer-events-auto w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-xl hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                   </div>`
+                : `<div class="w-full h-full flex items-center justify-center bg-gray-100">
+                    <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                   </div>`;
+
+            const specsHtml = [
+                rt.panjang && rt.lebar ? `<div class="bg-slate-50 rounded-xl px-2 py-1.5 text-center"><p class="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Ukuran</p><p class="text-[10px] font-black text-slate-700">${rt.panjang}×${rt.lebar} m²</p></div>` : '',
+                `<div class="bg-slate-50 rounded-xl px-2 py-1.5 text-center"><p class="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Kapasitas</p><p class="text-[10px] font-black text-slate-700">${rt.max_dewasa||1} Dws${rt.max_anak>0?'+'+rt.max_anak+'Ank':''}</p></div>`,
+                rt.ranjang ? `<div class="bg-slate-50 rounded-xl px-2 py-1.5 text-center"><p class="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Kasur</p><p class="text-[10px] font-black text-slate-700">${rt.ranjang}</p></div>` : '',
+            ].filter(Boolean).join('');
+
+            const bookUrl = fid ? `/formBooking?id=${fid}&tipe_id=${idx}` : '#';
+
+            const card = document.createElement('div');
+            card.className = 'border-2 border-slate-100 hover:border-blue-300 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all';
+            card.innerHTML = `
+                <div class="flex flex-col sm:flex-row">
+                    <div class="relative w-full sm:w-40 aspect-[4/3] flex-shrink-0 bg-gray-100 modal-slider-wrap" data-sliderid="${sliderId}">
+                        ${photoHtml}
+                    </div>
+                    <div class="flex-1 p-4 flex flex-col gap-2.5">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <p class="font-black text-slate-900 text-sm">${rt.tipe || ('Tipe ' + (idx+1))}</p>
+                            ${rt.kode_blok ? `<span class="text-[9px] font-bold text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded-full">Blok ${rt.kode_blok}</span>` : ''}
+                            <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full ml-auto">Tersedia ${rt.jumlah||0} Kamar</span>
+                        </div>
+                        ${rt.keunggulan ? `<p class="text-[11px] text-slate-500 font-medium leading-snug line-clamp-2">${rt.keunggulan}</p>` : ''}
+                        <div class="flex flex-wrap gap-1.5">${prices.join('')}</div>
+                        <div class="grid grid-cols-3 gap-1.5">${specsHtml}</div>
+                        ${chips ? `<div class="flex flex-wrap gap-1">${chips}</div>` : ''}
+                        <div class="mt-auto pt-2 border-t border-slate-100">
+                            <a href="${bookUrl}" onclick="closeDescription()"
+                               class="inline-flex items-center gap-2 bg-[#1d6fa5] hover:bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md">
+                                Booking Now
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>`;
+            container.appendChild(card);
+
+            // Auto-slider for this card
+            if (photos.length > 1) {
+                let si = 0;
+                const track = card.querySelector(`#${sliderId}`);
+                const dots  = card.querySelectorAll(`.modal-dot[data-sliderid="${sliderId}"]`);
+                const imgs  = card.querySelectorAll(`.modal-slider-img[data-sliderid="${sliderId}"]`);
+                const lbBtn = card.querySelector('.modal-lb-btn');
+                const wrap  = card.querySelector('.modal-slider-wrap');
+                const timer = setInterval(() => {
+                    si = (si + 1) % photos.length;
+                    track.style.transform = `translateX(-${si * (100/photos.length)}%)`;
+                    dots.forEach((d, di) => { d.classList.toggle('bg-white', di===si); d.classList.toggle('scale-125', di===si); d.classList.toggle('bg-white/50', di!==si); });
+                    if (lbBtn) lbBtn.dataset.slideidx = si;
+                }, 3000);
+                // Hover blur
+                wrap.addEventListener('mouseenter', () => {
+                    imgs.forEach(img => { img.style.filter='blur(3px)'; img.style.transform='scale(1.05)'; });
+                    if (lbBtn) { lbBtn.classList.remove('opacity-0','pointer-events-none'); lbBtn.classList.add('opacity-100'); }
+                    clearInterval(timer);
+                });
+                wrap.addEventListener('mouseleave', () => {
+                    imgs.forEach(img => { img.style.filter=''; img.style.transform=''; });
+                    if (lbBtn) { lbBtn.classList.add('opacity-0','pointer-events-none'); lbBtn.classList.remove('opacity-100'); }
+                });
+            } else if (photos.length === 1) {
+                // Single photo — still show hover lightbox
+                const lbBtn = card.querySelector('.modal-lb-btn');
+                const wrap  = card.querySelector('.modal-slider-wrap');
+                const img   = card.querySelector('.modal-slider-img');
+                if (wrap && lbBtn) {
+                    wrap.addEventListener('mouseenter', () => {
+                        if (img) { img.style.filter='blur(3px)'; img.style.transform='scale(1.05)'; }
+                        lbBtn.classList.remove('opacity-0','pointer-events-none'); lbBtn.classList.add('opacity-100');
+                    });
+                    wrap.addEventListener('mouseleave', () => {
+                        if (img) { img.style.filter=''; img.style.transform=''; }
+                        lbBtn.classList.add('opacity-0','pointer-events-none'); lbBtn.classList.remove('opacity-100');
+                    });
+                }
+            }
+
+            // Lightbox trigger
+            const lbTrigger = card.querySelector('.modal-lb-trigger');
+            if (lbTrigger) {
+                lbTrigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const btn = card.querySelector('.modal-lb-btn');
+                    const startIdx = parseInt(btn ? btn.dataset.slideidx : 0) || 0;
+                    openModalLightbox(photos, startIdx);
+                });
+            }
+        });
+    }
+
+    // ── Inline lightbox for modal room cards ──
+    let __mlbPhotos = [], __mlbIdx = 0;
+    function openModalLightbox(photos, idx) {
+        __mlbPhotos = photos; __mlbIdx = idx;
+        const lb = document.getElementById('modalRoomLightbox');
+        if (!lb) return;
+        renderModalLightbox();
+        lb.classList.remove('hidden');
+        lb.classList.add('flex');
+    }
+    function closeModalLightbox() {
+        const lb = document.getElementById('modalRoomLightbox');
+        if (lb) { lb.classList.add('hidden'); lb.classList.remove('flex'); }
+    }
+    function renderModalLightbox() {
+        const track = document.getElementById('modalRoomLbTrack');
+        const counter = document.getElementById('modalRoomLbCounter');
+        if (!track) return;
+        track.innerHTML = __mlbPhotos.map(src =>
+            `<div style="min-width:100%"><img src="${src}" class="w-full max-h-[75vh] object-contain mx-auto"></div>`
+        ).join('');
+        track.style.transform = `translateX(-${__mlbIdx * 100}%)`;
+        if (counter) counter.textContent = (__mlbIdx + 1) + ' / ' + __mlbPhotos.length;
+    }
+    function modalLbPrev() { if (__mlbIdx > 0) { __mlbIdx--; renderModalLightbox(); } }
+    function modalLbNext() { if (__mlbIdx < __mlbPhotos.length - 1) { __mlbIdx++; renderModalLightbox(); } }
 
     function closeDescription() {
         const modal = document.getElementById('descModal');
@@ -679,7 +893,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <div id="descModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl transform transition-all scale-95 opacity-0 duration-300" id="modalContent">
+        <div class="bg-white w-full max-w-2xl rounded-[3rem] overflow-y-auto max-h-[90vh] shadow-2xl transform transition-all scale-95 opacity-0 duration-300" id="modalContent">
             <div class="p-8 md:p-12">
                 <div class="flex justify-between items-start mb-6">
                     <div>
@@ -732,6 +946,36 @@
                         
                         <h4 class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-3">Gallery Preview</h4>
                         <div id="modalGallery" class="grid grid-cols-3 gap-2"></div>
+                    </div>
+                </div>
+
+                {{-- ── Tipe Kamar Cards (asrama only, rendered via JS) ── --}}
+                <div id="modalRoomCardsSection" class="hidden mt-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="h-px flex-1 bg-slate-100"></div>
+                        <h4 class="text-[10px] font-black uppercase tracking-[0.25em] text-[#1d6fa5] whitespace-nowrap">Tipe Kamar Tersedia</h4>
+                        <div class="h-px flex-1 bg-slate-100"></div>
+                    </div>
+                    <div id="modalRoomCards" class="space-y-3"></div>
+                </div>
+
+                {{-- ── Room card inline lightbox ── --}}
+                <div id="modalRoomLightbox"
+                     class="hidden fixed inset-0 z-[200] items-center justify-center bg-black/85 backdrop-blur-md p-4"
+                     onclick="if(event.target===this) closeModalLightbox()">
+                    <div class="relative max-w-3xl w-full">
+                        <button onclick="closeModalLightbox()"
+                            class="absolute -top-10 right-0 text-white/80 hover:text-red-400 transition-colors">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                        <div class="overflow-hidden rounded-[2rem] bg-gray-900 shadow-2xl">
+                            <div id="modalRoomLbTrack" class="flex" style="transition:transform .45s cubic-bezier(.4,0,.2,1)"></div>
+                        </div>
+                        <div class="flex justify-center gap-3 mt-4">
+                            <button onclick="modalLbPrev()" class="px-5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition-all text-sm">← Prev</button>
+                            <span id="modalRoomLbCounter" class="text-white/50 text-xs self-center"></span>
+                            <button onclick="modalLbNext()" class="px-5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition-all text-sm">Next →</button>
+                        </div>
                     </div>
                 </div>
 

@@ -379,7 +379,7 @@
                     </h4>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.details?.tipe === 'asrama'">
+                            x-show="detailPayload.fasilitas_tipe === 'asrama'">
                             <span class="block text-[10px] uppercase text-purple-500 font-bold mb-1">Kamar</span>
                             <span class="font-black text-purple-700 text-xl"
                                 x-text="detailPayload.details?.rooms_count || detailPayload.details?.rooms || '1'"></span>
@@ -391,14 +391,14 @@
                             <span class="font-black text-blue-700 text-xl" x-text="detailPayload.details?.adults || '1'"></span>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.details?.tipe === 'asrama'">
+                            x-show="detailPayload.fasilitas_tipe === 'asrama'">
                             <span class="block text-[10px] uppercase text-amber-500 font-bold mb-1">Anak ≥12</span>
                             <span class="font-black text-amber-600 text-xl"
                                 x-text="detailPayload.details?.billable_children || '0'"></span>
                             <span class="block text-[9px] text-amber-400 mt-1">Tarif dewasa</span>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.details?.tipe === 'asrama'">
+                            x-show="detailPayload.fasilitas_tipe === 'asrama'">
                             <span class="block text-[10px] uppercase text-emerald-500 font-bold mb-1">Anak &lt;12</span>
                             <span class="font-black text-emerald-600 text-xl"
                                 x-text="detailPayload.details?.free_children || '0'"></span>
@@ -418,8 +418,35 @@
                         </div>
                     </div>
 
+                    {{-- Fasilitas Kamar (rooms_data) --}}
+                    <template x-if="detailPayload.rooms_data && detailPayload.rooms_data.length">
+                        <div class="mt-8">
+                            <h4 class="text-xs font-black uppercase text-slate-400 tracking-wider mb-4 border-b border-slate-100 pb-2">
+                                Fasilitas Kamar
+                            </h4>
+                            <template x-for="(room, rIndex) in detailPayload.rooms_data" :key="rIndex">
+                                <div class="mb-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                    <span class="block text-xs font-bold text-slate-600 mb-2" x-text="room.nama || ('Kamar ' + (rIndex + 1))"></span>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2" x-show="room.fasilitas">
+                                        <template x-for="(val, key) in room.fasilitas">
+                                            <div class="flex items-center gap-1.5 text-xs text-slate-600" x-show="val > 0">
+                                                <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                                <span x-text="key.replace(/_/g, ' ') + ': ' + val"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div x-show="!room.fasilitas || Object.keys(room.fasilitas).filter(k => room.fasilitas[k] > 0).length === 0" class="text-xs text-slate-400 italic">
+                                        Tidak ada fasilitas khusus untuk kamar ini
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
                     {{-- Dokumen & Log --}}
-                    <h4 class="text-xs font-black uppercase text-slate-400 tracking-wider mb-4 border-b border-slate-100 pb-2">
+                    <h4 class="text-xs font-black uppercase text-slate-400 tracking-wider mt-8 mb-4 border-b border-slate-100 pb-2">
                         Dokumen &amp; Log Waktu
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -431,7 +458,7 @@
                                 {{-- FIX: x-show bukan x-if --}}
                                 <div x-show="detailPayload.foto_identitas" class="w-full h-full relative">
                                     <img :src="detailPayload.foto_identitas ?? ''" alt="KTP"
-                                        class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+                                        class="w-full h-full object-cover max-h-[400px] hover:scale-105 transition-transform duration-500">
                                     <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                         <span class="text-white text-xs font-bold">Perbesar</span>
                                     </div>

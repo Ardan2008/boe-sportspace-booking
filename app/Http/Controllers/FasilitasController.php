@@ -38,23 +38,47 @@ class FasilitasController extends Controller
             'tipe' => 'required|in:asrama,aula',
             'deskripsi' => 'required',
             'detail' => 'nullable',
-            'harga' => 'required|numeric',
+            'harga' => 'nullable|numeric',
             'harga_bulanan' => 'nullable|numeric',
             'max_dewasa' => 'nullable|integer',
             'max_anak' => 'nullable|integer',
             'max_durasi_harian' => 'nullable|integer',
+            'max_durasi_hari' => 'nullable|integer|min:0',
+            'max_durasi_minggu' => 'nullable|integer|min:0',
+            'max_durasi_bulan' => 'nullable|integer|min:0',
+            'max_durasi_tahun' => 'nullable|integer|min:0',
             'jam_operasional' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'paket_harian' => 'nullable|string',
+            'rooms_data'   => 'nullable|string',
             'jumlah_kamar' => 'nullable|integer|min:1',
             'labels' => 'nullable|array',
+            'room_fotos' => 'nullable|array',
+            'room_fotos.*.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         $oldHarga = $fasilitas->harga;
-        $newHarga = $request->harga;
 
-        if ($oldHarga != $newHarga) {
+        // paket_harian contains the full rooms payload from the Alpine.js syncPaketHarian()
+        $paket_harian = $request->paket_harian ? json_decode($request->paket_harian, true) : [];
+        if (!is_array($paket_harian)) {
+            $paket_harian = [];
+        }
+
+        // Derive canonical harga from first room's harga_harian (prices live in paket_harian now)
+        $firstRoom = $paket_harian[0] ?? [];
+        $h_harian  = isset($firstRoom['harga_harian'])  && (float) $firstRoom['harga_harian']  > 0
+                        ? (float) $firstRoom['harga_harian']
+                        : (float) ($request->harga ?? $oldHarga);
+        $h_bulanan = isset($firstRoom['harga_bulanan']) && (float) $firstRoom['harga_bulanan'] > 0
+                        ? (float) $firstRoom['harga_bulanan']
+                        : (float) ($request->harga_bulanan ?? 0);
+
+        $newHarga = $h_harian;
+
+        // Record price history only when harga_harian actually changed
+        if ($oldHarga != $newHarga && $newHarga > 0) {
             $diff = $newHarga - $oldHarga;
             $percent = ($oldHarga != 0) ? ($diff / $oldHarga) * 100 : 100;
             $percentFormatted = ($percent > 0 ? '+' : '') . round($percent) . '%';
@@ -67,14 +91,20 @@ class FasilitasController extends Controller
             ]);
         }
 
-        $paket_harian = []; // UI removed, default to empty
-        
-        // Calculate thumbnail price range
-        $prices = [$newHarga];
-        if ($request->harga_bulanan) $prices[] = $request->harga_bulanan;
-        
-        $minPrice = min($prices);
-        $maxPrice = max($prices);
+        // Calculate thumbnail price range from all rooms' all price tiers
+        $allPrices = [];
+        foreach ($paket_harian as $room) {
+            foreach (['harga_harian','harga_mingguan','harga_bulanan','harga_tahunan'] as $pKey) {
+                $v = isset($room[$pKey]) ? (float) $room[$pKey] : 0;
+                if ($v > 0) $allPrices[] = $v;
+            }
+        }
+        if (empty($allPrices)) {
+            $allPrices = [$h_harian];
+            if ($h_bulanan > 0) $allPrices[] = $h_bulanan;
+        }
+        $minPrice = min($allPrices);
+        $maxPrice = max($allPrices);
 
         $formatPrice = function($price) {
             if ($price >= 1000000) return round($price / 1000000, 1) . 'JT';
@@ -82,7 +112,7 @@ class FasilitasController extends Controller
             return $price;
         };
 
-        $harga_thumbnail = (count($prices) > 1) 
+        $harga_thumbnail = ($minPrice !== $maxPrice) 
             ? "Mulai " . $formatPrice($minPrice) . " - " . $formatPrice($maxPrice)
             : "Rp " . number_format($newHarga, 0, ',', '.');
 
@@ -91,17 +121,53 @@ class FasilitasController extends Controller
             'tipe' => $request->tipe,
             'deskripsi' => $request->deskripsi,
             'detail' => $request->detail,
-            'harga' => $request->harga,
-            'harga_bulanan' => $request->harga_bulanan,
+            'harga' => $newHarga,
+            'harga_bulanan' => $h_bulanan > 0 ? $h_bulanan : null,
             'max_dewasa' => $request->max_dewasa,
             'max_anak' => $request->max_anak,
             'max_durasi_harian' => $request->max_durasi_harian,
+            'max_durasi_hari' => $request->max_durasi_hari ? (int) $request->max_durasi_hari : null,
+            'max_durasi_minggu' => $request->max_durasi_minggu ? (int) $request->max_durasi_minggu : null,
+            'max_durasi_bulan' => $request->max_durasi_bulan ? (int) $request->max_durasi_bulan : null,
+            'max_durasi_tahun' => $request->max_durasi_tahun ? (int) $request->max_durasi_tahun : null,
             'jam_operasional' => $request->jam_operasional,
             'jumlah_kamar' => $request->jumlah_kamar ? (int) $request->jumlah_kamar : $fasilitas->jumlah_kamar,
             'paket_harian' => $paket_harian,
             'labels' => $request->labels ?? [],
             'harga_thumbnail' => $harga_thumbnail,
         ];
+
+        // Handle Room Photos — merge per-slot: only replace a slot if a new file was uploaded for it.
+        // Always fall back to the existing DB path for each slot that has no new upload.
+        $existingPaket = $fasilitas->paket_harian ?? [];
+        foreach ($paket_harian as $roomIdx => &$room) {
+            // Start from existing saved photos for this room (3-element array)
+            $existingFoto = isset($existingPaket[$roomIdx]['foto']) && is_array($existingPaket[$roomIdx]['foto'])
+                ? $existingPaket[$roomIdx]['foto']
+                : [null, null, null];
+
+            // Pad to 3 slots so index access is always safe
+            while (count($existingFoto) < 3) {
+                $existingFoto[] = null;
+            }
+
+            $newFiles = $request->file('room_fotos.' . $roomIdx) ?? [];
+
+            for ($fotoIdx = 0; $fotoIdx < 3; $fotoIdx++) {
+                $file = $newFiles[$fotoIdx] ?? null;
+                if ($file && $file->isValid()) {
+                    // New upload for this slot — store on public disk under fasilitas/rooms
+                    $name = time() . '_room_' . $roomIdx . '_' . $fotoIdx . '.' . $file->getClientOriginalExtension();
+                    $file->storeAs('fasilitas/rooms', $name, 'public');
+                    $existingFoto[$fotoIdx] = $name;
+                }
+                // else: keep $existingFoto[$fotoIdx] as-is (preserve old path)
+            }
+
+            $room['foto'] = array_values(array_filter($existingFoto, fn($v) => $v !== null && $v !== ''));
+        }
+        unset($room);
+        $data['paket_harian'] = $paket_harian;
 
         if ($request->hasFile('image')) {
             $oldPath = public_path('storage/fasilitas/' . $fasilitas->image);
@@ -145,7 +211,56 @@ class FasilitasController extends Controller
 
     public function edit($id) {
         $fasilitas = Fasilitas::findOrFail($id);
-        return view('admin.dashboard.edit.editFasilitas', compact('fasilitas'));
+
+        $rooms = [];
+        $paketHarian = $fasilitas->paket_harian;
+        if (is_array($paketHarian) && !empty($paketHarian)) {
+            $rooms = $paketHarian;
+            // Ensure nomor_kamar and temp_input exist on each room
+            foreach ($rooms as &$room) {
+                if (!isset($room['nomor_kamar'])) $room['nomor_kamar'] = [];
+                if (!isset($room['temp_input']))   $room['temp_input']  = '';
+            }
+            unset($room);
+        } else {
+            $count = $fasilitas->jumlah_kamar ?? 1;
+            for ($i = 0; $i < $count; $i++) {
+                $rooms[] = [
+                    'tipe' => '',
+                    'jumlah' => 1,
+                    'kode_blok' => '',
+                    'nomor_kamar' => [],
+                    'temp_input' => '',
+                    'max_dewasa' => $fasilitas->max_dewasa ?? 1,
+                    'max_anak' => $fasilitas->max_anak ?? 0,
+                    'foto' => [],
+                    'harga_harian' => $i === 0 ? $fasilitas->harga : '',
+                    'harga_mingguan' => '',
+                    'harga_bulanan' => $i === 0 ? $fasilitas->harga_bulanan : '',
+                    'harga_tahunan' => '',
+                    'keunggulan' => '',
+                    'panjang' => '',
+                    'lebar' => '',
+                    'ranjang' => '',
+                    'fasilitas' => [
+                        'ac' => 0,
+                        'kipas_angin' => 0,
+                        'meja_kursi' => 0,
+                        'lemari_locker' => 0,
+                        'stopkontak' => 0,
+                        'kamar_mandi_dalam' => 0,
+                        'water_heater' => 0,
+                        'bantal_set_sprei' => 0,
+                        'gantungan_baju' => 0,
+                        'kaca_rias' => 0,
+                    ],
+                ];
+            }
+        }
+
+        $roomTypes = \App\Models\GlobalRoomType::orderBy('name')->get(['id', 'name']);
+
+        return view('admin.dashboard.edit.editFasilitas', compact('fasilitas', 'rooms', 'roomTypes'));
     }
 
     public function destroy($id) {
@@ -179,26 +294,24 @@ class FasilitasController extends Controller
                 'tipe' => 'required|in:asrama,aula',
                 'deskripsi' => 'required',
                 'detail' => 'nullable',
-                'harga' => 'required|numeric',
-                'harga_bulanan' => 'nullable|numeric',
-                'max_dewasa_asrama' => 'nullable|integer',
                 'max_dewasa_aula' => 'nullable|integer',
-                'max_anak' => 'nullable|integer',
                 'max_durasi_harian' => 'nullable|integer',
+                'max_durasi_hari' => 'nullable|integer|min:0',
+                'max_durasi_minggu' => 'nullable|integer|min:0',
+                'max_durasi_bulan' => 'nullable|integer|min:0',
+                'max_durasi_tahun' => 'nullable|integer|min:0',
                 'jumlah_kamar'     => 'required|integer|min:1',
                 'jam_operasional' => 'nullable|string',
                 'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
                 'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
                 'paket_harian' => 'nullable|string',
+                'rooms_data'   => 'nullable|string',
                 'labels' => 'nullable|array',
+                'room_fotos' => 'nullable|array',
+                'room_fotos.*.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             ]);
 
             $imageName = null;
-            if ($request->hasFile('image')) {
-                $image = $request->file('image');
-                $path = $image->store('fasilitas', 'public'); 
-                $imageName = basename($path);
-            }
 
             $gallery = [];
             if ($request->hasFile('gallery')) {
@@ -211,17 +324,46 @@ class FasilitasController extends Controller
             }
             $gallery = array_values(array_filter($gallery));
 
-            $paket_harian = [];
-            
-            // Calculate thumbnail price range
-            $h_harian = (float) $request->harga;
-            $h_bulanan = $request->harga_bulanan ? (float) $request->harga_bulanan : null;
+            $paket_harian = $request->paket_harian ? json_decode($request->paket_harian, true) : [];
+            if (!is_array($paket_harian)) $paket_harian = [];
 
-            $prices = [$h_harian];
-            if ($h_bulanan) $prices[] = $h_bulanan;
-            
-            $minPrice = min($prices);
-            $maxPrice = max($prices);
+            // Handle Room Photos — merge uploaded files into each room's foto array
+            if ($request->hasFile('room_fotos')) {
+                foreach ($request->file('room_fotos') as $roomIdx => $fotoFiles) {
+                    if (!isset($paket_harian[$roomIdx])) continue;
+                    $fotos = $paket_harian[$roomIdx]['foto'] ?? [];
+                    $fotos = is_array($fotos) ? $fotos : [];
+                    foreach ($fotoFiles as $fotoIdx => $file) {
+                        if ($file && $file->isValid()) {
+                            $name = time() . '_room_' . $roomIdx . '_' . $fotoIdx . '.' . $file->getClientOriginalExtension();
+                            $file->storeAs('fasilitas/rooms', $name, 'public');
+                            $fotos[$fotoIdx] = $name;
+                        }
+                    }
+                    $paket_harian[$roomIdx]['foto'] = array_values(array_filter($fotos));
+                }
+            }
+
+            // Get prices from first room in paket_harian
+            $firstRoom = $paket_harian[0] ?? [];
+            $h_harian = (float) ($firstRoom['harga_harian'] ?? 0);
+            $h_bulanan = !empty($firstRoom['harga_bulanan']) ? (float) $firstRoom['harga_bulanan'] : null;
+
+            // Collect all price tiers across all rooms to build thumbnail range
+            $allPrices = [];
+            foreach ($paket_harian as $room) {
+                foreach (['harga_harian','harga_mingguan','harga_bulanan','harga_tahunan'] as $pKey) {
+                    $v = isset($room[$pKey]) ? (float) $room[$pKey] : 0;
+                    if ($v > 0) $allPrices[] = $v;
+                }
+            }
+            if (empty($allPrices)) {
+                $allPrices = [$h_harian > 0 ? $h_harian : 0];
+                if ($h_bulanan > 0) $allPrices[] = $h_bulanan;
+            }
+
+            $minPrice = min($allPrices);
+            $maxPrice = max($allPrices);
 
             $formatPrice = function($price) {
                 if ($price >= 1000000) return round($price / 1000000, 1) . 'JT';
@@ -229,7 +371,7 @@ class FasilitasController extends Controller
                 return $price;
             };
 
-            $harga_thumbnail = (count($prices) > 1) 
+            $harga_thumbnail = ($minPrice !== $maxPrice)
                 ? "Mulai " . $formatPrice($minPrice) . " - " . $formatPrice($maxPrice)
                 : "Rp " . number_format($h_harian, 0, ',', '.');
 
@@ -241,10 +383,14 @@ class FasilitasController extends Controller
                 'harga' => $h_harian,
                 'harga_bulanan' => $h_bulanan,
                 'max_dewasa' => $request->tipe === 'asrama'
-                    ? (int) $request->max_dewasa_asrama
+                    ? (int) ($firstRoom['max_dewasa'] ?? 1)
                     : (int) $request->max_dewasa_aula,
-                'max_anak' => $request->max_anak,
+                'max_anak' => (int) ($firstRoom['max_anak'] ?? 0),
                 'max_durasi_harian' => $request->max_durasi_harian,
+                'max_durasi_hari' => $request->max_durasi_hari ? (int) $request->max_durasi_hari : null,
+                'max_durasi_minggu' => $request->max_durasi_minggu ? (int) $request->max_durasi_minggu : null,
+                'max_durasi_bulan' => $request->max_durasi_bulan ? (int) $request->max_durasi_bulan : null,
+                'max_durasi_tahun' => $request->max_durasi_tahun ? (int) $request->max_durasi_tahun : null,
                 'jumlah_kamar'     => (int) $request->jumlah_kamar, 
                 'jam_operasional' => $request->jam_operasional,
                 'image' => $imageName, 

@@ -12,6 +12,7 @@ use App\Http\Controllers\KontrolJadwalController;
 use App\Http\Controllers\RiwayatController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\RoomAvailabilityController;
 
 // --- ROUTE ASLI KAMU (TIDAK DIUBAH) ---
 
@@ -26,11 +27,18 @@ Route::get('/formBooking', function (\Illuminate\Http\Request $request) {
     return view('formBooking', compact('facilities', 'selectedId'));
 })->name('formBooking');
 
+Route::get('/fasilitas/{id}/detail', function ($id) {
+    $fasilitas = \App\Models\Fasilitas::findOrFail($id);
+    return view('detailFasilitas', compact('fasilitas'));
+})->name('fasilitas.detail');
+
 Route::post('/bookings/store', [BookingController::class, 'store'])->name('bookings.store');
 Route::get('/receipt/public/{id}', [BookingController::class, 'publicReceipt'])->name('public.receipt');
 
 Route::get('/schedule_booking', [ScheduleController::class, 'index'])->name('schedule_booking');
 Route::get('/schedule_booking/data', [KontrolJadwalController::class, 'publicCalendarData'])->name('schedule_booking.data');
+
+Route::get('/api/check-room-availability', [RoomAvailabilityController::class, 'checkAvailability'])->name('api.check-room-availability');
 
 // Bagian Admin
 // -- form login
@@ -131,7 +139,8 @@ Route::middleware(['admin.access'])->group(function () {
     // Route edit/update/create perlu can_edit (readonly check)
     Route::middleware(['admin.access:can_edit'])->group(function () {
         Route::get('/admin/dashboard/create/createFasilitas', function () {
-            return view('admin.dashboard.create.createFasilitas');
+            $roomTypes = \App\Models\GlobalRoomType::orderBy('name')->get(['id', 'name']);
+            return view('admin.dashboard.create.createFasilitas', compact('roomTypes'));
         })->name('dashboardcreateFasilitas');
         
         Route::post('/admin/fasilitas/store', [FasilitasController::class, 'store'])->name('fasilitas.store');
@@ -140,6 +149,12 @@ Route::middleware(['admin.access'])->group(function () {
         Route::put('/admin/fasilitas/paket-harian/{id}', [FasilitasController::class, 'updatePaketHarian'])->name('fasilitas.updatePaketHarian');
         Route::delete('/admin/fasilitas/delete/{id}', [FasilitasController::class, 'destroy'])->name('fasilitas.destroy');
         Route::put('/admin/update/{id_log}', [AdminsController::class, 'update'])->name('admin.update');
+
+        // Global Room Types CRUD (AJAX)
+        Route::get('/admin/room-types', [\App\Http\Controllers\GlobalRoomTypeController::class, 'index'])->name('roomTypes.index');
+        Route::post('/admin/room-types', [\App\Http\Controllers\GlobalRoomTypeController::class, 'store'])->name('roomTypes.store');
+        Route::put('/admin/room-types/{id}', [\App\Http\Controllers\GlobalRoomTypeController::class, 'update'])->name('roomTypes.update');
+        Route::delete('/admin/room-types/{id}', [\App\Http\Controllers\GlobalRoomTypeController::class, 'destroy'])->name('roomTypes.destroy');
     });
 
     Route::get('/admin/manage/{id_log}', [AdminsController::class, 'manage'])->name('admin.manage');
