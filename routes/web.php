@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 // --- TAMBAHKAN IMPORT CONTROLLER DI SINI ---
-use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\AdminsController;
@@ -13,6 +12,7 @@ use App\Http\Controllers\RiwayatController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RoomAvailabilityController;
+use App\Http\Controllers\ValidationController;
 
 // --- ROUTE ASLI KAMU (TIDAK DIUBAH) ---
 
@@ -149,6 +149,8 @@ Route::get('/schedule_booking', [ScheduleController::class, 'index'])->name('sch
 Route::get('/schedule_booking/data', [KontrolJadwalController::class, 'publicCalendarData'])->name('schedule_booking.data');
 
 Route::get('/api/check-room-availability', [RoomAvailabilityController::class, 'checkAvailability'])->name('api.check-room-availability');
+Route::get('/api/validate-whatsapp', [ValidationController::class, 'whatsapp'])->name('api.validate.whatsapp');
+Route::get('/api/validate-email', [ValidationController::class, 'email'])->name('api.validate.email');
 
 // Bagian Admin
 // -- form login

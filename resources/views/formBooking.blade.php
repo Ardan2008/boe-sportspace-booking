@@ -821,40 +821,128 @@
                         <label class="text-[9px] font-black uppercase tracking-widest ml-1 mb-2 flex items-center gap-1 transition-colors"
                             :class="step4Errors.whatsapp?'text-red-500':step4Success.whatsapp?'text-emerald-500':'text-gray-400'">
                             Nomor WhatsApp <span class="text-red-500">*</span>
+                            <!-- Status badge -->
+                            <span x-show="step4FieldStatus.whatsapp==='checking'"
+                                  class="ml-auto text-[8px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <svg class="w-2.5 h-2.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                                </svg>
+                                Mengecek...
+                            </span>
+                            <span x-show="step4FieldStatus.whatsapp==='valid'"
+                                  class="ml-auto text-[8px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                                ✓ Aktif
+                            </span>
+                            <span x-show="step4FieldStatus.whatsapp==='invalid'"
+                                  class="ml-auto text-[8px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                                ✗ Tidak Aktif
+                            </span>
+                            <span x-show="step4FieldStatus.whatsapp==='unchecked'"
+                                  class="ml-auto text-[8px] font-black bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">
+                                ⚠ Tidak Terverifikasi
+                            </span>
                         </label>
                         <div class="relative">
-                            <input type="text" x-model="step4Whatsapp" @input="s4ValidateField('whatsapp')" placeholder="08xxxxxxxxx" maxlength="14"
-                                class="w-full px-5 py-3.5 bg-gray-50 border-2 rounded-2xl outline-none font-medium text-sm transition-all pr-10"
-                                :class="step4Errors.whatsapp?'field-error':step4Success.whatsapp?'field-ok':'border-gray-200 focus:border-blue-500 focus:bg-white'">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2" x-show="step4Errors.whatsapp">
-                                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            </span>
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2" x-show="step4Success.whatsapp" x-transition>
-                                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <input type="text" x-model="step4Whatsapp"
+                                   @input="s4ValidateField('whatsapp')"
+                                   placeholder="08xxxxxxxxx" maxlength="14"
+                                   class="w-full px-5 py-3.5 bg-gray-50 border-2 rounded-2xl outline-none font-medium text-sm transition-all pr-12"
+                                   :class="step4Errors.whatsapp?'field-error':step4Success.whatsapp?'field-ok':'border-gray-200 focus:border-blue-500 focus:bg-white'">
+
+                            <!-- Icon status di kanan -->
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2">
+                                <!-- Loading spinner -->
+                                <svg x-show="step4FieldStatus.whatsapp==='checking'"
+                                     class="w-4 h-4 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                                </svg>
+                                <!-- Error icon -->
+                                <svg x-show="step4Errors.whatsapp && step4FieldStatus.whatsapp!=='checking'"
+                                     class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <!-- Success icon -->
+                                <svg x-show="step4Success.whatsapp && step4FieldStatus.whatsapp!=='checking'"
+                                     class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
                             </span>
                         </div>
-                        <p x-show="step4Errors.whatsapp" x-transition class="text-[10px] text-red-500 font-semibold mt-1.5 ml-1">Nomor valid 9–14 digit angka</p>
-                        <p x-show="step4Success.whatsapp" x-transition class="text-[10px] text-emerald-600 font-semibold mt-1.5 ml-1">Nomor valid ✓</p>
+                        <!-- Dynamic message -->
+                        <p x-show="step4FieldMsg.whatsapp" x-transition
+                           class="text-[10px] font-semibold mt-1.5 ml-1"
+                           :class="{
+                               'text-red-500':    step4Errors.whatsapp,
+                               'text-emerald-600':step4Success.whatsapp && step4FieldStatus.whatsapp==='valid',
+                               'text-amber-600':  step4FieldStatus.whatsapp==='unchecked'
+                           }"
+                           x-text="step4FieldMsg.whatsapp"></p>
                     </div>
 
                     <div :class="{'animate-shake': step4Shake.email}">
                         <label class="text-[9px] font-black uppercase tracking-widest ml-1 mb-2 flex items-center gap-1 transition-colors"
                             :class="step4Errors.email?'text-red-500':step4Success.email?'text-emerald-500':'text-gray-400'">
                             Email Aktif <span class="text-red-500">*</span>
+                            <!-- Status badge -->
+                            <span x-show="step4FieldStatus.email==='checking'"
+                                  class="ml-auto text-[8px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <svg class="w-2.5 h-2.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                                </svg>
+                                Mengecek...
+                            </span>
+                            <span x-show="step4FieldStatus.email==='valid'"
+                                  class="ml-auto text-[8px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                                ✓ Aktif
+                            </span>
+                            <span x-show="step4FieldStatus.email==='invalid'"
+                                  class="ml-auto text-[8px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                                ✗ Tidak Aktif
+                            </span>
+                            <span x-show="step4FieldStatus.email==='unchecked'"
+                                  class="ml-auto text-[8px] font-black bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">
+                                ⚠ Tidak Terverifikasi
+                            </span>
                         </label>
                         <div class="relative">
-                            <input type="email" x-model="step4Email" @input="s4ValidateField('email')" placeholder="nama@email.com"
-                                class="w-full px-5 py-3.5 bg-gray-50 border-2 rounded-2xl outline-none font-medium text-sm transition-all pr-10"
-                                :class="step4Errors.email?'field-error':step4Success.email?'field-ok':'border-gray-200 focus:border-blue-500 focus:bg-white'">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2" x-show="step4Errors.email">
-                                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            </span>
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2" x-show="step4Success.email" x-transition>
-                                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <input type="email" x-model="step4Email"
+                                   @input="s4ValidateField('email')"
+                                   placeholder="nama@email.com"
+                                   class="w-full px-5 py-3.5 bg-gray-50 border-2 rounded-2xl outline-none font-medium text-sm transition-all pr-12"
+                                   :class="step4Errors.email?'field-error':step4Success.email?'field-ok':'border-gray-200 focus:border-blue-500 focus:bg-white'">
+
+                            <!-- Icon status di kanan -->
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2">
+                                <!-- Loading spinner -->
+                                <svg x-show="step4FieldStatus.email==='checking'"
+                                     class="w-4 h-4 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                                </svg>
+                                <!-- Error icon -->
+                                <svg x-show="step4Errors.email && step4FieldStatus.email!=='checking'"
+                                     class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <!-- Success icon -->
+                                <svg x-show="step4Success.email && step4FieldStatus.email!=='checking'"
+                                     class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
                             </span>
                         </div>
-                        <p x-show="step4Errors.email" x-transition class="text-[10px] text-red-500 font-semibold mt-1.5 ml-1">Format email tidak sesuai</p>
-                        <p x-show="step4Success.email" x-transition class="text-[10px] text-emerald-600 font-semibold mt-1.5 ml-1">Email valid ✓</p>
+                        <!-- Dynamic message -->
+                        <p x-show="step4FieldMsg.email" x-transition
+                           class="text-[10px] font-semibold mt-1.5 ml-1"
+                           :class="{
+                               'text-red-500':    step4Errors.email,
+                               'text-emerald-600':step4Success.email && step4FieldStatus.email==='valid',
+                               'text-amber-600':  step4FieldStatus.email==='unchecked'
+                           }"
+                           x-text="step4FieldMsg.email"></p>
                     </div>
                 </div>
 
@@ -1113,6 +1201,12 @@ document.addEventListener('alpine:init', () => {
         step4Errors:  { name:false,provinsi:false,kabupaten:false,whatsapp:false,email:false,foto:false },
         step4Success: { name:false,provinsi:false,kabupaten:false,whatsapp:false,email:false,foto:false },
         step4Shake:   { name:false,provinsi:false,kabupaten:false,whatsapp:false,email:false,foto:false },
+
+        // ── Field checking state ──
+        step4FieldStatus: { whatsapp: 'idle', email: 'idle' },
+        step4FieldMsg: { whatsapp: '', email: '' },
+        _waTimer: null,
+        _emailTimer: null,
 
         packageLabels: {
             harian:   { title:'Harian',   desc:'Cocok untuk kebutuhan jangka pendek, dihitung per hari.' },
@@ -1715,18 +1809,98 @@ document.addEventListener('alpine:init', () => {
         },
         s4TriggerSuccess(f) { this.step4Errors[f] = false; this.step4Success[f] = true; this.step4Shake[f] = false; },
 
+        // ── Enhanced validation dengan aktifitas check ──────────────────
         s4ValidateField(f) {
             if (f === 'name') {
-                const t = this.step4Name.trim(); if (!t) { this.step4Errors.name=false;this.step4Success.name=false;return; }
-                (/^[a-zA-Z\s]{3,}$/.test(t) ? this.s4TriggerSuccess : this.s4TriggerError).call(this,'name');
+                const t = this.step4Name.trim();
+                if (!t) { this.step4Errors.name=false; this.step4Success.name=false; return; }
+                (/^[a-zA-Z\s]{3,}$/.test(t)
+                    ? this.s4TriggerSuccess
+                    : this.s4TriggerError).call(this, 'name');
             }
+
             if (f === 'whatsapp') {
-                const n = this.step4Whatsapp.trim(); if (!n) { this.step4Errors.whatsapp=false;this.step4Success.whatsapp=false;return; }
-                (/^[0-9]{9,14}$/.test(n) ? this.s4TriggerSuccess : this.s4TriggerError).call(this,'whatsapp');
+                const n = this.step4Whatsapp.trim();
+                if (!n) { this.step4Errors.whatsapp=false; this.step4Success.whatsapp=false;
+                          this.step4FieldStatus.whatsapp='idle'; return; }
+
+                // Format dasar dulu
+                if (!/^[0-9]{9,14}$/.test(n)) {
+                    this.s4TriggerError('whatsapp');
+                    this.step4FieldStatus.whatsapp = 'invalid-format';
+                    this.step4FieldMsg.whatsapp = 'Nomor valid 9–14 digit angka';
+                    return;
+                }
+
+                // Debounce check aktif
+                clearTimeout(this._waTimer);
+                this._waTimer = setTimeout(() => this.s4CheckWhatsapp(n), 900);
             }
+
             if (f === 'email') {
-                const e = this.step4Email.trim(); if (!e) { this.step4Errors.email=false;this.step4Success.email=false;return; }
-                (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) ? this.s4TriggerSuccess : this.s4TriggerError).call(this,'email');
+                const e = this.step4Email.trim();
+                if (!e) { this.step4Errors.email=false; this.step4Success.email=false;
+                          this.step4FieldStatus.email='idle'; return; }
+
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+                    this.s4TriggerError('email');
+                    this.step4FieldStatus.email = 'invalid-format';
+                    this.step4FieldMsg.email = 'Format email tidak sesuai';
+                    return;
+                }
+
+                // Debounce check MX / deliverability
+                clearTimeout(this._emailTimer);
+                this._emailTimer = setTimeout(() => this.s4CheckEmail(e), 900);
+            }
+        },
+
+        // ── Cek nomor WA via backend proxy ──────────────────────────────
+        async s4CheckWhatsapp(nomor) {
+            this.step4FieldStatus.whatsapp = 'checking';
+            try {
+                const res = await fetch('/api/validate-whatsapp?nomor=' + encodeURIComponent(nomor), {
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' }
+                });
+                const data = await res.json();
+                if (data.valid) {
+                    this.s4TriggerSuccess('whatsapp');
+                    this.step4FieldStatus.whatsapp = 'valid';
+                    this.step4FieldMsg.whatsapp = 'Nomor WhatsApp aktif ✓';
+                } else {
+                    this.s4TriggerError('whatsapp');
+                    this.step4FieldStatus.whatsapp = 'invalid';
+                    this.step4FieldMsg.whatsapp = data.message || 'Nomor WhatsApp tidak aktif / tidak terdaftar';
+                }
+            } catch (e) {
+                // Fallback: anggap valid jika API error (jangan blokir user)
+                this.s4TriggerSuccess('whatsapp');
+                this.step4FieldStatus.whatsapp = 'unchecked';
+                this.step4FieldMsg.whatsapp = 'Format valid (cek aktifitas tidak tersedia)';
+            }
+        },
+
+        // ── Cek email via Abstract API (MX + deliverability) ─────────────
+        async s4CheckEmail(email) {
+            this.step4FieldStatus.email = 'checking';
+            try {
+                const res = await fetch('/api/validate-email?email=' + encodeURIComponent(email), {
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' }
+                });
+                const data = await res.json();
+                if (data.valid) {
+                    this.s4TriggerSuccess('email');
+                    this.step4FieldStatus.email = 'valid';
+                    this.step4FieldMsg.email = 'Email dapat dikirim ✓';
+                } else {
+                    this.s4TriggerError('email');
+                    this.step4FieldStatus.email = 'invalid';
+                    this.step4FieldMsg.email = data.message || 'Email tidak aktif / tidak bisa menerima pesan';
+                }
+            } catch (e) {
+                this.s4TriggerSuccess('email');
+                this.step4FieldStatus.email = 'unchecked';
+                this.step4FieldMsg.email = 'Format valid (cek aktifitas tidak tersedia)';
             }
         },
 

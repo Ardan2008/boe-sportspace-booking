@@ -349,15 +349,6 @@ class BookingController extends Controller
         ]);
     }
 
-    public function downloadReceipt($id)
-    {
-        $booking = \App\Models\Booking::with(['penyewa', 'fasilitas'])->findOrFail($id);
-        
-        $pdf = Pdf::loadView('pdf.receipt', compact('booking'));
-        
-        return $pdf->download('Kwitansi_BOE_' . $booking->id . '.pdf');
-    }
-
     public function publicReceipt($id)
     {
         // Public method to stream the receipt for sharing via WA link
