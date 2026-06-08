@@ -87,7 +87,7 @@ class BookingController extends Controller
             })
             ->exists();
 
-        $isBlocked = \App\Models\JadwalBlokir::where('fasilitas_id', $request->fasilitas_id)
+        $blockedRecords = \App\Models\JadwalBlokir::where('fasilitas_id', $request->fasilitas_id)
             ->where(function ($q) use ($tgl_mulai, $tgl_selesai) {
                 $q->whereBetween('tgl_mulai', [$tgl_mulai, $tgl_selesai])
                   ->orWhereBetween('tgl_selesai', [$tgl_mulai, $tgl_selesai])
@@ -96,7 +96,27 @@ class BookingController extends Controller
                          ->where('tgl_selesai', '>=', $tgl_selesai);
                   });
             })
-            ->exists();
+            ->get();
+
+        $isBlocked = false;
+        $requestedRooms = $request->input('allocated_rooms', []);
+        foreach ($blockedRecords as $br) {
+            $brRooms = $br->nomor_kamar;
+            if (empty($brRooms)) {
+                $isBlocked = true;
+                break;
+            }
+            if (!empty($requestedRooms)) {
+                $conflict = array_intersect($brRooms, $requestedRooms);
+                if (!empty($conflict)) {
+                    $isBlocked = true;
+                    break;
+                }
+            } else {
+                $isBlocked = true;
+                break;
+            }
+        }
 
         if ($isOverlapping || $isBlocked) {
             return response()->json([

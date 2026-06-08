@@ -64,6 +64,16 @@ php artisan test --filter=SomeTest  # single test
 - Sends email on approve/reject (`ApproveBookingMail` / `RejectBookingMail`) — sent **synchronously** (not queued)
 - `php artisan storage:link` required for public access to uploaded images
 
+### WhatsApp & Email Validation
+
+| Service | Method | Details |
+|---|---|---|
+| **WhatsApp** | Baileys Node.js (`baileys-server/`) | `npm start --prefix baileys-server` — connects to WhatsApp Web via `@whiskeysockets/baileys`. First run requires scanning QR code in terminal. Exposes HTTP on port 3001 (config: `BAILEYS_PORT`). Endpoint: `GET /check?nomor=628xxx`. Auto-reconnects on disconnect. |
+| **Email** | PHP native | `filter_var()` + `checkdnsrr()` for MX records + disposable domain blocklist. No external API key needed. |
+
+**To run Baileys:** `composer baileys` or included automatically in `composer dev`.
+**Pertama kali:** QR code muncul di terminal — scan dengan WhatsApp mobile untuk menghubungkan.
+
 ## Important conventions
 
 - **No comments in code** — avoid adding PHP/BLADE/JS comments unless necessary.

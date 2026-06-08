@@ -48,38 +48,103 @@
         
         <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+        <script>
+            window.__facilityRooms = @json($facilities->mapWithKeys(fn($f) => [$f->id => $f->paket_harian ?? []])->toArray());
+        </script>
+
         <section x-data="{ 
             openPreview: false, 
             previewImg: '', 
             previewTitle: '',
             maintenanceModal: false,
             maintData: { id: null, name: '', start_date: '', end_date: '', reason: '' },
+            selectedRooms: [],
+            selectAllRooms: false,
+            reasonLen: 0,
+            reasonMax: 255,
+            dateStartErr: '',
+            dateEndErr: '',
+            reasonErr: '',
+            roomErr: '',
+            durationDays: 0,
+            get facilityRoomList() {
+                const data = window.__facilityRooms?.[this.maintData.id];
+                if (!data || !Array.isArray(data)) return [];
+                const list = [];
+                data.forEach(rt => {
+                    const rooms = Array.isArray(rt.nomor_kamar) ? rt.nomor_kamar : [];
+                    rooms.forEach(nr => {
+                        list.push({ room: nr, type: rt.tipe || 'Tipe', blok: rt.kode_blok || '' });
+                    });
+                });
+                return list;
+            },
+            get reasonLeft()   { return this.reasonMax - this.reasonLen; },
+            get reasonPct()    { return Math.min(this.reasonLen / this.reasonMax * 100, 100); },
+            get reasonColor()  {
+                if (this.reasonLen === 0)              return '#e2e8f0';
+                if (this.reasonLen < 20)               return '#f97316';
+                if (this.reasonLeft < 30)              return '#ef4444';
+                return '#22c55e';
+            },
+            toggleAllRooms() {
+                this.selectAllRooms = !this.selectAllRooms;
+                this.roomErr = '';
+                if (this.selectAllRooms) {
+                    this.selectedRooms = [];
+                } else {
+                    this.selectedRooms = this.facilityRoomList.map(r => r.room);
+                }
+            },
             openMaintenanceModal(id, name) {
                 this.maintData = { id: id, name: name, start_date: new Date().toISOString().split('T')[0], end_date: '', reason: '' };
+                this.selectedRooms = [];
+                this.selectAllRooms = false;
+                this.reasonLen = 0;
+                this.dateStartErr = '';
+                this.dateEndErr = '';
+                this.reasonErr = '';
+                this.roomErr = '';
+                this.durationDays = 0;
                 this.maintenanceModal = true;
             },
             submitMaintenance() {
                 const url = `/admin/fasilitas/${this.maintData.id}/maintenance`;
+                const body = {
+                    tgl_mulai: this.maintData.start_date,
+                    tgl_selesai: this.maintData.end_date,
+                    tujuan: this.maintData.reason
+                };
+                if (!this.selectAllRooms && this.selectedRooms.length > 0) {
+                    body.nomor_kamar = this.selectedRooms;
+                }
+                Swal.fire({
+                    title: 'Memproses...',
+                    text: 'Mohon tunggu sebentar.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    willOpen: () => Swal.showLoading()
+                });
                 fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({
-                        tgl_mulai: this.maintData.start_date,
-                        tgl_selesai: this.maintData.end_date,
-                        tujuan: this.maintData.reason
-                    })
+                    body: JSON.stringify(body)
                 })
                 .then(res => res.json())
                 .then(data => {
+                    Swal.close();
                     if (data.success) {
                         Swal.fire({
                             title: 'Berhasil!',
                             text: data.message,
                             icon: 'success',
-                            confirmButtonColor: '#ef4444'
+                            confirmButtonColor: '#ef4444',
+                            timer: 1500,
+                            showConfirmButton: false
                         }).then(() => location.reload());
                     } else {
                         Swal.fire({
@@ -91,6 +156,7 @@
                     }
                 })
                 .catch(err => {
+                    Swal.close();
                     Swal.fire({
                         title: 'Error!',
                         text: 'Terjadi kesalahan sistem.',
@@ -121,6 +187,14 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         const url = `/admin/fasilitas/${id}/cancel-maintenance`;
+                        Swal.fire({
+                            title: 'Membatalkan...',
+                            text: 'Mohon tunggu sebentar.',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            showConfirmButton: false,
+                            willOpen: () => Swal.showLoading()
+                        });
                         fetch(url, {
                             method: 'POST',
                             headers: {
@@ -130,12 +204,15 @@
                         })
                         .then(res => res.json())
                         .then(data => {
+                            Swal.close();
                             if (data.success) {
                                 Swal.fire({
                                     title: 'Berhasil!',
                                     text: data.message,
                                     icon: 'success',
-                                    confirmButtonColor: '#1265A8'
+                                    confirmButtonColor: '#1265A8',
+                                    timer: 1500,
+                                    showConfirmButton: false
                                 }).then(() => location.reload());
                             } else {
                                 Swal.fire({
@@ -147,6 +224,7 @@
                             }
                         })
                         .catch(err => {
+                            Swal.close();
                             Swal.fire({
                                 title: 'Error!',
                                 text: 'Terjadi kesalahan sistem.',
@@ -156,7 +234,63 @@
                         });
                     }
                 });
-            }
+            },
+            validateStart() {
+                const today = new Date(); today.setHours(0,0,0,0);
+                const val   = new Date(this.maintData.start_date);
+                if (!this.maintData.start_date) {
+                    this.dateStartErr = 'Tanggal mulai wajib diisi.'; return false;
+                }
+                if (val < today) {
+                    this.dateStartErr = 'Tanggal mulai tidak boleh di masa lalu.'; return false;
+                }
+                this.dateStartErr = '';
+                this.calcDuration();
+                return true;
+            },
+            validateEnd() {
+                if (!this.maintData.end_date) {
+                    this.dateEndErr = 'Tanggal selesai wajib diisi.'; return false;
+                }
+                const start = new Date(this.maintData.start_date);
+                const end   = new Date(this.maintData.end_date);
+                if (end < start) {
+                    this.dateEndErr = 'Tanggal selesai tidak boleh sebelum tanggal mulai.'; return false;
+                }
+                this.dateEndErr = '';
+                this.calcDuration();
+                return true;
+            },
+            validateReason() {
+                if (this.maintData.reason.trim().length < 10) {
+                    this.reasonErr = 'Alasan minimal 10 karakter.'; return false;
+                }
+                this.reasonErr = '';
+                return true;
+            },
+            calcDuration() {
+                if (this.maintData.start_date && this.maintData.end_date) {
+                    const s = new Date(this.maintData.start_date);
+                    const e = new Date(this.maintData.end_date);
+                    const d = Math.ceil((e - s) / (1000 * 60 * 60 * 24)) + 1;
+                    this.durationDays = d > 0 ? d : 0;
+                }
+            },
+            validateRooms() {
+                if (this.facilityRoomList.length > 0 && !this.selectAllRooms && this.selectedRooms.length === 0) {
+                    this.roomErr = 'Pilih minimal satu kamar atau gunakan &quot;Semua Kamar&quot;.';
+                    return false;
+                }
+                this.roomErr = '';
+                return true;
+            },
+            submitWithValidation() {
+                const s = this.validateStart();
+                const e = this.validateEnd();
+                const r = this.validateReason();
+                const rm = this.validateRooms();
+                if (s && e && r && rm) this.submitMaintenance();
+            },
         }">
             <div class="flex items-center justify-between mb-8">
                 <div class="flex flex-col gap-1.5 p-2">
@@ -249,7 +383,7 @@
                                 
                                 <div x-data="{ active: {{ $item->is_maintenance ? 'true' : 'false' }} }"
                                     class="relative inline-flex items-center cursor-pointer"
-                                    @click="active = !active; handleMaintenanceToggle({{ $item->id }}, '{{ addslashes($item->nama) }}', !active)">
+                                    @click="(() => { const a = active; if (!a) active = true; handleMaintenanceToggle({{ $item->id }}, '{{ addslashes($item->nama) }}', a); })()">
                                     
                                     {{-- Track --}}
                                     <div class="w-10 h-5 rounded-full transition-all duration-300 relative"
@@ -360,75 +494,7 @@
                 x-transition:leave="transition ease-in duration-200"
                 x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0"
-                x-data="{
-                    reasonLen: 0,
-                    reasonMax: 255,
-                    dateStartErr: '',
-                    dateEndErr: '',
-                    reasonErr: '',
-                    durationDays: 0,
-
-                    get reasonLeft()   { return this.reasonMax - this.reasonLen; },
-                    get reasonPct()    { return Math.min(this.reasonLen / this.reasonMax * 100, 100); },
-                    get reasonColor()  {
-                        if (this.reasonLen === 0)              return '#e2e8f0';
-                        if (this.reasonLen < 20)               return '#f97316';
-                        if (this.reasonLeft < 30)              return '#ef4444';
-                        return '#22c55e';
-                    },
-
-                    validateStart() {
-                        const today = new Date(); today.setHours(0,0,0,0);
-                        const val   = new Date(this.maintData.start_date);
-                        if (!this.maintData.start_date) {
-                            this.dateStartErr = 'Tanggal mulai wajib diisi.'; return false;
-                        }
-                        if (val < today) {
-                            this.dateStartErr = 'Tanggal mulai tidak boleh di masa lalu.'; return false;
-                        }
-                        this.dateStartErr = '';
-                        this.calcDuration();
-                        return true;
-                    },
-
-                    validateEnd() {
-                        if (!this.maintData.end_date) {
-                            this.dateEndErr = 'Tanggal selesai wajib diisi.'; return false;
-                        }
-                        const start = new Date(this.maintData.start_date);
-                        const end   = new Date(this.maintData.end_date);
-                        if (end < start) {
-                            this.dateEndErr = 'Tanggal selesai tidak boleh sebelum tanggal mulai.'; return false;
-                        }
-                        this.dateEndErr = '';
-                        this.calcDuration();
-                        return true;
-                    },
-
-                    validateReason() {
-                        if (this.maintData.reason.trim().length < 10) {
-                            this.reasonErr = 'Alasan minimal 10 karakter.'; return false;
-                        }
-                        this.reasonErr = '';
-                        return true;
-                    },
-
-                    calcDuration() {
-                        if (this.maintData.start_date && this.maintData.end_date) {
-                            const s = new Date(this.maintData.start_date);
-                            const e = new Date(this.maintData.end_date);
-                            const d = Math.ceil((e - s) / (1000 * 60 * 60 * 24)) + 1;
-                            this.durationDays = d > 0 ? d : 0;
-                        }
-                    },
-
-                    submitWithValidation() {
-                        const s = this.validateStart();
-                        const e = this.validateEnd();
-                        const r = this.validateReason();
-                        if (s && e && r) this.submitMaintenance();
-                    }
-                }">
+                >
 
                 <div class="flex items-center justify-center min-h-screen p-4">
                     <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="maintenanceModal = false"></div>
@@ -509,6 +575,38 @@
                                 </p>
                             </div>
 
+                            {{-- Pilih Kamar — muncul jika fasilitas memiliki data kamar --}}
+                            <div x-show="facilityRoomList.length > 0"
+                                class="space-y-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest">Pilih Kamar</label>
+                                    <button type="button" @click="toggleAllRooms()"
+                                        class="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full transition-all"
+                                        :class="selectAllRooms ? 'bg-blue-100 text-blue-600 border border-blue-200' : 'bg-slate-200 text-slate-500 border border-slate-300'"
+                                        x-text="selectAllRooms ? 'Semua Kamar' : 'Pilih Individual'"></button>
+                                </div>
+                                <div x-show="!selectAllRooms" x-transition
+                                    class="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+                                    <template x-for="(r, i) in facilityRoomList" :key="i">
+                                        <label class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl border border-slate-100 cursor-pointer hover:border-blue-200 transition-all"
+                                            :class="selectedRooms.includes(r.room) ? 'border-blue-400 bg-blue-50' : ''">
+                                            <input type="checkbox"
+                                                :value="r.room"
+                                                x-model="selectedRooms"
+                                                @change="roomErr = ''"
+                                                class="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                            <span class="text-[11px] font-bold text-slate-700">
+                                                <span x-text="r.type"></span>
+                                                <span x-show="r.blok" x-text="' (Blok ' + r.blok + ')'"></span>
+                                                — Kamar <span x-text="r.room"></span>
+                                            </span>
+                                        </label>
+                                    </template>
+                                </div>
+                                <p x-show="selectAllRooms" class="text-[10px] font-medium text-slate-400">Semua kamar akan diblokir untuk perbaikan.</p>
+                                <p class="text-[10px] font-bold text-red-500 px-1 min-h-[14px]" x-text="roomErr"></p>
+                            </div>
+
                             {{-- Alasan --}}
                             <div class="space-y-1.5">
                                 <div class="flex items-center justify-between px-1">
@@ -546,7 +644,7 @@
                             </div>
 
                             {{-- Summary validasi — muncul jika ada error saat submit --}}
-                            <div x-show="dateStartErr || dateEndErr || reasonErr"
+                            <div x-show="dateStartErr || dateEndErr || reasonErr || roomErr"
                                 class="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl">
                                 <svg class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
@@ -557,19 +655,20 @@
                                         <li x-show="dateStartErr" class="text-[11px] text-red-500 font-semibold" x-text="'• ' + dateStartErr"></li>
                                         <li x-show="dateEndErr"   class="text-[11px] text-red-500 font-semibold" x-text="'• ' + dateEndErr"></li>
                                         <li x-show="reasonErr"    class="text-[11px] text-red-500 font-semibold" x-text="'• ' + reasonErr"></li>
+                                        <li x-show="roomErr"     class="text-[11px] text-red-500 font-semibold" x-text="'• ' + roomErr"></li>
                                     </ul>
                                 </div>
                             </div>
 
                             {{-- Action buttons --}}
                             <div class="pt-2 flex items-center gap-3">
-                                <button type="button" @click="maintenanceModal = false; dateStartErr = ''; dateEndErr = ''; reasonErr = ''; durationDays = 0; reasonLen = 0;"
+                                <button type="button" @click="maintenanceModal = false; dateStartErr = ''; dateEndErr = ''; reasonErr = ''; roomErr = ''; durationDays = 0; reasonLen = 0;"
                                     class="flex-1 px-6 py-4 bg-slate-100 text-slate-500 rounded-2xl border border-slate-200 font-bold text-sm hover:bg-slate-200 transition-all">
                                     Batal
                                 </button>
                                 <button type="submit"
-                                    :disabled="!!(dateStartErr || dateEndErr || reasonErr)"
-                                    :class="(dateStartErr || dateEndErr || reasonErr) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-red-700 hover:shadow-lg hover:shadow-red-600/30'"
+                                    :disabled="!!(dateStartErr || dateEndErr || reasonErr || roomErr)"
+                                    :class="(dateStartErr || dateEndErr || reasonErr || roomErr) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-red-700 hover:shadow-lg hover:shadow-red-600/30'"
                                     class="flex-[2] px-6 py-4 bg-red-600 text-white rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>

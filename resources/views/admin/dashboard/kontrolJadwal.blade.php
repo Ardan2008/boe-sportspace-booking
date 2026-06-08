@@ -830,7 +830,7 @@
             else if (statusClass === 'status-pending')   stats.pending++;
             else if (statusClass === 'status-booked')    stats.booked++;
             else if (statusClass === 'status-blocked')   stats.blocked++;
-            else if (statusClass === 'status-Maintenance') stats.Maintenance++;
+            else if (statusClass === 'status-maintenance') stats.Maintenance++;
         }
 
         const items = [

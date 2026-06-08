@@ -7,15 +7,24 @@ use Illuminate\Support\Facades\Cache;
 
 class ValidationController extends Controller
 {
+    private function baileysPort()
+    {
+        return env('BAILEYS_PORT', 3001);
+    }
+
+    private function baileysBase()
+    {
+        return 'http://localhost:' . $this->baileysPort();
+    }
+
     /**
-     * Cek nomor WA via WABLAS / Fonnte / WA Gateway lokal
-     * Ganti endpoint & token sesuai provider yang dipakai.
+     * Cek nomor WA via Baileys Node.js service (WhatsApp Web API).
+     * Jalankan: npm start --prefix baileys-server
      */
     public function whatsapp(Request $request)
     {
         $nomor = preg_replace('/\D/', '', $request->query('nomor', ''));
 
-        // Normalisasi: 08xx → 628xx
         if (str_starts_with($nomor, '0')) {
             $nomor = '62' . substr($nomor, 1);
         }
@@ -24,42 +33,40 @@ class ValidationController extends Controller
             return response()->json(['valid' => false, 'message' => 'Format nomor tidak sesuai']);
         }
 
-        // Cache 10 menit agar tidak spam API
+        $base = $this->baileysBase();
         $cacheKey = 'wa_valid_' . $nomor;
-        return Cache::remember($cacheKey, 600, function () use ($nomor) {
+        return Cache::remember($cacheKey, 600, function () use ($nomor, $base) {
             try {
-                // ── Opsi A: Fonnte (https://fonnte.com) ──────────────────
-                // $res = Http::withToken(env('FONNTE_TOKEN'))
-                //     ->timeout(5)
-                //     ->post('https://api.fonnte.com/validate', ['target' => $nomor]);
-                // $data = $res->json();
-                // $valid = $data['status'] ?? false;
+                $res = Http::timeout(5)->get($base . '/check', [
+                    'nomor' => $nomor,
+                ]);
 
-                // ── Opsi B: WABLAS ────────────────────────────────────────
-                // $res = Http::withHeaders(['Authorization' => env('WABLAS_TOKEN')])
-                //     ->timeout(5)
-                //     ->get('https://my.wablas.com/api/check-phone?phone=' . $nomor);
-                // $data = $res->json();
-                // $valid = ($data['status'] ?? false) && ($data['data']['exists'] ?? false);
+                if (!$res->successful()) {
+                    return response()->json(['valid' => true, 'message' => 'Tidak dapat memverifikasi (format valid)']);
+                }
 
-                // ── Opsi C: Fallback (format-only, tanpa gateway) ─────────
-                $valid = true; // Ganti dengan kode API di atas
+                $data = $res->json();
+
+                // Jika Baileys tidak terhubung (blum scan QR), jangan blokir user
+                if (($data['status'] ?? '') !== 'connected') {
+                    return response()->json(['valid' => true, 'message' => 'Format valid (cek aktifitas tidak tersedia)']);
+                }
 
                 return response()->json([
-                    'valid'   => $valid,
-                    'message' => $valid ? 'Nomor WhatsApp aktif ✓' : 'Nomor tidak terdaftar di WhatsApp',
+                    'valid'   => $data['valid'] ?? false,
+                    'message' => $data['message'] ?? 'Tidak terverifikasi',
                 ]);
             } catch (\Throwable $e) {
-                // Jika API error, jangan blokir user — loloskan
                 return response()->json(['valid' => true, 'message' => 'Tidak dapat memverifikasi (format valid)']);
             }
         });
     }
 
     /**
-     * Cek email via Abstract API (MX record + disposable check)
-     * Daftar gratis di https://www.abstractapi.com/api/email-validation-verification-api
-     * 100 req/bulan gratis.
+     * Cek email aktif via PHP native:
+     * 1. filter_var — format
+     * 2. checkdnsrr — MX record domain
+     * 3. Opsional: cek disposable domain via list sederhana
      */
     public function email(Request $request)
     {
@@ -69,38 +76,39 @@ class ValidationController extends Controller
             return response()->json(['valid' => false, 'message' => 'Format email tidak sesuai']);
         }
 
-        $cacheKey = 'email_valid_' . md5($email);
-        return Cache::remember($cacheKey, 3600, function () use ($email) {
-            try {
-                $res = Http::timeout(6)->get('https://emailvalidation.abstractapi.com/v1/', [
-                    'api_key' => env('ABSTRACT_EMAIL_API_KEY'),
-                    'email'   => $email,
-                ]);
+        $domain = substr(strrchr($email, '@'), 1);
 
-                if (!$res->successful()) {
-                    return response()->json(['valid' => true, 'message' => 'Format valid (cek aktifitas tidak tersedia)']);
+        $cacheKey = 'email_valid_' . md5($email);
+        return Cache::remember($cacheKey, 3600, function () use ($email, $domain) {
+            try {
+                $mxOk = checkdnsrr($domain, 'MX');
+
+                $disposableDomains = [
+                    'mailinator.com', 'guerrillamail.com', 'tempmail.com', 'throwaway.email',
+                    'yopmail.com', '10minutemail.com', 'trashmail.com', 'sharklasers.com',
+                    'mailnesia.com', 'fakeinbox.com', 'temp-mail.org', 'dispostable.com',
+                    'getairmail.com', 'maildrop.cc', 'mailexpire.com', 'spambox.us',
+                ];
+                $isDisposable = in_array(strtolower($domain), $disposableDomains, true);
+
+                if (!$mxOk) {
+                    return response()->json([
+                        'valid' => false,
+                        'message' => 'Domain email tidak memiliki server penerima (MX)',
+                    ]);
                 }
 
-                $data = $res->json();
+                if ($isDisposable) {
+                    return response()->json([
+                        'valid' => false,
+                        'message' => 'Email sementara (disposable) tidak diperbolehkan',
+                    ]);
+                }
 
-                // Tolak jika: format salah, MX tidak ada, atau disposable email
-                $formatOk      = ($data['is_valid_format']['value']      ?? false);
-                $mxOk          = ($data['is_mx_found']['value']          ?? false);
-                $notDisposable = !($data['is_disposable_email']['value'] ?? false);
-                $deliverable   = ($data['deliverability'] ?? '') !== 'UNDELIVERABLE';
-
-                $valid = $formatOk && $mxOk && $notDisposable && $deliverable;
-
-                $msg = match(true) {
-                    !$formatOk      => 'Format email tidak valid',
-                    !$mxOk          => 'Domain email tidak memiliki server penerima (MX)',
-                    !$notDisposable => 'Email sementara (disposable) tidak diperbolehkan',
-                    !$deliverable   => 'Email tidak dapat menerima pesan',
-                    default         => 'Email aktif dan dapat menerima pesan ✓',
-                };
-
-                return response()->json(['valid' => $valid, 'message' => $msg]);
-
+                return response()->json([
+                    'valid' => true,
+                    'message' => 'Email aktif dan dapat menerima pesan ✓',
+                ]);
             } catch (\Throwable $e) {
                 return response()->json(['valid' => true, 'message' => 'Format valid (cek aktifitas tidak tersedia)']);
             }

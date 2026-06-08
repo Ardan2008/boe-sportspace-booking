@@ -20,7 +20,6 @@ class FasilitasController extends Controller
         foreach ($facilities as $f) {
             $f->is_maintenance = \App\Models\JadwalBlokir::where('fasilitas_id', $f->id)
                 ->where('tipe', 'maintenance')
-                ->where('tgl_mulai', '<=', $today)
                 ->where('tgl_selesai', '>=', $today)
                 ->exists();
         }
@@ -444,11 +443,16 @@ class FasilitasController extends Controller
                 "tgl_mulai" => "required|date|after_or_equal:today",
                 "tgl_selesai" => "required|date|after_or_equal:tgl_mulai",
                 "tujuan" => "required|string|max:255",
+                "nomor_kamar" => "nullable|array",
+                "nomor_kamar.*" => "string|max:50",
             ]);
 
             $fasilitas = Fasilitas::findOrFail($id);
             $start = \Carbon\Carbon::parse($request->tgl_mulai)->startOfDay();
             $end = \Carbon\Carbon::parse($request->tgl_selesai)->endOfDay();
+
+            $nomorKamar = $request->nomor_kamar;
+            $blockingAll = empty($nomorKamar);
 
             $overlaps = \App\Models\Booking::where("fasilitas_id", $id)
                 ->whereIn("status", ["pending", "confirmed", "booked"])
@@ -459,8 +463,20 @@ class FasilitasController extends Controller
                           $q2->where("tgl_mulai", "<=", $start)
                              ->where("tgl_selesai", ">=", $end);
                       });
-                })
-                ->get();
+                });
+
+            if (!$blockingAll) {
+                $overlaps = $overlaps->where(function ($q) use ($nomorKamar) {
+                    $q->whereNull("allocated_rooms")
+                      ->orWhere(function ($q2) use ($nomorKamar) {
+                          foreach ($nomorKamar as $nr) {
+                              $q2->orWhereJsonContains("allocated_rooms", $nr);
+                          }
+                      });
+                });
+            }
+
+            $overlaps = $overlaps->get();
 
             if ($overlaps->count() > 0) {
                 return response()->json([
@@ -475,13 +491,15 @@ class FasilitasController extends Controller
                 "tgl_selesai" => $end,
                 "tipe" => "maintenance",
                 "tujuan" => $request->tujuan,
+                "nomor_kamar" => $blockingAll ? null : $nomorKamar,
                 "created_by" => session("nama") ?? "System Admin",
             ]);
 
+            $roomInfo = $blockingAll ? 'semua kamar' : implode(', ', $nomorKamar);
             \App\Models\AuditLog::catat(
                 "Maintenance Facility",
-                "Mengaktifkan mode perbaikan untuk: {$fasilitas->nama} ({$request->tgl_mulai} s/d {$request->tgl_selesai})",
-                ["target_tipe" => "fasilitas", "target_id" => $id, "reason" => $request->tujuan]
+                "Mengaktifkan mode perbaikan untuk: {$fasilitas->nama} - {$roomInfo} ({$request->tgl_mulai} s/d {$request->tgl_selesai})",
+                ["target_tipe" => "fasilitas", "target_id" => $id, "reason" => $request->tujuan, "nomor_kamar" => $nomorKamar]
             );
 
             return response()->json(["success" => true, "message" => "Mode perbaikan berhasil diaktifkan!"]);

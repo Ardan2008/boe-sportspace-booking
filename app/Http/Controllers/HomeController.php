@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Fasilitas;
 use App\Models\Booking;
+use App\Models\JadwalBlokir;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -32,7 +33,31 @@ class HomeController extends Controller
                 ->count();
 
             $totalKamar = $item->jumlah_kamar ?? 0;
-            $availableStok[$item->id] = max(0, $totalKamar - $bookedCount);
+
+            $activeMaintenance = JadwalBlokir::where('fasilitas_id', $item->id)
+                ->where('tipe', 'maintenance')
+                ->where('tgl_mulai', '<=', $today)
+                ->where('tgl_selesai', '>=', $today)
+                ->get();
+
+            $blockedRooms = [];
+            $fullMaintenance = false;
+            foreach ($activeMaintenance as $m) {
+                $rooms = $m->nomor_kamar;
+                if (empty($rooms)) {
+                    $fullMaintenance = true;
+                    break;
+                }
+                foreach ((array) $rooms as $nr) {
+                    $blockedRooms[$nr] = true;
+                }
+            }
+
+            if ($fullMaintenance) {
+                $availableStok[$item->id] = 0;
+            } else {
+                $availableStok[$item->id] = max(0, $totalKamar - $bookedCount - count($blockedRooms));
+            }
         }
 
         return view('home', compact('facilities', 'availableStok'));

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Fasilitas;
 use App\Models\GlobalRoomType;
+use App\Models\JadwalBlokir;
 
 class RoomAvailabilityController extends Controller
 {
@@ -68,7 +69,30 @@ class RoomAvailabilityController extends Controller
             ->values()
             ->toArray();
 
-        $availableRooms = array_values(array_diff($allRoomNumbers, $bookedRoomNumbers));
+        $maintenanceRooms = JadwalBlokir::where('fasilitas_id', $request->fasilitas_id)
+            ->where('tipe', 'maintenance')
+            ->where('tgl_mulai', '<=', $checkOut)
+            ->where('tgl_selesai', '>=', $checkIn)
+            ->get()
+            ->flatMap(fn ($m) => $m->nomor_kamar ?? [])
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $hasFullMaintenance = JadwalBlokir::where('fasilitas_id', $request->fasilitas_id)
+            ->where('tipe', 'maintenance')
+            ->where('tgl_mulai', '<=', $checkOut)
+            ->where('tgl_selesai', '>=', $checkIn)
+            ->whereNull('nomor_kamar')
+            ->exists();
+
+        $excludedRooms = array_unique(array_merge($bookedRoomNumbers, $maintenanceRooms));
+
+        if ($hasFullMaintenance) {
+            $availableRooms = [];
+        } else {
+            $availableRooms = array_values(array_diff($allRoomNumbers, $excludedRooms));
+        }
 
         return response()->json([
             'success'               => true,

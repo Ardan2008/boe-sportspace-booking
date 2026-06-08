@@ -23,10 +23,10 @@ Route::get('/', function () {
 
 Route::get('/formBooking', function (\Illuminate\Http\Request $request) {
     $facilities = \App\Models\Fasilitas::all();
+    $today = now()->toDateString();
     
     foreach ($facilities as $fasilitas) {
         if ($fasilitas->tipe === 'asrama' && is_array($fasilitas->paket_harian)) {
-            $today = now()->toDateString();
             $activeBookings = \App\Models\Booking::where('fasilitas_id', $fasilitas->id)
                 ->whereIn('status', ['pending', 'confirmed', 'booked'])
                 ->where('tgl_mulai', '<=', $today)
@@ -55,6 +55,27 @@ Route::get('/formBooking', function (\Illuminate\Http\Request $request) {
                 }
             }
 
+            $activeMaintenance = \App\Models\JadwalBlokir::where('fasilitas_id', $fasilitas->id)
+                ->where('tipe', 'maintenance')
+                ->where('tgl_mulai', '<=', $today)
+                ->where('tgl_selesai', '>=', $today)
+                ->get();
+
+            $maintenanceRoomsByType = [];
+            foreach ($activeMaintenance as $m) {
+                $rooms = $m->nomor_kamar;
+                if (empty($rooms)) {
+                    $maintenanceRoomsByType = null;
+                    break;
+                }
+                foreach ($rooms as $nr) {
+                    if (!isset($maintenanceRoomsByType['__all'])) {
+                        $maintenanceRoomsByType['__all'] = [];
+                    }
+                    $maintenanceRoomsByType['__all'][] = $nr;
+                }
+            }
+
             $paket = $fasilitas->paket_harian;
             foreach ($paket as &$rt) {
                 $typeName = strtolower(trim($rt['tipe'] ?? ''));
@@ -66,10 +87,19 @@ Route::get('/formBooking', function (\Illuminate\Http\Request $request) {
                     $bookedRooms = array_filter($typeBookedList, fn($r) => $r !== '__placeholder__');
                     $placeholderCount = count(array_filter($typeBookedList, fn($r) => $r === '__placeholder__'));
                     $available = count(array_diff($allRooms, array_values($bookedRooms))) - $placeholderCount;
+
+                    if ($maintenanceRoomsByType !== null && isset($maintenanceRoomsByType['__all'])) {
+                        $available -= count(array_intersect($allRooms, $maintenanceRoomsByType['__all']));
+                    } elseif ($maintenanceRoomsByType === null) {
+                        $available = 0;
+                    }
                 } else {
                     $placeholderCount = count(array_filter($typeBookedList, fn($r) => $r === '__placeholder__'));
                     $namedCount = count(array_filter($typeBookedList, fn($r) => $r !== '__placeholder__'));
                     $available = max(0, $totalRooms - $placeholderCount - $namedCount);
+                    if ($maintenanceRoomsByType === null) {
+                        $available = 0;
+                    }
                 }
 
                 $rt['jumlah'] = max(0, $available);
@@ -85,9 +115,9 @@ Route::get('/formBooking', function (\Illuminate\Http\Request $request) {
 
 Route::get('/fasilitas/{id}/detail', function ($id) {
     $fasilitas = \App\Models\Fasilitas::findOrFail($id);
+    $today = now()->toDateString();
 
     if ($fasilitas->tipe === 'asrama' && is_array($fasilitas->paket_harian)) {
-        $today = now()->toDateString();
         $activeBookings = \App\Models\Booking::where('fasilitas_id', $fasilitas->id)
             ->whereIn('status', ['pending', 'confirmed', 'booked'])
             ->where('tgl_mulai', '<=', $today)
@@ -116,6 +146,27 @@ Route::get('/fasilitas/{id}/detail', function ($id) {
             }
         }
 
+        $activeMaintenance = \App\Models\JadwalBlokir::where('fasilitas_id', $fasilitas->id)
+            ->where('tipe', 'maintenance')
+            ->where('tgl_mulai', '<=', $today)
+            ->where('tgl_selesai', '>=', $today)
+            ->get();
+
+        $maintenanceRoomsByType = [];
+        foreach ($activeMaintenance as $m) {
+            $rooms = $m->nomor_kamar;
+            if (empty($rooms)) {
+                $maintenanceRoomsByType = null;
+                break;
+            }
+            foreach ($rooms as $nr) {
+                if (!isset($maintenanceRoomsByType['__all'])) {
+                    $maintenanceRoomsByType['__all'] = [];
+                }
+                $maintenanceRoomsByType['__all'][] = $nr;
+            }
+        }
+
         $paket = $fasilitas->paket_harian;
         foreach ($paket as &$rt) {
             $typeName = strtolower(trim($rt['tipe'] ?? ''));
@@ -127,10 +178,19 @@ Route::get('/fasilitas/{id}/detail', function ($id) {
                 $bookedRooms = array_filter($typeBookedList, fn($r) => $r !== '__placeholder__');
                 $placeholderCount = count(array_filter($typeBookedList, fn($r) => $r === '__placeholder__'));
                 $available = count(array_diff($allRooms, array_values($bookedRooms))) - $placeholderCount;
+
+                if ($maintenanceRoomsByType !== null && isset($maintenanceRoomsByType['__all'])) {
+                    $available -= count(array_intersect($allRooms, $maintenanceRoomsByType['__all']));
+                } elseif ($maintenanceRoomsByType === null) {
+                    $available = 0;
+                }
             } else {
                 $placeholderCount = count(array_filter($typeBookedList, fn($r) => $r === '__placeholder__'));
                 $namedCount = count(array_filter($typeBookedList, fn($r) => $r !== '__placeholder__'));
                 $available = max(0, $totalRooms - $placeholderCount - $namedCount);
+                if ($maintenanceRoomsByType === null) {
+                    $available = 0;
+                }
             }
 
             $rt['jumlah'] = max(0, $available);
