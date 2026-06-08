@@ -438,7 +438,7 @@
                     <div class="grid gap-3 mb-3" :style="'grid-template-columns: repeat(' + Math.min(rooms,3) + ', 1fr)'">
                         <template x-for="r in rooms" :key="r">
                             <div class="room-slot bg-white border-2 border-blue-200 rounded-2xl p-3 pop-in">
-                                <p class="text-[9px] font-black text-blue-500 uppercase tracking-wider mb-2" x-text="'KAMAR ' + r + (availableRooms && availableRooms[r-1] ? ' (' + availableRooms[r-1] + ')' : '')"></p>
+                                <p class="text-[9px] font-black text-blue-500 uppercase tracking-wider mb-2" x-text="roomSlotLabel(r)"></p>
                                 <div class="flex flex-col gap-1.5">
                                     <div class="flex items-center gap-1.5">
                                         <template x-for="slot in [1,2]" :key="'a'+slot">
@@ -1335,6 +1335,20 @@ document.addEventListener('alpine:init', () => {
             if (a > 0) parts.push(a + ' Dewasa');
             if (c > 0) parts.push(c + ' Anak');
             return parts.join(' · ');
+        },
+
+        roomSlotLabel(r) {
+            let roomNo = null;
+            if (this.availableRooms && this.availableRooms.length >= r) {
+                roomNo = this.availableRooms[r - 1];
+            } else if (this.selected_tipe_id !== null && this.roomTypes.length > 0) {
+                const rt = this.roomTypes[this.selected_tipe_id];
+                const nomorKamar = rt && Array.isArray(rt.nomor_kamar) ? rt.nomor_kamar : [];
+                if (nomorKamar.length >= r) {
+                    roomNo = nomorKamar[r - 1];
+                }
+            }
+            return 'KAMAR ' + r + (roomNo ? ' (' + roomNo + ')' : '');
         },
 
         // ── Step navigation ───────────────────────────────────────────

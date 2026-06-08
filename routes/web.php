@@ -23,12 +23,122 @@ Route::get('/', function () {
 
 Route::get('/formBooking', function (\Illuminate\Http\Request $request) {
     $facilities = \App\Models\Fasilitas::all();
+    
+    foreach ($facilities as $fasilitas) {
+        if ($fasilitas->tipe === 'asrama' && is_array($fasilitas->paket_harian)) {
+            $today = now()->toDateString();
+            $activeBookings = \App\Models\Booking::where('fasilitas_id', $fasilitas->id)
+                ->whereIn('status', ['pending', 'confirmed', 'booked'])
+                ->where('tgl_mulai', '<=', $today)
+                ->where('tgl_selesai', '>=', $today)
+                ->whereNotNull('tipe_kamar_id')
+                ->get();
+
+            $globalTypes = \App\Models\GlobalRoomType::whereIn('id', $activeBookings->pluck('tipe_kamar_id')->unique())->get()->keyBy('id');
+
+            $bookedPerType = [];
+            foreach ($activeBookings as $b) {
+                $typeName = strtolower(trim($globalTypes[$b->tipe_kamar_id]->name ?? ''));
+                if (!isset($bookedPerType[$typeName])) {
+                    $bookedPerType[$typeName] = [];
+                }
+                if (!empty($b->allocated_rooms)) {
+                    foreach ($b->allocated_rooms as $room) {
+                        $bookedPerType[$typeName][] = $room;
+                    }
+                } else {
+                    $packages = json_decode($b->selected_packages ?? '{}', true);
+                    $roomsBooked = (int) ($packages['rooms'] ?? 1);
+                    for ($i = 0; $i < $roomsBooked; $i++) {
+                        $bookedPerType[$typeName][] = '__placeholder__';
+                    }
+                }
+            }
+
+            $paket = $fasilitas->paket_harian;
+            foreach ($paket as &$rt) {
+                $typeName = strtolower(trim($rt['tipe'] ?? ''));
+                $allRooms = $rt['nomor_kamar'] ?? [];
+                $totalRooms = count($allRooms) > 0 ? count($allRooms) : (int) ($rt['jumlah'] ?? 0);
+                $typeBookedList = $bookedPerType[$typeName] ?? [];
+
+                if (!empty($allRooms)) {
+                    $bookedRooms = array_filter($typeBookedList, fn($r) => $r !== '__placeholder__');
+                    $placeholderCount = count(array_filter($typeBookedList, fn($r) => $r === '__placeholder__'));
+                    $available = count(array_diff($allRooms, array_values($bookedRooms))) - $placeholderCount;
+                } else {
+                    $placeholderCount = count(array_filter($typeBookedList, fn($r) => $r === '__placeholder__'));
+                    $namedCount = count(array_filter($typeBookedList, fn($r) => $r !== '__placeholder__'));
+                    $available = max(0, $totalRooms - $placeholderCount - $namedCount);
+                }
+
+                $rt['jumlah'] = max(0, $available);
+            }
+            unset($rt);
+            $fasilitas->paket_harian = $paket;
+        }
+    }
+
     $selectedId = $request->query('id', '');
     return view('formBooking', compact('facilities', 'selectedId'));
 })->name('formBooking');
 
 Route::get('/fasilitas/{id}/detail', function ($id) {
     $fasilitas = \App\Models\Fasilitas::findOrFail($id);
+
+    if ($fasilitas->tipe === 'asrama' && is_array($fasilitas->paket_harian)) {
+        $today = now()->toDateString();
+        $activeBookings = \App\Models\Booking::where('fasilitas_id', $fasilitas->id)
+            ->whereIn('status', ['pending', 'confirmed', 'booked'])
+            ->where('tgl_mulai', '<=', $today)
+            ->where('tgl_selesai', '>=', $today)
+            ->whereNotNull('tipe_kamar_id')
+            ->get();
+
+        $globalTypes = \App\Models\GlobalRoomType::whereIn('id', $activeBookings->pluck('tipe_kamar_id')->unique())->get()->keyBy('id');
+
+        $bookedPerType = [];
+        foreach ($activeBookings as $b) {
+            $typeName = strtolower(trim($globalTypes[$b->tipe_kamar_id]->name ?? ''));
+            if (!isset($bookedPerType[$typeName])) {
+                $bookedPerType[$typeName] = [];
+            }
+            if (!empty($b->allocated_rooms)) {
+                foreach ($b->allocated_rooms as $room) {
+                    $bookedPerType[$typeName][] = $room;
+                }
+            } else {
+                $packages = json_decode($b->selected_packages ?? '{}', true);
+                $roomsBooked = (int) ($packages['rooms'] ?? 1);
+                for ($i = 0; $i < $roomsBooked; $i++) {
+                    $bookedPerType[$typeName][] = '__placeholder__';
+                }
+            }
+        }
+
+        $paket = $fasilitas->paket_harian;
+        foreach ($paket as &$rt) {
+            $typeName = strtolower(trim($rt['tipe'] ?? ''));
+            $allRooms = $rt['nomor_kamar'] ?? [];
+            $totalRooms = count($allRooms) > 0 ? count($allRooms) : (int) ($rt['jumlah'] ?? 0);
+            $typeBookedList = $bookedPerType[$typeName] ?? [];
+
+            if (!empty($allRooms)) {
+                $bookedRooms = array_filter($typeBookedList, fn($r) => $r !== '__placeholder__');
+                $placeholderCount = count(array_filter($typeBookedList, fn($r) => $r === '__placeholder__'));
+                $available = count(array_diff($allRooms, array_values($bookedRooms))) - $placeholderCount;
+            } else {
+                $placeholderCount = count(array_filter($typeBookedList, fn($r) => $r === '__placeholder__'));
+                $namedCount = count(array_filter($typeBookedList, fn($r) => $r !== '__placeholder__'));
+                $available = max(0, $totalRooms - $placeholderCount - $namedCount);
+            }
+
+            $rt['jumlah'] = max(0, $available);
+        }
+        unset($rt);
+        $fasilitas->paket_harian = $paket;
+    }
+
     return view('detailFasilitas', compact('fasilitas'));
 })->name('fasilitas.detail');
 

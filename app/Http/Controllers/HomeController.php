@@ -28,7 +28,7 @@ class HomeController extends Controller
             $bookedCount = Booking::where('fasilitas_id', $item->id)
                 ->whereIn('status', ['approved', 'pending', 'confirmed', 'booked'])
                 ->where('tgl_mulai', '<=', $today)
-                ->where('tgl_selesai', '>', $today)
+                ->where('tgl_selesai', '>=', $today)
                 ->count();
 
             $totalKamar = $item->jumlah_kamar ?? 0;
