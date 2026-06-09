@@ -24,10 +24,13 @@ class Booking extends Model
     ];
 
     protected $casts = [
-        'expired_at'      => 'datetime',
-        'checkin_at'      => 'datetime',
-        'allocated_rooms' => 'array',
-        'nomor_kamar'     => 'array',
+        'expired_at'        => 'datetime',
+        'checkin_at'        => 'datetime',
+        'allocated_rooms'   => 'array',
+        'nomor_kamar'       => 'array',
+        'selected_packages' => 'array',
+        'tgl_mulai'         => 'date',
+        'tgl_selesai'       => 'date',
     ];
 
     public function penyewa()

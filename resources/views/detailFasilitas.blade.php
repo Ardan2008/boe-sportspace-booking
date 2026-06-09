@@ -14,8 +14,6 @@
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-gray-100 min-h-screen">
-<x-layout.navbar />
-
 {{-- ══════════════════════════════════════════════════
      MAIN PAGE WRAPPER  (Alpine scope for lightbox)
      ══════════════════════════════════════════════════ --}}
@@ -30,7 +28,7 @@
         }
      }"
      @keydown.escape.window="lbOpen = false"
-     class="pt-28 pb-20 px-4 md:px-6">
+     class="pt-12 pb-20 px-4 md:px-6">
 
     <div class="max-w-4xl mx-auto">
 
@@ -226,7 +224,8 @@
                             @if(!empty($rt['kode_blok']))
                             <span class="text-[9px] font-bold text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded-full">Blok {{ $rt['kode_blok'] }}</span>
                             @endif
-                            <span class="text-[9px] font-bold {{ ($rt['jumlah'] ?? 0) > 0 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-red-700 bg-red-50 border border-red-200' }} px-2 py-0.5 rounded-full ml-auto">
+                            <span id="avail-badge-{{ $rtIdx }}" class="text-[9px] font-bold {{ ($rt['jumlah'] ?? 0) > 0 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-red-700 bg-red-50 border border-red-200' }} px-2 py-0.5 rounded-full ml-auto"
+                                  data-init-text="{{ ($rt['jumlah'] ?? 0) > 0 ? 'Tersedia ' . $rt['jumlah'] . ' Kamar' : 'Kamar Penuh' }}">
                                 {{ ($rt['jumlah'] ?? 0) > 0 ? 'Tersedia ' . $rt['jumlah'] . ' Kamar' : 'Kamar Penuh' }}
                             </span>
                         </div>
@@ -401,5 +400,30 @@
     </template>
 
 </div>{{-- /x-data wrapper --}}
+
+{{-- Auto-refresh badge setiap 15 detik --}}
+<script>
+(function() {
+    var fasId = {{ $fasilitas->id }};
+    function refreshBadges() {
+        fetch('/api/fasilitas/' + fasId + '/room-stock')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.stock) return;
+                data.stock.forEach(function(item, idx) {
+                    var el = document.getElementById('avail-badge-' + idx);
+                    if (el) {
+                        var txt = item.jumlah > 0 ? 'Tersedia ' + item.jumlah + ' Kamar' : 'Kamar Penuh';
+                        if (el.textContent !== txt) {
+                            el.textContent = txt;
+                        }
+                    }
+                });
+            })
+            .catch(function(e) {});
+    }
+    setInterval(refreshBadges, 15000);
+})();
+</script>
 </body>
 </html>

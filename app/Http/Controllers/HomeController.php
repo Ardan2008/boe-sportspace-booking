@@ -25,14 +25,36 @@ class HomeController extends Controller
                 continue;
             }
 
-            // Hitung jumlah kamar yang sedang dibooking (approved/pending) pada tanggal hari ini
-            $bookedCount = Booking::where('fasilitas_id', $item->id)
-                ->whereIn('status', ['approved', 'pending', 'confirmed', 'booked'])
+            // Hitung total kamar dari paket_harian (semua tipe)
+            $totalKamar = 0;
+            if (is_array($item->paket_harian)) {
+                foreach ($item->paket_harian as $rt) {
+                    $totalKamar += count($rt['nomor_kamar'] ?? []);
+                }
+            }
+            if ($totalKamar === 0) $totalKamar = $item->jumlah_kamar ?? 0;
+
+            // Hitung jumlah kamar yang sedang dibooking hari ini
+            $activeBookings = Booking::where('fasilitas_id', $item->id)
+                ->whereIn('status', ['pending', 'confirmed', 'booked'])
                 ->where('tgl_mulai', '<=', $today)
                 ->where('tgl_selesai', '>=', $today)
-                ->count();
+                ->get();
 
-            $totalKamar = $item->jumlah_kamar ?? 0;
+            $bookedRooms = [];
+            $untypedRoomCount = 0;
+            foreach ($activeBookings as $b) {
+                $rooms = $b->allocated_rooms;
+                if (!empty($rooms) && is_array($rooms)) {
+                    foreach ($rooms as $r) {
+                        $bookedRooms[strval($r)] = true;
+                    }
+                } else {
+                    $packages = ($b->selected_packages ?? []);
+                    $untypedRoomCount += (int) ($packages['rooms'] ?? 1);
+                }
+            }
+            $bookedCount = count($bookedRooms) + $untypedRoomCount;
 
             $activeMaintenance = JadwalBlokir::where('fasilitas_id', $item->id)
                 ->where('tipe', 'maintenance')

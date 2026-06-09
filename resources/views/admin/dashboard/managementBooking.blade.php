@@ -125,7 +125,7 @@
                     <tbody class="divide-y divide-slate-50">
                         @forelse($pendingBookings as $booking)
                         @php
-                            $details  = json_decode($booking->selected_packages, true) ?? [];
+                            $details  = $booking->selected_packages ?? [];
                             $duration = $details['duration']            ?? 1;
                             $rooms    = $details['rooms_count']         ?? 1;
                             $adults   = $details['adults']              ?? 1;
@@ -374,7 +374,7 @@
                     <tbody class="divide-y divide-slate-50">
                         @forelse($confirmedBookings as $booking)
                         @php
-                            $details  = json_decode($booking->selected_packages, true) ?? [];
+                            $details  = $booking->selected_packages ?? [];
                             $duration = $details['duration']            ?? 1;
                             $rooms    = $details['rooms_count']         ?? 1;
                             $adults   = $details['adults']              ?? 1;
@@ -601,7 +601,7 @@
                     <tbody class="divide-y divide-slate-50">
                         @forelse($bookedBookings as $booking)
                         @php
-                            $details  = json_decode($booking->selected_packages, true) ?? [];
+                            $details  = $booking->selected_packages ?? [];
                             $duration = $details['duration']            ?? 1;
                             $rooms    = $details['rooms_count']         ?? 1;
                             $adults   = $details['adults']              ?? 1;
@@ -1004,7 +1004,7 @@
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <span class="block text-[10px] uppercase text-slate-400 font-bold mb-2">Foto KTP / Identitas</span>
+                            <span class="block text-[10px] uppercase text-slate-400 font-bold mb-2">Foto KTP</span>
                             <div class="w-full h-44 bg-slate-200 rounded-xl overflow-hidden flex items-center justify-center border border-slate-200 relative group cursor-pointer"
                                 @click="if(detailPayload.foto_identitas) window.open(detailPayload.foto_identitas, '_blank')">
                                 <div x-show="detailPayload.foto_identitas" class="w-full h-full relative">

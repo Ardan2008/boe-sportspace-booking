@@ -56,6 +56,7 @@
             openPreview: false, 
             previewImg: '', 
             previewTitle: '',
+            previewDesc: '',
             maintenanceModal: false,
             maintData: { id: null, name: '', start_date: '', end_date: '', reason: '' },
             selectedRooms: [],
@@ -438,7 +439,38 @@
                 @endforeach
             </div>
 
-            {{-- MODAL PREVIEW (Akan muncul saat gambar diklik) --}}
+            {{-- MODAL PREVIEW GAMBAR --}}
+            <div x-show="openPreview" x-cloak
+                class="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0">
+
+                <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
+
+                <div class="relative bg-white rounded-[2.5rem] shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-100"
+                    x-transition:enter="transition ease-out duration-300 transform"
+                    x-transition:enter-start="scale-90 opacity-0"
+                    x-transition:enter-end="scale-100 opacity-100">
+
+                    <button @click="openPreview = false"
+                        class="absolute top-4 right-4 z-10 p-2 bg-white/90 backdrop-blur rounded-full shadow-lg hover:bg-red-500 hover:text-white transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+
+                    <img :src="previewImg" :alt="previewTitle"
+                        class="w-full max-h-[65vh] object-contain bg-slate-900">
+
+                    <div class="p-6">
+                        <h3 class="text-lg font-bold text-slate-800" x-text="previewTitle"></h3>
+                        <p class="text-sm text-slate-500 mt-1" x-text="previewDesc"></p>
+                    </div>
+                </div>
             </div>
 
             <style>

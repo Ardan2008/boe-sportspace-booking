@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\KtpOcrService;
 use Illuminate\Support\Facades\Http;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -36,7 +37,7 @@ class BookingController extends Controller
         }
 
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|regex:/^[a-zA-Z\s.\x27\x2D]+$/u',
             'whatsapp' => 'required|string|max:20',
             'email' => 'required|email|max:255',
             'fasilitas_id' => 'required|exists:fasilitas,id',
@@ -129,7 +130,20 @@ class BookingController extends Controller
         if ($request->hasFile('foto_identitas')) {
             $file = $request->file('foto_identitas');
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $identitasPath = $file->storeAs('identitas', $filename, 'public');
+            $identitasPath = $file->storeAs('ktp', $filename, 'public');
+
+            // Hanya verifikasi OCR di production
+            if (app()->environment('production')) {
+                $ocr = new KtpOcrService();
+                $result = $ocr->verifyName($identitasPath, $request->name);
+
+                if (!$result['valid']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $result['message']
+                    ], 422);
+                }
+            }
         }
 
         // --- RESOLVE TIPE KAMAR ID ---
@@ -200,12 +214,12 @@ class BookingController extends Controller
             'penyewa_id'       => $penyewa->id,
             'fasilitas_id'     => $request->fasilitas_id,
             'tipe_kamar_id'    => $tipeKamarId,
-            'nomor_kamar'      => !empty($allocatedRooms) ? json_encode($allocatedRooms) : null,
+            'nomor_kamar'      => !empty($allocatedRooms) ? $allocatedRooms : null,
             'allocated_rooms'  => !empty($allocatedRooms) ? $allocatedRooms : null,
             'tgl_mulai'        => $request->tgl_mulai,
             'tgl_selesai'      => $tgl_selesai,
             'package_type'     => $request->package_type,
-            'selected_packages' => json_encode([
+            'selected_packages' => [
                 'duration'    => $duration,
                 'adults'      => $request->adults,
                 'children'    => $request->children_count ?? 0,
@@ -213,7 +227,7 @@ class BookingController extends Controller
                 'child_ages'  => $request->child_age ?? [],
                 'tipe_kamar'  => $request->selected_tipe ?? null,
                 'kode_blok'   => $request->selected_kode_blok ?? null,
-            ]),
+            ],
             'total_harga' => $totalPrice,
             'status'      => 'pending',
         ]);
@@ -264,13 +278,13 @@ class BookingController extends Controller
                 $available = array_values(array_diff($allRoomNumbers, $alreadyAllocated));
 
                 // Determine how many rooms are needed from selected_packages
-                $selectedPackages = json_decode($booking->selected_packages ?? '{}', true);
+                $selectedPackages = ($booking->selected_packages ?? []);
                 $roomsNeeded = (int) ($selectedPackages['rooms'] ?? 1);
                 $allocated   = array_slice($available, 0, $roomsNeeded);
 
                 if (!empty($allocated)) {
                     $updateData['allocated_rooms'] = $allocated;
-                    $updateData['nomor_kamar']     = json_encode($allocated);
+                    $updateData['nomor_kamar']     = $allocated;
                 }
             }
         }
@@ -414,7 +428,7 @@ class BookingController extends Controller
                 'package' => $booking->package_type,
                 'status' => $booking->status,
                 'total' => 'Rp ' . number_format($booking->total_harga, 0, ',', '.'),
-                'details' => json_decode($booking->selected_packages, true) ?? [],
+                'details' => $booking->selected_packages ?? [],
                 'rooms_data' => $rooms_data,
                 'nomor_kamar' => is_array($booking->nomor_kamar)
                     ? implode(', ', $booking->nomor_kamar)

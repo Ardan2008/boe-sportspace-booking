@@ -81,6 +81,13 @@ php artisan test --filter=SomeTest  # single test
 - All admin routes are inside `middleware(['admin.access'])` group.
 - Audit logging via `AuditLog::catat()` on every state-changing action.
 
+### KTP OCR Validation
+
+Booking form **otomatis diverifikasi** via OCR.space API:
+- Nama yang diinput dicocokkan dengan teks hasil scan foto KTP.
+- Jika tidak cocok → booking ditolak (422).
+- Set `OCR_API_KEY` di `.env` (daftar gratis di https://ocr.space/ocrapi/freekey). Default `'free'` untuk free tier.
+
 ## UI & Frontend Rules (CRITICAL)
 - **Alpine.js:** NEVER put multi-line logic inside HTML attributes. Always use a dedicated `<script>` tag at the bottom of the page and initialize components using `document.addEventListener('alpine:init', ...)`.
 - **Blade Syntax:** Be careful with `{{ }}` and quotes. Always use single quotes `'` inside Alpine attributes if the attribute itself is wrapped in double quotes `"`.

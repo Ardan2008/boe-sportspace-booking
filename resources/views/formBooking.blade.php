@@ -752,8 +752,8 @@
                             <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </span>
                     </div>
-                    <p x-show="step4Errors.name" x-transition class="text-[10px] text-red-500 font-semibold mt-1.5 ml-1">Nama minimal 3 karakter, hanya huruf dan spasi</p>
-                    <p x-show="step4Success.name" x-transition class="text-[10px] text-emerald-600 font-semibold mt-1.5 ml-1">Nama valid ✓</p>
+                    <p x-show="step4Errors.name" x-transition class="text-[10px] text-red-500 font-semibold mt-1.5 ml-1">Nama minimal 3 karakter, sesuai dengan nama di KTP</p>
+                    <p x-show="step4Success.name" x-transition class="text-[10px] text-emerald-600 font-semibold mt-1.5 ml-1">Nama sesuai KTP ✓</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative" style="z-index:50;">
@@ -952,7 +952,7 @@
                     :style="step4Errors.foto?'border-color:#f87171':step4Success.foto?'border-color:#34d399':'border-color:#e5e7eb'">
                     <label class="text-[9px] font-black uppercase tracking-widest flex items-center gap-1 mb-4 transition-colors"
                         :class="step4Errors.foto?'text-red-500':step4Success.foto?'text-emerald-500':'text-gray-400'">
-                        Upload Foto Identitas (KTP/SIM) <span class="text-red-500">*</span>
+                        Upload Foto KTP <span class="text-red-500">*</span>
                     </label>
                     <div class="flex flex-col md:flex-row gap-4">
                         <div class="flex-1 space-y-3">
@@ -972,7 +972,7 @@
                             <p x-show="step4Errors.foto" x-transition class="text-[10px] text-red-500 font-semibold ml-1" x-text="step4FotoErrorMsg"></p>
                             <div class="p-3 bg-blue-50 rounded-xl flex items-start gap-2.5">
                                 <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                <p class="text-[10px] text-blue-700 font-medium leading-relaxed">Dokumen hanya digunakan untuk validasi reservasi dan dihapus otomatis setelah masa sewa berakhir.</p>
+                                <p class="text-[10px] text-blue-700 font-medium leading-relaxed">Foto KTP hanya digunakan untuk validasi reservasi dan dihapus otomatis setelah masa sewa berakhir.</p>
                             </div>
                         </div>
                         <div class="w-full md:w-44 flex flex-col items-center justify-center border-2 rounded-2xl overflow-hidden relative min-h-[7rem] transition-all"
@@ -1244,6 +1244,8 @@ document.addEventListener('alpine:init', () => {
                     this.rooms = 1;
                 }
             }
+            // ── Auto-refresh stok kamar setiap 15 detik ──
+            setInterval(() => { this.pollRoomStock(); }, 15000);
         },
 
         // ── Room type helpers (from paket_harian DB field) ───────────
@@ -1609,6 +1611,27 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        async pollRoomStock() {
+            const f = this.currentFacility;
+            if (!f || !f.id) return;
+            try {
+                const res = await fetch('/api/fasilitas/' + f.id + '/room-stock');
+                const data = await res.json();
+                if (!data.stock) return;
+                const idx = this.facilities.findIndex(x => x.id === f.id);
+                if (idx < 0) return;
+                const updated = JSON.parse(JSON.stringify(this.facilities[idx]));
+                data.stock.forEach(function(item, i) {
+                    if (updated.paket_harian && updated.paket_harian[i]) {
+                        updated.paket_harian[i].jumlah = item.jumlah;
+                    }
+                });
+                this.facilities.splice(idx, 1, updated);
+            } catch (e) {
+                console.error('Poll stock error:', e);
+            }
+        },
+
         async fetchRoomAvailability() {
             if (!this.selectedDate || !this.endDate || this.selected_tipe_id === null) {
                 // No dates selected yet — reset fetch flag but keep master capacity visible
@@ -1814,7 +1837,7 @@ document.addEventListener('alpine:init', () => {
             if (f === 'name') {
                 const t = this.step4Name.trim();
                 if (!t) { this.step4Errors.name=false; this.step4Success.name=false; return; }
-                (/^[a-zA-Z\s]{3,}$/.test(t)
+                (/^[a-zA-Z\s.'-]{3,}$/.test(t)
                     ? this.s4TriggerSuccess
                     : this.s4TriggerError).call(this, 'name');
             }
@@ -1934,12 +1957,12 @@ document.addEventListener('alpine:init', () => {
 
         s4ValidateAll() {
             let ok = true;
-            if (!this.step4Name.trim() || !/^[a-zA-Z\s]{3,}$/.test(this.step4Name.trim())) { this.s4TriggerError('name'); ok=false; }
+            if (!this.step4Name.trim() || !/^[a-zA-Z\s.'-]{3,}$/.test(this.step4Name.trim())) { this.s4TriggerError('name'); ok=false; }
             if (!this.step4ProvinsiName) { this.s4TriggerError('provinsi'); ok=false; }
             if (!this.step4KabupatenName) { this.s4TriggerError('kabupaten'); ok=false; }
             if (!/^[0-9]{9,14}$/.test(this.step4Whatsapp.trim())) { this.s4TriggerError('whatsapp'); ok=false; }
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.step4Email.trim())) { this.s4TriggerError('email'); ok=false; }
-            if (!this.step4FotoFile) { this.step4FotoErrorMsg='Foto identitas wajib diunggah'; this.s4TriggerError('foto'); ok=false; }
+            if (!this.step4FotoFile) { this.step4FotoErrorMsg='Foto KTP wajib diunggah'; this.s4TriggerError('foto'); ok=false; }
             return ok;
         },
 

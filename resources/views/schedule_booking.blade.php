@@ -67,9 +67,7 @@
 </head>
 <body class="min-h-screen">
     
-    <x-layout.navbar />
-
-    <main class="max-w-6xl mx-auto px-4 pt-32 pb-12" 
+    <main class="max-w-6xl mx-auto px-4 pt-12 pb-12" 
         x-data="scheduleManager({
             facilities: {{ $facilities->toJson() }},
             initialFasilitasId: {{ $selectedFasilitasId ?? 'null' }}

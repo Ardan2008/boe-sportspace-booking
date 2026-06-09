@@ -48,11 +48,7 @@
                     Hapus Terpilih (<span id="selectedCount">0</span>)
                 </button>
 
-                <a href="{{ route('kontrolJadwal.index') }}"
-                   class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all shadow-sm active:scale-95">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                    Kembali
-                </a>
+
             </div>
         </div>
 

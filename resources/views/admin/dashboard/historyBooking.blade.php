@@ -138,7 +138,7 @@
                     <tbody class="divide-y divide-slate-50">
                         @forelse($bookings as $booking)
                         @php
-                            $details  = json_decode($booking->selected_packages, true) ?? [];
+                            $details  = $booking->selected_packages ?? [];
                             $duration = $details['duration']            ?? 1;
                             $rooms    = $details['rooms_count']         ?? ($details['rooms'] ?? 1);
                             $adults   = $details['adults']              ?? 1;

@@ -244,20 +244,6 @@
                             </div>
                         </div>
 
-                        {{-- Availability Badge (asrama only) --}}
-                        @if($item->tipe === 'asrama' && isset($availableStok[$item->id]))
-                            <div class="absolute top-5 left-5 z-20">
-                                @if($availableStok[$item->id] === 0)
-                                    <span class="bg-red-500 text-white text-[9px] font-black px-3 py-1.5 rounded-xl shadow-md uppercase tracking-widest">
-                                        Kamar Penuh
-                                    </span>
-                                @else
-                                    <span class="bg-emerald-500 text-white text-[9px] font-black px-3 py-1.5 rounded-xl shadow-md uppercase tracking-widest">
-                                        {{ $availableStok[$item->id] }} Kamar Tersedia
-                                    </span>
-                                @endif
-                            </div>
-                        @endif
                     </div>
                     
                     {{-- Content --}}

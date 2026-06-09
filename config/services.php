@@ -39,4 +39,9 @@ return [
         ],
     ],
 
+    'ocr' => [
+        'api_key' => env('OCR_API_KEY', 'free'), // OCR.space API key
+        'endpoint' => env('OCR_ENDPOINT', 'https://api.ocr.space/parse/image'),
+    ],
+
 ];
