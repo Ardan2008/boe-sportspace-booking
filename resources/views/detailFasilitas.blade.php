@@ -355,19 +355,16 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             class="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
-             @click.self="lbOpen = false">
+             class="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
             <div class="relative max-w-3xl w-full">
-                {{-- Close --}}
-                <button @click="lbOpen = false"
-                    class="absolute -top-12 right-0 text-white/80 hover:text-red-400 transition-colors flex items-center gap-2">
-                    <span class="text-xs font-bold uppercase tracking-widest text-white/50">Tutup</span>
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
                 {{-- Track --}}
-                <div class="overflow-hidden rounded-[2rem] bg-gray-900 shadow-2xl">
+                <div class="overflow-hidden rounded-[2rem] bg-gray-900 shadow-2xl relative">
+                    <button @click="lbOpen = false"
+                        class="absolute top-3 right-3 z-10 p-2 bg-black/50 rounded-full text-white hover:bg-red-600 hover:text-white transition-all shadow-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
                     <div class="flex transition-all duration-500 ease-in-out"
                          :style="'transform: translateX(-' + (lbIdx * 100) + '%)'">
                         <template x-for="(src, si) in (lbPhotos || [])" :key="si">

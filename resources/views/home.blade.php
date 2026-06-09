@@ -394,12 +394,7 @@
                                     Booking
                                 </a>
                             </li>
-                            <li>
-                                <a href="#contact" class="group flex items-center text-lg font-medium text-blue-100 hover:text-white transition-all duration-300">
-                                    <span class="w-0 group-hover:w-6 h-[2px] bg-blue-300 mr-0 group-hover:mr-3 transition-all duration-300"></span>
-                                    Contact
-                                </a>
-                            </li>
+
                         </ul>
                     </nav>
                 </div>
