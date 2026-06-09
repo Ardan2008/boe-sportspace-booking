@@ -6,7 +6,17 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="/image/logo/tutwuri-logo.svg">
-    <title>BOE-Space Reserve | Form Reservasi</title>
+
+    <x-seo.head
+        title="Form Reservasi - BOE-Space Reserve"
+        description="Isi form reservasi untuk memesan aula, asrama, dan fasilitas lainnya di BBPPMPV BOE Malang. Proses pemesanan cepat dan mudah."
+        keywords="form reservasi, booking, BOE Malang, pemesanan ruangan, daftar sewa"
+        :url="url()->current()"
+        :image="url('/image/logo/tutwuri-logo.svg')"
+        type="website"
+        robots="index, follow"
+    />
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

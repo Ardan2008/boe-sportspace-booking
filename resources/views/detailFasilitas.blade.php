@@ -7,7 +7,44 @@
     <link rel="icon" href="/image/logo/tutwuri-logo.svg">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <title>{{ $fasilitas->nama }} — BOE-Space Reserve</title>
+
+    @php
+        $seoImage = $fasilitas->image ? asset('storage/fasilitas/' . $fasilitas->image) : url('/image/logo/tutwuri-logo.svg');
+        $seoDesc = Str::limit(strip_tags($fasilitas->deskripsi ?? ''), 160);
+        $seoKeywords = $fasilitas->nama . ', ' . $fasilitas->tipe . ', BOE Malang, booking ' . $fasilitas->tipe . ', BBPPMPV';
+        if (is_array($fasilitas->labels)) {
+            $seoKeywords .= ', ' . implode(', ', $fasilitas->labels);
+        }
+    @endphp
+
+    <x-seo.head
+        :title="$fasilitas->nama . ' - BOE-Space Reserve'"
+        :description="$seoDesc"
+        :keywords="$seoKeywords"
+        :image="$seoImage"
+        :url="url()->current()"
+        type="website"
+        :jsonLd="[
+            [
+                '@context' => 'https://schema.org',
+                '@type' => 'BreadcrumbList',
+                'itemListElement' => [
+                    ['@type' => 'ListItem', 'position' => 1, 'name' => 'Beranda', 'item' => url('/')],
+                    ['@type' => 'ListItem', 'position' => 2, 'name' => 'Fasilitas', 'item' => url('/#booking')],
+                    ['@type' => 'ListItem', 'position' => 3, 'name' => $fasilitas->nama, 'item' => url()->current()],
+                ],
+            ],
+            [
+                '@context' => 'https://schema.org',
+                '@type' => 'Product',
+                'name' => $fasilitas->nama,
+                'description' => $seoDesc,
+                'image' => $seoImage,
+                'category' => ucfirst($fasilitas->tipe),
+            ],
+        ]"
+    />
+
     <style>
         body { font-family: 'Poppins', sans-serif; }
         [x-cloak] { display: none !important; }

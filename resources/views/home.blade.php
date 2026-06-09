@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +7,49 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="icon" href="/image/logo/tutwuri-logo.svg">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <x-seo.head
+        title="BOE-Space Reserve - Booking Fasilitas BBPPMPV BOE Malang"
+        description="Sistem reservasi fasilitas dan ruangan di BBPPMPV BOE Malang. Pesan aula, asrama, dan ruangan untuk seminar, pelatihan, dan rapat formal."
+        :url="url()->current()"
+        :image="url('/image/logo/tutwuri-logo.svg')"
+        type="website"
+        :jsonLd="[
+            [
+                '@context' => 'https://schema.org',
+                '@type' => 'Organization',
+                'name' => 'BBPPMPV BOE Malang',
+                'url' => url('/'),
+                'logo' => url('/image/logo/tutwuri-logo.svg'),
+                'contactPoint' => [
+                    '@type' => 'ContactPoint',
+                    'telephone' => '(0341) 123456',
+                    'contactType' => 'customer service',
+                    'areaServed' => 'ID',
+                ],
+                'address' => [
+                    '@type' => 'PostalAddress',
+                    'streetAddress' => 'Jl. Teluk Mandar Tromol Arjosari',
+                    'addressLocality' => 'Malang',
+                    'addressRegion' => 'Jawa Timur',
+                    'postalCode' => '65126',
+                    'addressCountry' => 'ID',
+                ],
+            ],
+            [
+                '@context' => 'https://schema.org',
+                '@type' => 'WebSite',
+                'name' => 'BOE-Space Reserve',
+                'url' => url('/'),
+                'potentialAction' => [
+                    '@type' => 'SearchAction',
+                    'target' => url('/') . '?search={search_term_string}',
+                    'query-input' => 'required name=search_term_string',
+                ],
+            ],
+        ]"
+    />
+
     <style>
         html { scroll-behavior: smooth; }
         
@@ -71,7 +114,6 @@
             animation: pulse-slow 6s infinite ease-in-out;
         }
     </style>
-    <title>BOE-Space Reserve</title>
 </head>
 <body class="bg-[#FFFFFF]">
     <x-layout.navbar />

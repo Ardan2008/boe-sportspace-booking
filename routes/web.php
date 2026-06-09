@@ -141,6 +141,18 @@ Route::get('/api/fasilitas/{id}/room-stock', function ($id) {
     return response()->json(['stock' => $stock]);
 })->name('api.fasilitas.room-stock');
 
+// --- SEO: Sitemap & Robots ---
+Route::get('/sitemap.xml', function () {
+    $facilities = \App\Models\Fasilitas::all();
+
+    return response()->view('sitemap', compact('facilities'))->header('Content-Type', 'application/xml');
+})->name('sitemap');
+
+Route::get('/robots.txt', function () {
+    $disallowAdmin = config('services.admin.secret') ?: 'admin/login-page';
+    return response()->view('robots', compact('disallowAdmin'))->header('Content-Type', 'text/plain');
+})->name('robots');
+
 // --- ROUTE ASLI KAMU (TIDAK DIUBAH) ---
 
 Route::get('/', [HomeController::class, 'index'])->name('home');

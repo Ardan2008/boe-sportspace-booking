@@ -5,7 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="/image/logo/tutwuri-logo.svg">
-    <title>BOE-Space Reserve | Jadwal Pembookingan</title>
+
+    <x-seo.head
+        title="Jadwal Pembookingan - BOE-Space Reserve"
+        description="Cek ketersediaan jadwal aula, asrama, dan fasilitas BBPPMPV BOE Malang secara real-time. Pantau status pemakaian ruangan."
+        keywords="jadwal booking, cek ketersediaan, kalendar booking, BOE Malang, ruangan tersedia"
+        :url="url()->current()"
+        :image="url('/image/logo/tutwuri-logo.svg')"
+        type="website"
+        robots="index, follow"
+    />
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
