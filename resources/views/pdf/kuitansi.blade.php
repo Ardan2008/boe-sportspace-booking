@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Kuitansi Reservasi - BOE Space Reserve</title>
+    <title>Kuitansi Reservasi - BOE Sport Space</title>
     <style>
         body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.6; margin: 0; padding: 0; }
         .container { width: 100%; max-width: 750px; margin: auto; padding: 20px; }
@@ -27,7 +27,7 @@
     <div class="container">
         <div class="header">
             <h1>KUITANSI RESERVASI</h1>
-            <p>BOE Space Reserve &mdash; Sistem Manajemen Reservasi</p>
+            <p>BOE Sport Space &mdash; Sistem Booking Lapangan Olahraga</p>
         </div>
 
         <div class="dashed-top"></div>
@@ -94,7 +94,7 @@
 
         <div class="signature">
             Dokumen ini sah dikeluarkan melalui sistem elektronik.<br>
-            BOE Space Reserve &mdash; Sistem Manajemen Reservasi
+            BOE Sport Space &mdash; Sistem Booking Lapangan Olahraga
         </div>
     </div>
 </body>

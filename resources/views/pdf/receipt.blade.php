@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Kwitansi Reservasi - BOE Space Reserve</title>
+    <title>Kwitansi Reservasi - BOE Sport Space</title>
     <style>
         body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.6; }
         .container { width: 100%; max-width: 800px; margin: auto; padding: 20px; }
@@ -24,7 +24,7 @@
     <div class="container">
         <div class="header">
             <h1>Bukti Reservasi Resmi</h1>
-            <p>BOE-Space Reserve System | Management Portal</p>
+            <p>BOE-Sport Space System | Management Portal</p>
         </div>
 
         <div class="info-section">
@@ -67,7 +67,7 @@
         <div class="footer">
             <div class="stamp">LUNAS / CONFIRMED</div>
             <p style="margin-bottom: 40px;">Dicetak pada: {{ \Carbon\Carbon::now()->format('d F Y, H:i \W\I\B') }}</p>
-            <p><b>Administrasi BOE-Reserve</b></p>
+            <p><b>Administrasi BOE-Sport Space</b></p>
             <p class="signature">Dokumen ini sah dikeluarkan melalui sistem elektronik.</p>
         </div>
     </div>

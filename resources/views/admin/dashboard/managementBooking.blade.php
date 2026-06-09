@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="icon" href="/image/logo/tutwuri-logo.svg">
-    <title>BOE-Space Reserve | Booking Management</title>
+    <title>BOE-Sport Space | Booking Management</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
@@ -146,7 +146,7 @@
                                 'tahunan'  => '~' . ($duration * 365) . ' hari',
                                 default    => $duration . ' hari',
                             };
-                            $tipe = $booking->fasilitas?->tipe ?? 'aula';
+                            $tipe = $booking->fasilitas?->tipe ?? 'kolam_renang';
                         @endphp
                         <tr class="hover:bg-slate-50/80 transition-all duration-200">
 
@@ -186,7 +186,7 @@
                                 <div class="flex items-center gap-2 flex-wrap mt-2">
                                     {{-- Badge tipe fasilitas --}}
                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase
-                                        {{ $tipe === 'asrama' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700' }}">
+                                        {{ $tipe === 'lapangan' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700' }}">
                                         {{ ucfirst($tipe) }}
                                     </span>
                                     {{-- Badge paket sewa (step 1) --}}
@@ -215,7 +215,7 @@
 
                             {{-- TAMU & KAMAR: step 2 breakdown --}}
                             <td class="p-5">
-                                @if($tipe === 'asrama')
+                                @if($tipe === 'lapangan')
                                 {{-- Jumlah kamar --}}
                                 <div class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full mb-2">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -255,7 +255,7 @@
 
                                 {{-- Total tamu berbayar --}}
                                 <p class="text-[10px] text-slate-500 font-semibold mt-2">
-                                    @if($tipe === 'aula')
+                                    @if($tipe === 'kolam_renang')
                                         Total peserta: <strong class="text-slate-700">{{ $adults }}</strong>
                                         @if($booking->fasilitas?->max_dewasa)
                                         / maks {{ $booking->fasilitas->max_dewasa }}
@@ -276,10 +276,10 @@
                                 </p>
                                 {{-- Rumus tagihan agar admin bisa verifikasi --}}
                                 <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">
-                                    @if($tipe === 'asrama')
-                                        {{ $rooms }} kamar &times; {{ $duration }} {{ $durUnit }}
+                                    @if($tipe === 'lapangan')
+                                        {{ $rooms }} lapangan &times; {{ $duration }} {{ $durUnit }}
                                     @else
-                                        {{ $duration }} {{ $durUnit }} &times; tarif aula
+                                        {{ $duration }} {{ $durUnit }} &times; tarif kolam renang
                                     @endif
                                 </p>
                                 <p class="text-[10px] text-slate-400">Sudah termasuk pajak</p>
@@ -389,7 +389,7 @@
                                 'tahunan'  => 'Tahun',
                                 default    => 'Hari',
                             };
-                            $tipe = $booking->fasilitas?->tipe ?? 'aula';
+                            $tipe = $booking->fasilitas?->tipe ?? 'kolam_renang';
 
                             $isJatim   = strtoupper($booking->penyewa?->provinsi ?? '') === 'JAWA TIMUR';
                             $totalMs   = $isJatim ? 86400000 : 259200000;
@@ -428,7 +428,7 @@
                                 </p>
                                 <div class="flex items-center gap-2 flex-wrap mt-2">
                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase
-                                        {{ $tipe === 'asrama' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700' }}">
+                                        {{ $tipe === 'lapangan' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700' }}">
                                         {{ ucfirst($tipe) }}
                                     </span>
                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase
@@ -454,7 +454,7 @@
 
                             {{-- TAMU & TAGIHAN --}}
                             <td class="p-5">
-                                @if($tipe === 'asrama')
+                                @if($tipe === 'lapangan')
                                 <div class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full mb-2">
                                     {{ $rooms }} Kamar
                                 </div>
@@ -478,10 +478,10 @@
                                     Rp {{ number_format($booking->total_harga, 0, ',', '.') }}
                                 </p>
                                 <p class="text-[10px] text-slate-400">
-                                    @if($tipe === 'asrama')
-                                        {{ $rooms }} kamar × {{ $duration }} {{ $durUnit }}
+                                    @if($tipe === 'lapangan')
+                                        {{ $rooms }} lapangan × {{ $duration }} {{ $durUnit }}
                                     @else
-                                        {{ $duration }} {{ $durUnit }} × tarif aula
+                                        {{ $duration }} {{ $durUnit }} × tarif kolam renang
                                     @endif
                                 </p>
                             </td>
@@ -528,7 +528,7 @@
                                         </svg>
                                         Extend
                                     </button>
-                                    <a href="https://wa.me/{{ preg_replace('/^0/', '62', preg_replace('/[^\d]/', '', $booking->penyewa?->whatsapp ?? '')) }}?text=Halo%20{{ urlencode($booking->penyewa?->nama ?? '') }},%20kami%20dari%20Admin%20BOE-Space..."
+                                    <a href="https://wa.me/{{ preg_replace('/^0/', '62', preg_replace('/[^\d]/', '', $booking->penyewa?->whatsapp ?? '')) }}?text=Halo%20{{ urlencode($booking->penyewa?->nama ?? '') }},%20kami%20dari%20Admin%20BOE-Sport..."
                                         target="_blank"
                                         class="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-500 hover:text-white transition-all font-bold text-xs ring-1 ring-emerald-200">
                                         <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
@@ -616,7 +616,7 @@
                                 'tahunan'  => 'Tahun',
                                 default    => 'Hari',
                             };
-                            $tipe = $booking->fasilitas?->tipe ?? 'aula';
+                            $tipe = $booking->fasilitas?->tipe ?? 'kolam_renang';
                             $end  = \Carbon\Carbon::parse($booking->tgl_selesai)->endOfDay();
                         @endphp
                         <tr class="hover:bg-slate-50/80 transition-all duration-200">
@@ -652,7 +652,7 @@
                             <td class="p-5">
                                 <div class="flex items-center gap-2 flex-wrap mb-2">
                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase
-                                        {{ $tipe === 'asrama' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700' }}">
+                                        {{ $tipe === 'lapangan' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700' }}">
                                         {{ ucfirst($tipe) }}
                                     </span>
                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase
@@ -666,7 +666,7 @@
                                         {{ $duration }} {{ $durUnit }}
                                     </span>
                                 </div>
-                                @if($tipe === 'asrama')
+                                @if($tipe === 'lapangan')
                                 <div class="flex flex-wrap gap-1.5 mb-1.5">
                                     <span class="bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
                                         {{ $rooms }} Kamar
@@ -922,7 +922,7 @@
                     </h4>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.fasilitas_tipe === 'asrama'">
+                            x-show="detailPayload.fasilitas_tipe === 'lapangan'">
                             <span class="block text-[10px] uppercase text-purple-500 font-bold mb-1">Kamar</span>
                             <span class="font-black text-purple-700 text-xl"
                                 x-text="detailPayload.details?.rooms || '1'"></span>
@@ -935,14 +935,14 @@
                                 x-text="detailPayload.details?.adults || '1'"></span>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.fasilitas_tipe === 'asrama'">
+                            x-show="detailPayload.fasilitas_tipe === 'lapangan'">
                             <span class="block text-[10px] uppercase text-amber-500 font-bold mb-1">Anak ≥12</span>
                             <span class="font-black text-amber-600 text-xl"
                                 x-text="detailPayload.details?.billable_children || '0'"></span>
                             <span class="block text-[9px] text-amber-400 mt-1">Tarif dewasa</span>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.fasilitas_tipe === 'asrama'">
+                            x-show="detailPayload.fasilitas_tipe === 'lapangan'">
                             <span class="block text-[10px] uppercase text-emerald-500 font-bold mb-1">Anak &lt;12</span>
                             <span class="font-black text-emerald-600 text-xl"
                                 x-text="detailPayload.details?.free_children || '0'"></span>

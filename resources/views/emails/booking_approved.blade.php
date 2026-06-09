@@ -6,7 +6,7 @@
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
     <h2>Halo, {{ $booking->penyewa->nama }}!</h2>
     
-    <p>Terima kasih telah melakukan reservasi di <strong>BOE Space Reserve</strong>.</p>
+    <p>Terima kasih telah melakukan reservasi di <strong>BOE Sport Space</strong>.</p>
 
     <p>Kami sangat senang memberitahukan bahwa permohonan booking Anda untuk fasilitas <strong>{{ $booking->fasilitas->nama }}</strong> telah <strong>DISETUJUI</strong>.</p>
     
@@ -23,6 +23,6 @@
     <p>Silakan unduh dan simpan kwitansi tersebut sebagai bukti pemesanan yang sah.</p>
 
     <p>Terima kasih,<br>
-    Tim BOE Space Reserve</p>
+    Tim BOE Sport Space</p>
 </body>
 </html>

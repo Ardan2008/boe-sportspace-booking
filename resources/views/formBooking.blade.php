@@ -8,9 +8,9 @@
     <link rel="icon" href="/image/logo/tutwuri-logo.svg">
 
     <x-seo.head
-        title="Form Reservasi - BOE-Space Reserve"
-        description="Isi form reservasi untuk memesan aula, asrama, dan fasilitas lainnya di BBPPMPV BOE Malang. Proses pemesanan cepat dan mudah."
-        keywords="form reservasi, booking, BOE Malang, pemesanan ruangan, daftar sewa"
+        title="Form Reservasi - BOE-Sport Space"
+        description="Isi form reservasi untuk memesan lapangan olahraga di BBPPMPV BOE Malang. Proses pemesanan cepat dan mudah."
+        keywords="form reservasi, booking lapangan, BOE Malang, pemesanan lapangan, daftar sewa"
         :url="url()->current()"
         :image="url('/image/logo/tutwuri-logo.svg')"
         type="website"
@@ -103,10 +103,10 @@
                 <div class="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center flex-shrink-0">
                     <svg class="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            x-show="currentFacility?.tipe==='aula'"
+                            x-show="currentFacility?.tipe==='kolam_renang'"
                             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            x-show="currentFacility?.tipe==='asrama'"
+                            x-show="currentFacility?.tipe==='lapangan'"
                             d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                     </svg>
                 </div>
@@ -191,9 +191,9 @@
             <div class="mb-5 p-4 rounded-[1.5rem] flex items-center gap-4" style="background:linear-gradient(135deg,#1e293b,#0f172a)">
                 <div class="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x-show="currentFacility?.tipe==='asrama'"
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x-show="currentFacility?.tipe==='lapangan'"
                             d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x-show="currentFacility?.tipe==='aula'"
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x-show="currentFacility?.tipe==='kolam_renang'"
                             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                     </svg>
                 </div>
@@ -206,182 +206,6 @@
 
             <div class="space-y-5">
 
-                {{-- ── PILIH TIPE KAMAR — Premium Horizontal Cards (asrama only) ── --}}
-                <div x-show="currentFacility?.tipe === 'asrama' && roomTypes.length > 0"
-                     class="space-y-4">
-                    <div class="flex items-center justify-between mb-1">
-                        <h4 class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Pilih Tipe Kamar</h4>
-                        <span x-show="selected_tipe_id !== null" x-transition
-                            class="text-[9px] text-blue-600 font-black bg-blue-50 px-2 py-1 rounded-full border border-blue-100 cursor-pointer hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all"
-                            @click="resetRoomType()">× Reset</span>
-                    </div>
-
-                    {{-- ── Premium Horizontal Room Card Loop ── --}}
-                    <template x-for="(rt, idx) in roomTypes" :key="idx">
-                        <div class="room-card border-2 rounded-2xl overflow-hidden cursor-pointer select-none"
-                             :class="selected_tipe_id === idx ? 'selected border-blue-500' : 'border-gray-200 bg-white'"
-                             @click="selectRoomType(idx)"
-                             x-data="{
-                                 hovered: false,
-                                 get photos() {
-                                     const raw = (rt.foto && rt.foto.length) ? rt.foto : [];
-                                     const first = raw.find(p => p) || null;
-                                     const result = [];
-                                     for (let i = 0; i < 3; i++) {
-                                         const src = (raw[i] && String(raw[i]).trim()) ? raw[i] : first;
-                                         if (src) result.push('/storage/fasilitas/rooms/' + src);
-                                     }
-                                     return result;
-                                 },
-                                 openLightbox(e) {
-                                     e.stopPropagation();
-                                     const photos = this.photos.length ? this.photos : ['/storage/fasilitas/' + (rt.image || '')];
-                                     $dispatch('open-lightbox', { photos: photos, idx: 0 });
-                                 }
-                             }"
-                             @mouseenter="hovered = true"
-                             @mouseleave="hovered = false">
-                            <div class="flex flex-col sm:flex-row">
-                                {{-- ── Left: Static photo thumbnail with hover + lightbox ── --}}
-                                <div class="relative w-full sm:w-44 aspect-[4/3] flex-shrink-0 overflow-hidden bg-gray-100 cursor-pointer"
-                                     @click.stop="openLightbox($event)">
-                                    <template x-if="photos.length > 0">
-                                        <div class="w-full h-full relative">
-                                            {{-- Static first-photo thumbnail --}}
-                                            <img :src="photos[0]"
-                                                 class="w-full h-full object-cover transition-all duration-300"
-                                                 :class="hovered ? 'blur-sm brightness-75 scale-105' : ''">
-                                            {{-- Photo count badge --}}
-                                            <div x-show="photos.length > 1"
-                                                 class="absolute top-2 right-2 bg-black/50 text-white text-[9px] font-black px-2 py-0.5 rounded-full z-10 pointer-events-none"
-                                                 x-text="photos.length + ' foto'"></div>
-                                            {{-- Hover eye icon --}}
-                                            <div x-show="hovered"
-                                                 x-transition:enter="transition ease-out duration-150"
-                                                 x-transition:enter-start="opacity-0 scale-75"
-                                                 x-transition:enter-end="opacity-100 scale-100"
-                                                 class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                                                <div class="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-xl">
-                                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
-                                    <template x-if="photos.length === 0">
-                                        <div class="w-full h-full flex items-center justify-center">
-                                            <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                        </div>
-                                    </template>
-                                    <div x-show="selected_tipe_id === idx" x-transition
-                                         class="absolute top-2 left-2 z-30 bg-blue-600 text-white text-[8px] font-black px-2 py-1 rounded-lg shadow">✓ DIPILIH</div>
-                                </div>{{-- /static photo --}}
-
-                                {{-- ── Right: Info Panel ── --}}
-                                <div class="flex-1 p-4 flex flex-col gap-3">
-                                    {{-- Name + radio + count + blok --}}
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <template x-if="selected_tipe_id !== idx">
-                                            <div class="w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0"></div>
-                                        </template>
-                                        <template x-if="selected_tipe_id === idx">
-                                            <div class="w-4 h-4 rounded-full border-2 border-blue-500 bg-blue-500 flex-shrink-0 flex items-center justify-center">
-                                                <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
-                                            </div>
-                                        </template>
-                                        <p class="font-black text-gray-900 text-sm" x-text="rt.tipe || ('Tipe ' + (idx + 1))"></p>
-                                        <span x-show="rt.kode_blok" class="text-[9px] font-bold text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded-full" x-text="'Blok ' + rt.kode_blok"></span>
-                                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ml-auto"
-                                              :class="selected_tipe_id === idx ? (availabilityFetched ? (maxStock > 0 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-red-700 bg-red-50 border border-red-200') : 'text-emerald-700 bg-emerald-50 border border-emerald-200') : 'text-emerald-700 bg-emerald-50 border border-emerald-200'"
-                                              x-text="selected_tipe_id === idx ? (availabilityFetched ? (maxStock > 0 ? 'Tersedia ' + maxStock + ' Kamar' : 'Kamar Penuh') : 'Tersedia ' + (rt.jumlah || 0) + ' Kamar') : 'Tersedia ' + (rt.jumlah || 0) + ' Kamar'"></span>
-                                    </div>
-                                    {{-- Keunggulan --}}
-                                    <p x-show="rt.keunggulan" class="text-[11px] text-slate-500 font-medium leading-snug line-clamp-2" x-text="rt.keunggulan"></p>
-                                    {{-- Pricing — refined typography --}}
-                                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                                        <template x-if="packageType === 'harian' && rt.harga_harian > 0">
-                                            <span><span class="text-sm font-black text-slate-800">Rp <span x-text="new Intl.NumberFormat('id-ID').format(rt.harga_harian)"></span></span> <span class="text-[10px] font-medium text-slate-400">/hari</span></span>
-                                        </template>
-                                        <template x-if="packageType === 'mingguan' && rt.harga_mingguan > 0">
-                                            <span><span class="text-sm font-black text-slate-800">Rp <span x-text="new Intl.NumberFormat('id-ID').format(rt.harga_mingguan)"></span></span> <span class="text-[10px] font-medium text-slate-400">/minggu</span></span>
-                                        </template>
-                                        <template x-if="packageType === 'bulanan' && rt.harga_bulanan > 0">
-                                            <span><span class="text-sm font-black text-slate-800">Rp <span x-text="new Intl.NumberFormat('id-ID').format(rt.harga_bulanan)"></span></span> <span class="text-[10px] font-medium text-slate-400">/bulan</span></span>
-                                        </template>
-                                        <template x-if="packageType === 'tahunan' && rt.harga_tahunan > 0">
-                                            <span><span class="text-sm font-black text-slate-800">Rp <span x-text="new Intl.NumberFormat('id-ID').format(rt.harga_tahunan)"></span></span> <span class="text-[10px] font-medium text-slate-400">/tahun</span></span>
-                                        </template>
-                                        <span x-show="selectedRoomMaxDurasi > 0 && selected_tipe_id === idx"
-                                            class="text-[10px] font-medium text-slate-400"
-                                            x-text="'Maks: ' + selectedRoomMaxDurasi + ' ' + (packageType === 'harian' ? 'hari' : packageType === 'mingguan' ? 'minggu' : packageType === 'bulanan' ? 'bulan' : 'tahun')"></span>
-                                    </div>
-                                    {{-- Specs --}}
-                                    <div class="grid grid-cols-3 gap-1.5">
-                                        <div x-show="rt.panjang && rt.lebar" class="bg-slate-50 rounded-xl px-2 py-1.5 text-center">
-                                            <p class="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Ukuran</p>
-                                            <p class="text-[10px] font-black text-slate-700" x-text="rt.panjang + '×' + rt.lebar + ' m²'"></p>
-                                        </div>
-                                        <div class="bg-slate-50 rounded-xl px-2 py-1.5 text-center">
-                                            <p class="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Kapasitas</p>
-                                            <p class="text-[10px] font-black text-slate-700"
-                                               x-text="(rt.max_dewasa || 1) + ' Dws' + (rt.max_anak > 0 ? '+' + rt.max_anak + 'Ank' : '')"></p>
-                                        </div>
-                                        <div x-show="rt.ranjang" class="bg-slate-50 rounded-xl px-2 py-1.5 text-center">
-                                            <p class="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Kasur</p>
-                                            <p class="text-[10px] font-black text-slate-700" x-text="rt.ranjang"></p>
-                                        </div>
-                                    </div>
-                                    {{-- Fasilitas chips — unified slate theme --}}
-                                    <div x-show="rt.fasilitas" class="flex flex-wrap gap-1">
-                                        <template x-if="rt.fasilitas?.ac > 0"><span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">AC × <span x-text="rt.fasilitas.ac"></span></span></template>
-                                        <template x-if="rt.fasilitas?.kipas_angin > 0"><span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">Kipas × <span x-text="rt.fasilitas.kipas_angin"></span></span></template>
-                                        <template x-if="rt.fasilitas?.meja_kursi > 0"><span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">Meja & Kursi × <span x-text="rt.fasilitas.meja_kursi"></span></span></template>
-                                        <template x-if="rt.fasilitas?.lemari_locker > 0"><span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">Lemari × <span x-text="rt.fasilitas.lemari_locker"></span></span></template>
-                                        <template x-if="rt.fasilitas?.stopkontak > 0"><span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">Stopkontak × <span x-text="rt.fasilitas.stopkontak"></span></span></template>
-                                        <template x-if="rt.fasilitas?.kamar_mandi_dalam > 0"><span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">KM Dalam × <span x-text="rt.fasilitas.kamar_mandi_dalam"></span></span></template>
-                                        <template x-if="rt.fasilitas?.water_heater > 0"><span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">Water Heater × <span x-text="rt.fasilitas.water_heater"></span></span></template>
-                                        <template x-if="rt.fasilitas?.bantal_set_sprei > 0"><span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">Bantal & Sprei × <span x-text="rt.fasilitas.bantal_set_sprei"></span></span></template>
-                                        <template x-if="rt.fasilitas?.gantungan_baju > 0"><span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">Gantungan × <span x-text="rt.fasilitas.gantungan_baju"></span></span></template>
-                                        <template x-if="rt.fasilitas?.kaca_rias > 0"><span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">Kaca Rias × <span x-text="rt.fasilitas.kaca_rias"></span></span></template>
-                                    </div>
-                                    {{-- Room counter (when selected) --}}
-                                    <div x-show="selected_tipe_id === idx" x-transition
-                                         class="flex items-center justify-between pt-2 border-t border-blue-100 mt-auto">
-                                        <template x-if="availabilityFetched && maxStock === 0">
-                                            <div class="w-full flex items-center justify-between">
-                                                <span class="text-[10px] font-black text-red-600">Kamar Penuh</span>
-                                                <button @click.stop="alert('Maaf, semua kamar pada tipe ini sudah penuh untuk tanggal yang Anda pilih.')"
-                                                    class="text-[9px] font-black px-3 py-1.5 bg-gray-400 text-white rounded-xl cursor-not-allowed opacity-80"
-                                                    :disabled="true">Tidak Tersedia</button>
-                                            </div>
-                                        </template>
-                                        <template x-if="!(availabilityFetched && maxStock === 0)">
-                                            <div class="w-full flex items-center justify-between">
-                                                <p class="text-[10px] font-bold text-blue-600">Jumlah kamar:</p>
-                                                <div class="flex items-center gap-2 bg-white border-2 border-blue-200 rounded-2xl px-2 py-1 shadow-sm">
-                                                    <button @click.stop="decRooms()"
-                                                        class="w-8 h-8 flex items-center justify-center rounded-xl text-blue-600 hover:bg-blue-100 font-black text-lg transition-all"
-                                                        :class="rooms <= 1 ? 'opacity-40 cursor-not-allowed' : ''">−</button>
-                                                    <span class="w-6 text-center font-black text-blue-700 text-sm" x-text="rooms"></span>
-                                                    <button @click.stop="incRooms()"
-                                                        class="w-8 h-8 flex items-center justify-center rounded-xl font-black text-lg transition-all"
-                                                        :class="rooms >= maxRoomsFromFacility ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-100'">+</button>
-                                                </div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>{{-- /info panel --}}
-                            </div>{{-- /flex row --}}
-                        </div>
-                    </template>
-
-                    <p x-show="step2Errors.roomType" x-transition class="text-[10px] text-red-500 font-semibold flex items-center gap-1">
-                        <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                        Pilih tipe kamar terlebih dahulu
-                    </p>
-                </div>
 
                 {{-- ── DURASI ── --}}
                 <div class="p-5 bg-gray-50 rounded-3xl border-2 transition-all"
@@ -417,14 +241,14 @@
                     </p>
                 </div>
 
-                {{-- ── JUMLAH KAMAR legacy counter (shown when NO paket_harian room types) — asrama only ── --}}
-                <div x-show="currentFacility?.tipe === 'asrama' && roomTypes.length === 0"
+                {{-- ── JUMLAH LAPANGAN legacy counter (shown when NO paket_harian field types) � lapangan only --
+                <div x-show="currentFacility?.tipe === 'lapangan'"
                      class="p-5 rounded-3xl border-2 transition-all"
                      :class="step2Errors.rooms ? 'border-red-300 bg-red-50/30' : 'border-blue-200 bg-blue-50'">
                     <div class="flex items-start justify-between gap-4 mb-4">
                         <div>
-                            <h4 class="font-black text-blue-800 uppercase tracking-tighter text-sm">Jumlah Kamar</h4>
-                            <p class="text-[10px] font-bold text-blue-600">1 Kamar = Maks <strong>2 Dewasa</strong> + Maks <strong>2 Anak</strong></p>
+                            <h4 class="font-black text-blue-800 uppercase tracking-tighter text-sm">Jumlah Lapangan</h4>
+                            <p class="text-[10px] font-bold text-blue-600">1 Lapangan = Maks <strong>2 Dewasa</strong> + Maks <strong>2 Anak</strong></p>
                         </div>
                         <div class="flex items-center gap-3 flex-shrink-0">
                             <button @click="decRooms()"
@@ -442,8 +266,8 @@
                     </p>
                 </div>
 
-                {{-- ── ROOM SLOT VISUAL (guest indicators) — asrama only ── --}}
-                <div x-show="currentFacility?.tipe === 'asrama'"
+                {{-- ── LAPANGAN SLOT VISUAL (guest indicators) � lapangan only --
+                <div x-show="currentFacility?.tipe === 'lapangan'"
                      x-transition class="p-5 rounded-3xl border-2 border-blue-100 bg-blue-50/30">
                     <div class="grid gap-3 mb-3" :style="'grid-template-columns: repeat(' + Math.min(rooms,3) + ', 1fr)'">
                         <template x-for="r in rooms" :key="r">
@@ -484,12 +308,12 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <h4 class="font-black text-gray-800 uppercase tracking-tighter text-sm"
-                                x-text="currentFacility?.tipe==='aula' ? 'Total Peserta / Kapasitas' : 'Jumlah Tamu Dewasa'"></h4>
+                                x-text="currentFacility?.tipe==='kolam_renang' ? 'Total Peserta / Kapasitas Kolam' : 'Jumlah Pemain'"></h4>
                             <p class="text-[10px] font-bold mt-0.5"
                                :class="step2Errors.adults ? 'text-red-400' : 'text-gray-400'">
-                                <span x-show="currentFacility?.tipe==='asrama'"
-                                      x-text="'Maks dewasa: ' + maxAdultsAllowed + ' (dari ' + (rooms*2) + ' slot kamar)'"></span>
-                                <span x-show="currentFacility?.tipe==='aula'"
+                                <span x-show="currentFacility?.tipe==='lapangan'"
+                                      x-text="'Maks pemain: ' + maxAdultsAllowed + ' (dari ' + (rooms*2) + ' slot lapangan)'"></span>
+                                <span x-show="currentFacility?.tipe==='kolam_renang'"
                                       x-text="'Maks. ' + (currentFacility?.max_dewasa||'–') + ' orang'"></span>
                             </p>
                         </div>
@@ -514,15 +338,15 @@
                             </button>
                         </div>
                     </div>
-                    <div x-show="showRoomHint && currentFacility?.tipe==='asrama'" x-transition
+                    <div x-show="showRoomHint && currentFacility?.tipe==='lapangan'" x-transition
                          class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-2">
                         <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <p class="text-[11px] text-blue-700 font-semibold">Slot penuh — tambah kamar untuk menambah tamu dewasa.</p>
+                        <p class="text-[11px] text-blue-700 font-semibold">Slot penuh — tambah lapangan untuk menambah tamu.</p>
                     </div>
-                    <div x-show="showRoomHint && currentFacility?.tipe==='aula'" x-transition
+                    <div x-show="showRoomHint && currentFacility?.tipe==='kolam_renang'" x-transition
                          class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-2">
                         <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <p class="text-[11px] text-amber-700 font-semibold">Kapasitas aula penuh. Maks. <span x-text="currentFacility?.max_dewasa"></span> peserta.</p>
+                        <p class="text-[11px] text-amber-700 font-semibold">Kapasitas kolam renang penuh. Maks. <span x-text="currentFacility?.max_dewasa"></span> peserta.</p>
                     </div>
                     <p x-show="step2Errors.adults" x-transition class="text-[10px] text-red-500 font-semibold mt-2 flex items-center gap-1">
                         <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
@@ -530,8 +354,8 @@
                     </p>
                 </div>
 
-                {{-- ── ANAK (asrama only) ── --}}
-                <div x-show="currentFacility?.tipe === 'asrama'"
+                {{-- ── ANAK (lapangan only) ── --}}
+                <div x-show="currentFacility?.tipe === 'lapangan'"
                      class="p-5 bg-gray-50 rounded-3xl border-2 transition-all"
                      :class="step2Errors.childAges ? 'border-red-300 bg-red-50/30' : 'border-gray-100'">
                     <div class="flex items-center justify-between">
@@ -539,7 +363,7 @@
                             <h4 class="font-black text-gray-800 uppercase tracking-tighter text-sm">Jumlah Anak</h4>
                             <p class="text-[10px] font-bold mt-0.5"
                                :class="step2Errors.childAges ? 'text-red-400' : 'text-gray-400'"
-                               x-text="'Maks anak: ' + maxChildrenAllowed + ' (slot anak per kamar)'"></p>
+                               x-text="'Maks anak: ' + maxChildrenAllowed + ' (slot anak per lapangan)'"></p>
                         </div>
                         <div class="flex items-center gap-4">
                             <button @click="decChildren()"
@@ -562,12 +386,12 @@
                     </div>
                     <div x-show="showChildHint" x-transition class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-2">
                         <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <p class="text-[11px] text-amber-700 font-semibold">Slot penuh — tambah kamar untuk menambah anak.</p>
+                        <p class="text-[11px] text-amber-700 font-semibold">Slot penuh — tambah lapangan untuk menambah anak.</p>
                     </div>
                 </div>
 
                 {{-- ── INPUT UMUR ANAK ── --}}
-                <div x-show="currentFacility?.tipe==='asrama' && children > 0" x-transition
+                <div x-show="currentFacility?.tipe==='lapangan' && children > 0" x-transition
                     class="p-5 bg-blue-50/30 rounded-3xl border border-blue-100">
                     <h4 class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Umur Anak (Tahun)</h4>
                     <p class="text-[10px] text-blue-400 font-medium mb-4">
@@ -605,17 +429,17 @@
                 {{-- ── RINGKASAN MINI ── --}}
                 <div class="mt-2 p-4 bg-slate-900 rounded-2xl">
                     <div class="grid gap-3 text-center"
-                        :style="currentFacility?.tipe==='asrama' ? 'grid-template-columns: repeat(3, 1fr)' : 'grid-template-columns: repeat(2, 1fr)'">
+                        :style="currentFacility?.tipe==='lapangan' ? 'grid-template-columns: repeat(3, 1fr)' : 'grid-template-columns: repeat(2, 1fr)'">
                         <div>
                             <p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Durasi</p>
                             <p class="text-white font-black text-sm"
                                x-text="duration + ' ' + (packageType==='harian'?'Hari':packageType==='mingguan'?'Minggu':packageType==='bulanan'?'Bln':'Thn')"></p>
                         </div>
-                        <div x-show="currentFacility?.tipe==='asrama'">
-                            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Kamar</p>
+                        <div x-show="currentFacility?.tipe==='lapangan'">
+                            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Lapangan</p>
                             <p class="font-black text-sm"
                                :class="((adults + billableChildren) > rooms*2 || freeChildren > rooms*2) ? 'text-amber-400' : 'text-white'"
-                               x-text="rooms + ' Kamar'"></p>
+                               x-text="rooms + ' Lapangan'"></p>
                         </div>
                         <div>
                             <p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Tamu Berbayar</p>
@@ -722,13 +546,8 @@
 
             <div class="mt-8 flex justify-between gap-4">
                 <button @click="prevStep()" class="flex-1 py-4 px-6 bg-slate-100 text-slate-400 font-bold rounded-2xl uppercase tracking-widest text-xs">Kembali</button>
-                <button @click="availabilityFetched && maxStock === 0 && selected_tipe_id !== null
-                        ? alert('Maaf, semua kamar pada tipe ini sudah penuh untuk tanggal yang Anda pilih.')
-                        : submitStep2()"
-                    class="flex-[2] py-4 px-6 font-black rounded-2xl uppercase tracking-widest text-xs shadow-lg transition-all"
-                    :class="availabilityFetched && maxStock === 0 && selected_tipe_id !== null
-                        ? 'bg-gray-400 text-white cursor-not-allowed opacity-80'
-                        : 'bg-blue-600 text-white shadow-blue-200 hover:bg-blue-700'">
+                <button @click="submitStep2()"
+                    class="flex-[2] py-4 px-6 font-black rounded-2xl uppercase tracking-widest text-xs shadow-lg transition-all bg-blue-600 text-white shadow-blue-200 hover:bg-blue-700">
                     Konfirmasi Data Diri →
                 </button>
             </div>
@@ -1018,9 +837,9 @@
                         <p class="text-[16px] font-bold text-slate-100 truncate" x-text="currentFacility?.nama"></p>
                         <div class="flex items-center gap-2 mt-1.5">
                             <span class="bg-blue-500/20 text-blue-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase" x-text="currentFacility?.tipe"></span>
-                            <span x-show="currentFacility?.tipe==='asrama' && selected_tipe_id !== null"
+                            <span x-show="currentFacility?.tipe==='lapangan'"
                                 class="bg-purple-500/20 text-purple-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase"
-                                x-text="(roomTypes[selected_tipe_id]?.tipe || 'Tipe ' + (selected_tipe_id+1)) + ' · ' + rooms + ' kamar'"></span>
+                                x-text="rooms + ' lapangan'"></span>
                         </div>
                     </div>
                     <div class="grid grid-cols-3 gap-2.5 mb-4">
@@ -1164,7 +983,6 @@ document.addEventListener('alpine:init', () => {
         children: 0,
         childAges: [],
         rooms: 1,
-        selected_tipe_id: null,   // index into roomTypes array (radio selection)
         selectedDate: null,
         facilities: config.facilities || [],
         selectedFacilityId: config.selectedFacilityId || '',
@@ -1191,7 +1009,6 @@ document.addEventListener('alpine:init', () => {
             rooms: false, roomsMsg: '',
             adults: false, adultsMsg: '',
             childAges: false,
-            roomType: false
         },
 
         // ── Step 3 (Data Diri) state ──
@@ -1237,7 +1054,6 @@ document.addEventListener('alpine:init', () => {
             this.$watch('selectedFacilityId', () => { this.fetchCalendarData(); });
             this.$watch('selectedDate', () => { this.availabilityFetched = false; this.fetchRoomAvailability(); });
             this.$watch('duration', () => { this.fetchRoomAvailability(); });
-            this.$watch('selected_tipe_id', () => { this.availabilityFetched = false; this.availableRooms = []; this.maxStock = 0; this.fetchRoomAvailability(); });
             this.$watch('step', val => {
                 if (val === 3) {
                     if (this.step4Provinces.length === 0) this.s4LoadProvinces();
@@ -1245,37 +1061,8 @@ document.addEventListener('alpine:init', () => {
                 }
                 if (val === 2) { this.fetchCalendarData(); }
             });
-            // ── Auto-select tipe_id from URL query param ──
-            const _urlTipeId = new URLSearchParams(window.location.search).get('tipe_id');
-            if (_urlTipeId !== null) {
-                const _idx = this.roomTypes.findIndex((rt, i) => String(rt.id ?? i) === String(_urlTipeId));
-                if (_idx >= 0) {
-                    this.selected_tipe_id = _idx;
-                    this.rooms = 1;
-                }
-            }
             // ── Auto-refresh stok kamar setiap 15 detik ──
             setInterval(() => { this.pollRoomStock(); }, 15000);
-        },
-
-        // ── Room type helpers (from paket_harian DB field) ───────────
-        get roomTypes() {
-            const f = this.currentFacility;
-            if (!f || !f.paket_harian) return [];
-            const pt = Array.isArray(f.paket_harian) ? f.paket_harian : [];
-            return pt;
-        },
-
-        selectRoomType(idx) {
-            if (this.selected_tipe_id === idx) return; // already selected
-            this.selected_tipe_id = idx;
-            this.rooms = 1; // reset room count when changing type
-            this.step2Errors.roomType = false;
-        },
-
-        resetRoomType() {
-            this.selected_tipe_id = null;
-            this.rooms = 1;
         },
 
         // Max durasi from the selected room type's parent facility field
@@ -1296,12 +1083,7 @@ document.addEventListener('alpine:init', () => {
 
         get maxRoomsFromFacility() {
             const f = this.currentFacility;
-            if (!f || f.tipe !== 'asrama') return 999;
-            // If a room type is selected, its jumlah field limits; otherwise use facility total
-            if (this.selected_tipe_id !== null && this.roomTypes.length > 0) {
-                const rt = this.roomTypes[this.selected_tipe_id];
-                return (rt && rt.jumlah) ? rt.jumlah : (f.jumlah_kamar || 999);
-            }
+            if (!f || f.tipe !== 'lapangan') return 999;
             return f.jumlah_kamar || 999;
         },
 
@@ -1316,13 +1098,13 @@ document.addEventListener('alpine:init', () => {
         get maxAdultsAllowed() {
             const f = this.currentFacility;
             if (!f) return 999;
-            if (f.tipe === 'asrama') return Math.max(0, (this.rooms * 2) - this.billableChildren);
+            if (f.tipe === 'lapangan') return Math.max(0, (this.rooms * 2) - this.billableChildren);
             return f.max_dewasa || 999;
         },
 
         get maxChildrenAllowed() {
             const f = this.currentFacility;
-            if (!f || f.tipe !== 'asrama') return 999;
+            if (!f || f.tipe !== 'lapangan') return 999;
             return Math.min(f.max_anak || 999, this.rooms * 2);
         },
 
@@ -1363,19 +1145,10 @@ document.addEventListener('alpine:init', () => {
 
         get tarifLabel() {
             const f = this.currentFacility; if (!f) return '';
-            // Use selected room type pricing first, fall back to facility-level prices
-            let h = 0, hb = 0, hm = 0, ht = 0;
-            if (this.selected_tipe_id !== null && this.roomTypes.length > 0) {
-                const rt = this.roomTypes[this.selected_tipe_id] || {};
-                h  = parseFloat(rt.harga_harian  || 0);
-                hm = parseFloat(rt.harga_mingguan || 0);
-                hb = parseFloat(rt.harga_bulanan  || 0);
-                ht = parseFloat(rt.harga_tahunan  || 0);
-            }
-            if (h === 0)  h  = parseFloat(f.harga        || 0);
-            if (hb === 0) hb = parseFloat(f.harga_bulanan || h * 30);
-            if (hm === 0) hm = h * 7;
-            if (ht === 0) ht = hb * 12;
+            const h  = parseFloat(f.harga        || 0);
+            const hb = parseFloat(f.harga_bulanan || h * 30);
+            const hm = h * 7;
+            const ht = hb * 12;
             const fmt = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(n);
             if (this.packageType === 'harian')   return 'Tarif: ' + fmt(h)  + ' / hari';
             if (this.packageType === 'mingguan') return 'Tarif: ' + fmt(hm) + ' / minggu';
@@ -1386,20 +1159,12 @@ document.addEventListener('alpine:init', () => {
 
         get totalPrice() {
             const f = this.currentFacility; if (!f) return 0;
-            let h = 0, hb = 0, hm = 0, ht = 0;
-            if (this.selected_tipe_id !== null && this.roomTypes.length > 0) {
-                const rt = this.roomTypes[this.selected_tipe_id] || {};
-                h  = parseFloat(rt.harga_harian  || 0);
-                hm = parseFloat(rt.harga_mingguan || 0);
-                hb = parseFloat(rt.harga_bulanan  || 0);
-                ht = parseFloat(rt.harga_tahunan  || 0);
-            }
-            if (h === 0)  h  = parseFloat(f.harga        || 0);
-            if (hb === 0) hb = parseFloat(f.harga_bulanan || h * 30);
-            if (hm === 0) hm = h * 7;
-            if (ht === 0) ht = hb * 12;
+            const h  = parseFloat(f.harga        || 0);
+            const hb = parseFloat(f.harga_bulanan || h * 30);
+            const hm = h * 7;
+            const ht = hb * 12;
             const d = parseInt(this.duration) || 0;
-            const mult = f.tipe === 'asrama' ? this.rooms : 1;
+            const mult = f.tipe === 'lapangan' ? this.rooms : 1;
             if (this.packageType === 'harian')   return d * h  * mult;
             if (this.packageType === 'mingguan') return d * hm * mult;
             if (this.packageType === 'bulanan')  return d * hb * mult;
@@ -1447,14 +1212,8 @@ document.addEventListener('alpine:init', () => {
             let roomNo = null;
             if (this.availableRooms && this.availableRooms.length >= r) {
                 roomNo = this.availableRooms[r - 1];
-            } else if (this.selected_tipe_id !== null && this.roomTypes.length > 0) {
-                const rt = this.roomTypes[this.selected_tipe_id];
-                const nomorKamar = rt && Array.isArray(rt.nomor_kamar) ? rt.nomor_kamar : [];
-                if (nomorKamar.length >= r) {
-                    roomNo = nomorKamar[r - 1];
-                }
             }
-            return 'KAMAR ' + r + (roomNo ? ' (' + roomNo + ')' : '');
+            return 'LAPANGAN ' + r + (roomNo ? ' (' + roomNo + ')' : '');
         },
 
         // ── Step navigation ───────────────────────────────────────────
@@ -1469,13 +1228,6 @@ document.addEventListener('alpine:init', () => {
             const f = this.currentFacility;
             let ok = true;
 
-            // 0. Room type selection (asrama with paket_harian data)
-            if (f?.tipe === 'asrama' && this.roomTypes.length > 0 && this.selected_tipe_id === null) {
-                this.step2Errors.roomType = true; ok = false;
-            } else {
-                this.step2Errors.roomType = false;
-            }
-
             // 1. Durasi
             if (!this.duration || parseInt(this.duration) < 1) {
                 this.step2Errors.duration = true; ok = false;
@@ -1484,10 +1236,10 @@ document.addEventListener('alpine:init', () => {
             // 2. Adults
             if (!this.adults || parseInt(this.adults) < 1) {
                 this.step2Errors.adults = true; this.step2Errors.adultsMsg = 'Jumlah tamu minimal 1 orang'; ok = false;
-            } else if (f?.tipe === 'aula' && this.adults > (f.max_dewasa || 999)) {
-                this.step2Errors.adults = true; this.step2Errors.adultsMsg = 'Melebihi kapasitas aula (' + f.max_dewasa + ' orang)'; ok = false;
-            } else if (f?.tipe === 'asrama' && this.adults > this.maxAdultsAllowed) {
-                this.step2Errors.adults = true; this.step2Errors.adultsMsg = 'Melebihi kapasitas kamar (maks ' + this.maxAdultsAllowed + ' dewasa)'; ok = false;
+            } else if (f?.tipe === 'kolam_renang' && this.adults > (f.max_dewasa || 999)) {
+                this.step2Errors.adults = true; this.step2Errors.adultsMsg = 'Melebihi kapasitas kolam renang (' + f.max_dewasa + ' orang)'; ok = false;
+            } else if (f?.tipe === 'lapangan' && this.adults > this.maxAdultsAllowed) {
+                this.step2Errors.adults = true; this.step2Errors.adultsMsg = 'Melebihi kapasitas lapangan (maks ' + this.maxAdultsAllowed + ' pemain)'; ok = false;
             } else { this.step2Errors.adults = false; this.step2Errors.adultsMsg = ''; }
 
             // 3. ChildAges
@@ -1497,13 +1249,13 @@ document.addEventListener('alpine:init', () => {
                 if (anyEmpty) ok = false;
             } else { this.step2Errors.childAges = false; }
 
-            // 4. Room capacity (asrama)
-            if (f?.tipe === 'asrama' && !this.step2Errors.adults && !this.step2Errors.childAges) {
+            // 4. Field capacity (lapangan)
+            if (f?.tipe === 'lapangan' && !this.step2Errors.adults && !this.step2Errors.childAges) {
                 const totalAdultSlot = this.adults + this.billableChildren;
                 if (totalAdultSlot > this.rooms * 2 || this.freeChildren > this.rooms * 2) {
                     this.step2Errors.rooms = true;
                     const butuh = Math.max(Math.ceil(totalAdultSlot / 2), Math.ceil(this.freeChildren / 2));
-                    this.step2Errors.roomsMsg = 'Kamar kurang! Butuh min. ' + butuh + ' kamar. Tambah ' + (butuh - this.rooms) + ' lagi.';
+                    this.step2Errors.roomsMsg = 'Lapangan kurang! Butuh min. ' + butuh + ' lapangan. Tambah ' + (butuh - this.rooms) + ' lagi.';
                     ok = false;
                 } else { this.step2Errors.rooms = false; this.step2Errors.roomsMsg = ''; }
             }
@@ -1522,7 +1274,7 @@ document.addEventListener('alpine:init', () => {
         incDuration() {
             const max = this.selectedRoomMaxDurasi;
             if (max > 0 && this.duration >= max) {
-                Swal.fire('Peringatan', 'Maksimal durasi untuk tipe kamar ini adalah ' + max + ' ' + (this.packageType === 'harian' ? 'hari' : this.packageType === 'mingguan' ? 'minggu' : this.packageType === 'bulanan' ? 'bulan' : 'tahun') + '.', 'warning');
+                Swal.fire('Peringatan', 'Maksimal durasi untuk paket ini adalah ' + max + ' ' + (this.packageType === 'harian' ? 'hari' : this.packageType === 'mingguan' ? 'minggu' : this.packageType === 'bulanan' ? 'bulan' : 'tahun') + '.', 'warning');
                 return;
             }
             this.duration++;
@@ -1531,11 +1283,11 @@ document.addEventListener('alpine:init', () => {
 
         incRooms() {
             if (this.rooms >= this.maxRoomsFromFacility) {
-                Swal.fire('Kapasitas Penuh', 'Tidak dapat menambah kamar lagi (maks ' + this.maxRoomsFromFacility + ' kamar).', 'warning');
+                Swal.fire('Kapasitas Penuh', 'Tidak dapat menambah lapangan lagi (maks ' + this.maxRoomsFromFacility + ' lapangan).', 'warning');
                 return;
             }
             if (this.maxStock > 0 && this.rooms >= this.maxStock) {
-                Swal.fire('Stok Habis', 'Hanya ' + this.maxStock + ' kamar tersedia untuk tanggal tersebut.', 'warning');
+                Swal.fire('Stok Habis', 'Hanya ' + this.maxStock + ' lapangan tersedia untuk tanggal tersebut.', 'warning');
                 return;
             }
             this.rooms++;
@@ -1559,8 +1311,8 @@ document.addEventListener('alpine:init', () => {
                 if (adultsRemoved   > 0) parts.push('<strong>' + adultsRemoved   + ' dewasa</strong>');
                 if (childrenRemoved > 0) parts.push('<strong>' + childrenRemoved + ' anak</strong>');
                 Swal.fire({
-                    title: 'Kurangi Kamar?',
-                    html: 'Menghapus kamar akan otomatis mengurangi ' + parts.join(' dan ') + '.',
+                    title: 'Kurangi Lapangan?',
+                    html: 'Menghapus lapangan akan otomatis mengurangi ' + parts.join(' dan ') + '.',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8',
@@ -1643,15 +1395,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         async fetchRoomAvailability() {
-            if (!this.selectedDate || !this.endDate || this.selected_tipe_id === null) {
-                // No dates selected yet — reset fetch flag but keep master capacity visible
-                this.availabilityFetched = false;
-                this.availableRooms = [];
-                this.maxStock = 0;
-                return;
-            }
-            const rt = this.roomTypes[this.selected_tipe_id];
-            if (!rt) {
+            if (!this.selectedDate || !this.endDate) {
                 this.availabilityFetched = false;
                 this.availableRooms = [];
                 this.maxStock = 0;
@@ -1663,16 +1407,6 @@ document.addEventListener('alpine:init', () => {
                     check_in_date: this.formatDateLocal(this.selectedDate),
                     check_out_date: this.formatDateLocal(this.endDate),
                 });
-                if (rt.id) {
-                    params.append('tipe_kamar_id', rt.id);
-                } else if (rt.tipe) {
-                    params.append('tipe_kamar_nama', rt.tipe);
-                } else {
-                    this.availabilityFetched = false;
-                    this.availableRooms = [];
-                    this.maxStock = 0;
-                    return;
-                }
                 const res = await fetch('/api/check-room-availability?' + params.toString());
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
@@ -2005,20 +1739,9 @@ document.addEventListener('alpine:init', () => {
             fd.append('children_count', this.children);
             fd.append('rooms_count', this.rooms);
             fd.append('max_per_room', 2);
-            // Send selected room type info for admin context
-            if (this.selected_tipe_id !== null && this.roomTypes.length > 0) {
-                const rt = this.roomTypes[this.selected_tipe_id] || {};
-                fd.append('selected_tipe', rt.tipe || '');
-                fd.append('selected_kode_blok', rt.kode_blok || '');
-                // Send the numeric DB id so the backend can save tipe_kamar_id correctly
-                if (rt.id) {
-                    fd.append('tipe_kamar_id', rt.id);
-                }
-                // Send the allocated room numbers so the backend can persist them immediately
-                if (this.availableRooms && this.availableRooms.length > 0) {
-                    const allocated = this.availableRooms.slice(0, this.rooms);
-                    allocated.forEach(n => fd.append('allocated_rooms[]', n));
-                }
+            if (this.availableRooms && this.availableRooms.length > 0) {
+                const allocated = this.availableRooms.slice(0, this.rooms);
+                allocated.forEach(n => fd.append('allocated_rooms[]', n));
             }
             this.childAges.forEach(a => fd.append('child_age[]', a));
             fd.append('tgl_mulai', this.formatDateLocal(this.selectedDate));

@@ -9,8 +9,8 @@
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
     <x-seo.head
-        title="BOE-Space Reserve - Booking Fasilitas BBPPMPV BOE Malang"
-        description="Sistem reservasi fasilitas dan ruangan di BBPPMPV BOE Malang. Pesan aula, asrama, dan ruangan untuk seminar, pelatihan, dan rapat formal."
+        title="BOE-Sport Space - Booking Lapangan Olahraga BBPPMPV BOE Malang"
+        description="Sistem booking lapangan olahraga di BBPPMPV BOE Malang. Pesan lapangan futsal, basket, bulutangkis, dan olahraga lainnya secara online."
         :url="url()->current()"
         :image="url('/image/logo/tutwuri-logo.svg')"
         type="website"
@@ -39,7 +39,7 @@
             [
                 '@context' => 'https://schema.org',
                 '@type' => 'WebSite',
-                'name' => 'BOE-Space Reserve',
+                'name' => 'BOE-Sport Space',
                 'url' => url('/'),
                 'potentialAction' => [
                     '@type' => 'SearchAction',
@@ -134,7 +134,7 @@
         <div class="relative z-10 flex flex-col items-center">
             <h1 data-aos="fade-down" data-aos-delay="200" class="text-white drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] text-[45px] lg:text-[72px] font-extrabold leading-[1.05] uppercase tracking-tighter mb-6 font-sans">
                 <span class="block">SELAMAT DATANG</span>
-                <span class="block mt-1">DI <span class="text-blue-400 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-200">BOE-SPACE RESERVE</span></span>
+                <span class="block mt-1">DI <span class="text-blue-400 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-200">BOE-SPORT SPACE</span></span>
             </h1>
 
             <p data-aos="fade-up" data-aos-delay="400" class="text-white/95 text-[18px] lg:text-[22px] drop-shadow-lg font-medium max-w-4xl leading-relaxed mb-10">
@@ -223,20 +223,19 @@
                     </div>
 
                     <h2 class="text-6xl lg:text-7xl font-black text-slate-900 tracking-tighter leading-[0.9] mb-8">
-                        Elevating 
+                        Your
                         <span class="bg-gradient-to-r from-[#1d6fa5] to-blue-400 bg-clip-text text-transparent">
-                            About
+                            Sport
                         </span> 
-                        Space.
+                        Arena.
                     </h2>
                     
                     <div class="space-y-8">
                         <p class="text-xl leading-relaxed text-slate-600 font-medium border-l-4 border-[#1d6fa5] pl-6">
-                            BBPPMPV BOE Malang tidak hanya berperan sebagai pusat pengembangan pendidikan vokasi, 
-                            tetapi juga menyediakan <span class="text-slate-900 font-bold italic decoration-[#1d6fa5] underline-offset-4 decoration-2">layanan premium booking</span> untuk kebutuhan profesional Anda.
+                            BBPPMPV BOE Malang menghadirkan <span class="text-slate-900 font-bold italic decoration-[#1d6fa5] underline-offset-4 decoration-2">BOE-Sport Space</span> — layanan booking lapangan olahraga modern yang terbuka untuk civitas akademika maupun masyarakat umum.
                         </p>
                         <p class="text-lg leading-relaxed text-slate-500 font-light">
-                            Layanan ini dirancang untuk mendukung ekosistem kolaborasi melalui seminar, pelatihan, dan rapat formal. Kami berkomitmen memberikan pengalaman penggunaan ruang yang <span class="font-semibold text-slate-700">representatif, efisien, dan berstandar internasional.</span>
+                            Nikmati kemudahan reservasi lapangan olahraga secara online kapan saja dan di mana saja. Kami berkomitmen menghadirkan fasilitas yang <span class="font-semibold text-slate-700">terawat, nyaman, dan berstandar profesional</span> demi mendukung gaya hidup aktif dan sehat.
                         </p>
                     </div>
                 </div>
@@ -251,13 +250,13 @@
 
         {{-- Header Section --}}
         <div class="max-w-6xl mx-auto mb-20 text-center relative" data-aos="fade-down">
-            <span class="hidden md:block text-blue-600/5 text-9xl font-black absolute -top-16 left-1/2 -translate-x-1/2 select-none tracking-[0.2em]">RESERVE</span>
+            <span class="hidden md:block text-blue-600/5 text-9xl font-black absolute -top-16 left-1/2 -translate-x-1/2 select-none tracking-[0.2em]">SPORT</span>
             <h1 class="relative text-5xl md:text-6xl font-black text-gray-900 uppercase tracking-tighter">
                 Boo<span class="text-[#1d6fa5]">king</span>
             </h1>
             <div class="h-2 w-24 bg-gradient-to-r from-[#1d6fa5] to-blue-400 mx-auto mt-4 rounded-full shadow-lg shadow-blue-100"></div>
             <p class="mt-6 text-gray-500 font-medium max-w-lg mx-auto leading-relaxed">
-                Pilih fasilitas terbaik kami untuk menunjang kenyamanan kegiatan Anda di BBPPMPV BOE Malang.
+                Pilih lapangan olahraga terbaik kami untuk menunjang aktivitas olahraga Anda di BBPPMPV BOE Malang.
             </p>
         </div>
 
@@ -306,13 +305,13 @@
                                 Lihat Detail
                             </a>
                             
-                            @if($item->tipe === 'asrama' && isset($availableStok[$item->id]) && $availableStok[$item->id] === 0)
-                                {{-- Kamar penuh: tombol dinonaktifkan --}}
+                            @if($item->tipe === 'lapangan' && isset($availableStok[$item->id]) && $availableStok[$item->id] === 0)
+                                {{-- Lapangan penuh: tombol dinonaktifkan --}}
                                 <button type="button"
-                                    onclick="alert('Maaf, semua kamar pada tipe ini sudah penuh untuk tanggal yang Anda pilih.')"
+                                    onclick="alert('Maaf, semua lapangan pada tipe ini sudah penuh untuk tanggal yang Anda pilih.')"
                                     class="relative flex-[1.2] bg-gray-400 text-white py-4 rounded-2xl font-bold text-xs transition-all duration-300 shadow-lg flex items-center justify-center gap-2 overflow-hidden cursor-not-allowed opacity-80"
                                     disabled>
-                                    <span>Kamar Penuh</span>
+                                    <span>Lapangan Penuh</span>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                                     </svg>
@@ -514,7 +513,7 @@
         const labelAnak   = document.getElementById('labelCapAnak');
         const rowAnak     = document.getElementById('rowCapAnak');
 
-        if (tipe === 'aula') {
+        if (tipe === 'kolam_renang') {
             if (labelDewasa) labelDewasa.textContent = 'Cap. Orang';
             if (rowAnak)     rowAnak.classList.add('hidden');
             document.getElementById('modalMaxDewasa').innerText = max_dewasa || '-';
@@ -528,8 +527,8 @@
         // kamar logic
         const kamarEl = document.getElementById('modal-jumlah-kamar');
         if (kamarEl) {
-            if (tipe === 'asrama' && jumlahKamar > 0) {
-                kamarEl.textContent = jumlahKamar + ' Kamar Tersedia';
+            if (tipe === 'lapangan' && jumlahKamar > 0) {
+                kamarEl.textContent = jumlahKamar + ' Lapangan Tersedia';
                 kamarEl.closest('[data-kamar-wrap]').classList.remove('hidden');
             } else {
                 kamarEl.closest('[data-kamar-wrap]').classList.add('hidden');
@@ -570,7 +569,7 @@
         
         currentPreviewImg = imgUrl; // Default to main image
         
-        // Render horizontal room type cards for asrama modal
+        // Render horizontal room type cards for lapangan modal
         renderModalRoomCards();
 
         modal.classList.replace('hidden', 'flex');
@@ -591,7 +590,7 @@
         const fid    = window.__modalFacilityId;
         const tipe   = window.__modalTipe;
 
-        if (tipe !== 'asrama' || rooms.length === 0) {
+        if (tipe !== 'lapangan' || rooms.length === 0) {
             section.classList.add('hidden');
             return;
         }
@@ -607,16 +606,16 @@
 
             // Build fasilitas chips — unified slate theme
             const fasMap = [
-                ['ac',               'AC',              'text-slate-600 bg-slate-100 border-slate-200'],
-                ['kipas_angin',       'Kipas Angin',     'text-slate-600 bg-slate-100 border-slate-200'],
-                ['meja_kursi',        'Meja & Kursi',    'text-slate-600 bg-slate-100 border-slate-200'],
-                ['lemari_locker',     'Lemari/Locker',   'text-slate-600 bg-slate-100 border-slate-200'],
-                ['stopkontak',        'Stopkontak',      'text-slate-600 bg-slate-100 border-slate-200'],
-                ['kamar_mandi_dalam', 'KM Dalam',        'text-slate-600 bg-slate-100 border-slate-200'],
-                ['water_heater',      'Water Heater',    'text-slate-600 bg-slate-100 border-slate-200'],
-                ['bantal_set_sprei',  'Bantal & Sprei',  'text-slate-600 bg-slate-100 border-slate-200'],
-                ['gantungan_baju',    'Gantungan',       'text-slate-600 bg-slate-100 border-slate-200'],
-                ['kaca_rias',         'Kaca Rias',       'text-slate-600 bg-slate-100 border-slate-200'],
+                ['lampu',            'Lampu',           'text-slate-600 bg-slate-100 border-slate-200'],
+                ['parkir',           'Parkir',          'text-slate-600 bg-slate-100 border-slate-200'],
+                ['toilet',           'Toilet',          'text-slate-600 bg-slate-100 border-slate-200'],
+                ['mushola',          'Mushola',         'text-slate-600 bg-slate-100 border-slate-200'],
+                ['kursi_tribun',     'Kursi Tribun',    'text-slate-600 bg-slate-100 border-slate-200'],
+                ['ruang_ganti',      'Ruang Ganti',     'text-slate-600 bg-slate-100 border-slate-200'],
+                ['papan_skor',       'Papan Skor',      'text-slate-600 bg-slate-100 border-slate-200'],
+                ['sound_system',     'Sound System',    'text-slate-600 bg-slate-100 border-slate-200'],
+                ['air_minum',        'Air Minum',       'text-slate-600 bg-slate-100 border-slate-200'],
+                ['wifi',             'WiFi',            'text-slate-600 bg-slate-100 border-slate-200'],
             ];
             const fas = rt.fasilitas || {};
             const chips = fasMap
@@ -660,7 +659,7 @@
             const specsHtml = [
                 rt.panjang && rt.lebar ? `<div class="bg-slate-50 rounded-xl px-2 py-1.5 text-center"><p class="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Ukuran</p><p class="text-[10px] font-black text-slate-700">${rt.panjang}×${rt.lebar} m²</p></div>` : '',
                 `<div class="bg-slate-50 rounded-xl px-2 py-1.5 text-center"><p class="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Kapasitas</p><p class="text-[10px] font-black text-slate-700">${rt.max_dewasa||1} Dws${rt.max_anak>0?'+'+rt.max_anak+'Ank':''}</p></div>`,
-                rt.ranjang ? `<div class="bg-slate-50 rounded-xl px-2 py-1.5 text-center"><p class="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Kasur</p><p class="text-[10px] font-black text-slate-700">${rt.ranjang}</p></div>` : '',
+
             ].filter(Boolean).join('');
 
             const bookUrl = fid ? `/formBooking?id=${fid}&tipe_id=${idx}` : '#';
@@ -676,7 +675,7 @@
                         <div class="flex items-center gap-2 flex-wrap">
                             <p class="font-black text-slate-900 text-sm">${rt.tipe || ('Tipe ' + (idx+1))}</p>
                             ${rt.kode_blok ? `<span class="text-[9px] font-bold text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded-full">Blok ${rt.kode_blok}</span>` : ''}
-                            <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full ml-auto">Tersedia ${rt.jumlah||0} Kamar</span>
+                            <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full ml-auto">Tersedia ${rt.jumlah||0} Lapangan</span>
                         </div>
                         ${rt.keunggulan ? `<p class="text-[11px] text-slate-500 font-medium leading-snug line-clamp-2">${rt.keunggulan}</p>` : ''}
                         <div class="flex flex-wrap gap-1.5">${prices.join('')}</div>
@@ -944,9 +943,9 @@
                         <h4 class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-3">Informasi Operasional</h4>
                         <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
 
-                            {{-- Jumlah Kamar — hanya muncul jika asrama --}}
+                            {{-- Jumlah Lapangan — hanya muncul jika lapangan --}}
                             <div data-kamar-wrap class="hidden flex items-center justify-between">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Jumlah Kamar</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Jumlah Lapangan</span>
                                 <span id="modal-jumlah-kamar" class="text-xs font-black text-[#1d6fa5]"></span>
                             </div>
 
@@ -972,11 +971,11 @@
                     </div>
                 </div>
 
-                {{-- ── Tipe Kamar Cards (asrama only, rendered via JS) ── --}}
+                {{-- ── Tipe Lapangan Cards (lapangan only, rendered via JS) ── --}}
                 <div id="modalRoomCardsSection" class="hidden mt-6">
                     <div class="flex items-center gap-3 mb-4">
                         <div class="h-px flex-1 bg-slate-100"></div>
-                        <h4 class="text-[10px] font-black uppercase tracking-[0.25em] text-[#1d6fa5] whitespace-nowrap">Tipe Kamar Tersedia</h4>
+                        <h4 class="text-[10px] font-black uppercase tracking-[0.25em] text-[#1d6fa5] whitespace-nowrap">Tipe Lapangan Tersedia</h4>
                         <div class="h-px flex-1 bg-slate-100"></div>
                     </div>
                     <div id="modalRoomCards" class="space-y-3"></div>

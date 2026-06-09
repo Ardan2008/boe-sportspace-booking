@@ -146,44 +146,25 @@ class BookingController extends Controller
             }
         }
 
-        // --- RESOLVE TIPE KAMAR ID ---
-        // The form sends tipe_kamar_id (preferred) or selected_tipe (name fallback)
-        $tipeKamarId = null;
-        if ($request->filled('tipe_kamar_id')) {
-            $tipeKamarId = (int) $request->tipe_kamar_id;
-        } elseif ($request->filled('selected_tipe')) {
-            $rt = \App\Models\GlobalRoomType::where('name', $request->selected_tipe)->first();
-            $tipeKamarId = $rt?->id;
-        }
-
         // --- AUTO-ALLOCATE ROOMS at submission time ---
-        // Prefer rooms sent by the frontend (already fetched from availability API),
-        // fall back to server-side allocation to be safe.
         $allocatedRooms = [];
         $frontendAllocated = $request->input('allocated_rooms', []);
 
         if (!empty($frontendAllocated) && is_array($frontendAllocated)) {
-            // Trust the frontend's allocation (it already did the availability check)
             $roomsNeeded    = (int) $request->rooms_count;
             $allocatedRooms = array_slice($frontendAllocated, 0, $roomsNeeded);
-        } elseif ($tipeKamarId && $fasilitas->paket_harian) {
-            // Server-side allocation fallback
-            $globalType = \App\Models\GlobalRoomType::find($tipeKamarId);
-            $typeName   = $globalType?->name ?? $request->selected_tipe ?? '';
-
-            $matchingPaket = null;
+        } elseif ($fasilitas->paket_harian) {
+            $allRoomNumbers = [];
             foreach ($fasilitas->paket_harian as $item) {
-                if (strtolower(trim($item['tipe'] ?? '')) === strtolower(trim($typeName))) {
-                    $matchingPaket = $item;
-                    break;
+                $rooms = $item['nomor_kamar'] ?? [];
+                foreach ($rooms as $r) {
+                    $allRoomNumbers[] = $r;
                 }
             }
+            $allRoomNumbers = array_unique($allRoomNumbers);
 
-            if ($matchingPaket) {
-                $allRoomNumbers = $matchingPaket['nomor_kamar'] ?? [];
-
+            if (!empty($allRoomNumbers)) {
                 $alreadyAllocated = \App\Models\Booking::where('fasilitas_id', $request->fasilitas_id)
-                    ->where('tipe_kamar_id', $tipeKamarId)
                     ->whereIn('status', ['pending', 'confirmed', 'booked'])
                     ->where('tgl_mulai', '<', $tgl_selesai)
                     ->where('tgl_selesai', '>', $tgl_mulai)
@@ -213,7 +194,6 @@ class BookingController extends Controller
         $booking = \App\Models\Booking::create([
             'penyewa_id'       => $penyewa->id,
             'fasilitas_id'     => $request->fasilitas_id,
-            'tipe_kamar_id'    => $tipeKamarId,
             'nomor_kamar'      => !empty($allocatedRooms) ? $allocatedRooms : null,
             'allocated_rooms'  => !empty($allocatedRooms) ? $allocatedRooms : null,
             'tgl_mulai'        => $request->tgl_mulai,
@@ -225,7 +205,6 @@ class BookingController extends Controller
                 'children'    => $request->children_count ?? 0,
                 'rooms'       => $request->rooms_count,
                 'child_ages'  => $request->child_age ?? [],
-                'tipe_kamar'  => $request->selected_tipe ?? null,
                 'kode_blok'   => $request->selected_kode_blok ?? null,
             ],
             'total_harga' => $totalPrice,
@@ -245,25 +224,20 @@ class BookingController extends Controller
 
         // --- AUTO-ALLOCATE ROOMS on approval if not yet allocated ---
         $updateData = [];
-        if (empty($booking->allocated_rooms) && $booking->tipe_kamar_id && $booking->fasilitas) {
-            $fasilitas   = $booking->fasilitas;
-            $tipeKamarId = $booking->tipe_kamar_id;
-            $globalType  = \App\Models\GlobalRoomType::find($tipeKamarId);
-            $typeName    = $globalType?->name ?? '';
+        if (empty($booking->allocated_rooms) && $booking->fasilitas) {
+            $fasilitas = $booking->fasilitas;
 
-            $matchingPaket = null;
+            $allRoomNumbers = [];
             foreach (($fasilitas->paket_harian ?: []) as $item) {
-                if (strtolower(trim($item['tipe'] ?? '')) === strtolower(trim($typeName))) {
-                    $matchingPaket = $item;
-                    break;
+                $rooms = $item['nomor_kamar'] ?? [];
+                foreach ($rooms as $r) {
+                    $allRoomNumbers[] = $r;
                 }
             }
+            $allRoomNumbers = array_unique($allRoomNumbers);
 
-            if ($matchingPaket) {
-                $allRoomNumbers = $matchingPaket['nomor_kamar'] ?? [];
-
+            if (!empty($allRoomNumbers)) {
                 $alreadyAllocated = \App\Models\Booking::where('fasilitas_id', $booking->fasilitas_id)
-                    ->where('tipe_kamar_id', $tipeKamarId)
                     ->where('id', '!=', $booking->id)
                     ->whereIn('status', ['pending', 'confirmed', 'booked'])
                     ->where('tgl_mulai', '<', $booking->tgl_selesai)
@@ -277,7 +251,6 @@ class BookingController extends Controller
 
                 $available = array_values(array_diff($allRoomNumbers, $alreadyAllocated));
 
-                // Determine how many rooms are needed from selected_packages
                 $selectedPackages = ($booking->selected_packages ?? []);
                 $roomsNeeded = (int) ($selectedPackages['rooms'] ?? 1);
                 $allocated   = array_slice($available, 0, $roomsNeeded);

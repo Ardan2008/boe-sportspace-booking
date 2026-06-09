@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="/image/logo/tutwuri-logo.svg">
-    <title>BOE-Space Reserve | History Booking</title>
+    <title>BOE-Sport Space | History Booking</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
@@ -152,7 +152,7 @@
                                 'tahunan'  => 'Tahun',
                                 default    => 'Hari',
                             };
-                            $tipe = $booking->fasilitas?->tipe ?? 'aula';
+                            $tipe = $booking->fasilitas?->tipe ?? 'kolam_renang';
 
                             $isPast = \Carbon\Carbon::parse($booking->tgl_selesai)->isPast();
                             $status = $booking->status;
@@ -189,7 +189,7 @@
                                 <p class="text-[11px] font-black text-slate-700">{{ $booking->fasilitas?->nama ?? 'Fasilitas Terhapus' }}</p>
                                 <div class="flex items-center gap-1.5 flex-wrap mt-1.5">
                                     <span class="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase
-                                        {{ $tipe === 'asrama' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700' }}">
+                                        {{ $tipe === 'lapangan' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700' }}">
                                         {{ ucfirst($tipe) }}
                                     </span>
                                     <span class="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase
@@ -213,7 +213,7 @@
 
                             {{-- TAMU & KAMAR --}}
                             <td class="p-5">
-                                @if($tipe === 'asrama')
+                                @if($tipe === 'lapangan')
                                 <div class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-[9px] font-bold px-2 py-0.5 rounded-full mb-1.5">
                                     {{ $rooms }} Kamar
                                 </div>
@@ -379,7 +379,7 @@
                     </h4>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.fasilitas_tipe === 'asrama'">
+                            x-show="detailPayload.fasilitas_tipe === 'lapangan'">
                             <span class="block text-[10px] uppercase text-purple-500 font-bold mb-1">Kamar</span>
                             <span class="font-black text-purple-700 text-xl"
                                 x-text="detailPayload.details?.rooms_count || detailPayload.details?.rooms || '1'"></span>
@@ -391,14 +391,14 @@
                             <span class="font-black text-blue-700 text-xl" x-text="detailPayload.details?.adults || '1'"></span>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.fasilitas_tipe === 'asrama'">
+                            x-show="detailPayload.fasilitas_tipe === 'lapangan'">
                             <span class="block text-[10px] uppercase text-amber-500 font-bold mb-1">Anak ≥12</span>
                             <span class="font-black text-amber-600 text-xl"
                                 x-text="detailPayload.details?.billable_children || '0'"></span>
                             <span class="block text-[9px] text-amber-400 mt-1">Tarif dewasa</span>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.fasilitas_tipe === 'asrama'">
+                            x-show="detailPayload.fasilitas_tipe === 'lapangan'">
                             <span class="block text-[10px] uppercase text-emerald-500 font-bold mb-1">Anak &lt;12</span>
                             <span class="font-black text-emerald-600 text-xl"
                                 x-text="detailPayload.details?.free_children || '0'"></span>

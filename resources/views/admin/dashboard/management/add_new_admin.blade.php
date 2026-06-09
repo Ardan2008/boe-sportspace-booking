@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BOE-Space Reserve | Tambah Admin Baru</title>
+    <title>BOE-Sport Space | Tambah Admin Baru</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         @keyframes fadeIn {

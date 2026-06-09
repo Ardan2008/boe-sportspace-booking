@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Fitur ini menambahkan **Hybrid Dropdown Permanen untuk Tipe Kamar** pada aplikasi booking ruangan/fasilitas BOE Space Reserve (Laravel). Dropdown memungkinkan admin memilih tipe kamar dari daftar yang sudah tersimpan di database, sekaligus menambahkan tipe kamar baru langsung dari dalam dropdown tanpa berpindah halaman. Semua operasi (baca, tambah, ubah, hapus) dilakukan secara asinkron (AJAX) terhadap tabel `global_room_types` melalui `GlobalRoomTypeController` yang sudah ada. Dropdown digunakan di halaman **Create Fasilitas** dan **Edit Fasilitas**, diterapkan sebagai komponen Alpine.js (`roomTypeDropdown`) yang di-include via Blade partial `_room_type_dropdown.blade.php`.
+Fitur ini menambahkan **Hybrid Dropdown Permanen untuk Tipe Kamar** pada aplikasi booking ruangan/fasilitas BOE Sport Space (Laravel). Dropdown memungkinkan admin memilih tipe kamar dari daftar yang sudah tersimpan di database, sekaligus menambahkan tipe kamar baru langsung dari dalam dropdown tanpa berpindah halaman. Semua operasi (baca, tambah, ubah, hapus) dilakukan secara asinkron (AJAX) terhadap tabel `global_room_types` melalui `GlobalRoomTypeController` yang sudah ada. Dropdown digunakan di halaman **Create Fasilitas** dan **Edit Fasilitas**, diterapkan sebagai komponen Alpine.js (`roomTypeDropdown`) yang di-include via Blade partial `_room_type_dropdown.blade.php`.
 
 ---
 

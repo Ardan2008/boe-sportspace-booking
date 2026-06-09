@@ -32,7 +32,7 @@ class BookingApprovedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Konfirmasi Persetujuan Booking - BOE Space Reserve',
+            subject: 'Konfirmasi Persetujuan Booking - BOE Sport Space',
         );
     }
 

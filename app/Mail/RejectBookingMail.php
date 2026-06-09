@@ -26,7 +26,7 @@ class RejectBookingMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Informasi Penolakan Booking - BOE Space Reserve',
+            subject: 'Informasi Penolakan Booking - BOE Sport Space',
         );
     }
 

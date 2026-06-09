@@ -9,7 +9,6 @@ class Booking extends Model
     protected $fillable = [
         'penyewa_id',
         'fasilitas_id',
-        'tipe_kamar_id',
         'nomor_kamar',
         'allocated_rooms',
         'tgl_mulai',

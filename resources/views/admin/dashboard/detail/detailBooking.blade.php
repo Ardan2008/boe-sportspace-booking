@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="icon" href="/image/logo/tutwuri-logo.svg">
-    <title>BOE-Space Reserve | Detail Booking</title>
+    <title>BOE-Sport Space | Detail Booking</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -27,7 +27,7 @@
                         Administrator
                     </div>
                     <h2 class="text-3xl font-black text-slate-800 tracking-tight">Detail Booking</h2>
-                    <p class="text-slate-400 text-sm mt-1 font-medium">Informasi lengkap reservasi fasilitas</p>
+                    <p class="text-slate-400 text-sm mt-1 font-medium">Informasi lengkap booking lapangan olahraga</p>
                 </div>
 
                 <div class="grid grid-cols-1 gap-6">
@@ -53,7 +53,7 @@
                     <div class="relative group">
                         <label class="absolute -top-2.5 left-4 bg-white px-2 text-[11px] font-bold text-blue-600 uppercase tracking-wider z-10">Fasilitas</label>
                         <div class="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-semibold text-slate-700">
-                            Asrama Tunggul Ametung - BOE-Space Reserve
+                            Lapangan Tunggul Ametung - BOE-Sport Space
                         </div>
                     </div>
 

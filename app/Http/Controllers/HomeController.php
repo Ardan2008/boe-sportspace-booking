@@ -15,13 +15,13 @@ class HomeController extends Controller
         // Ambil semua data fasilitas dari database
         $facilities = Fasilitas::all();
 
-        // Hitung stok kamar tersedia per fasilitas asrama (kurangi booking approved/pending aktif hari ini)
+        // Hitung stok lapangan tersedia per fasilitas lapangan (kurangi booking approved/pending aktif hari ini)
         $today = now()->toDateString();
         $availableStok = [];
 
         foreach ($facilities as $item) {
-            if ($item->tipe !== 'asrama') {
-                $availableStok[$item->id] = null; // bukan asrama, tidak perlu hitung
+            if ($item->tipe !== 'lapangan') {
+                $availableStok[$item->id] = null; // bukan lapangan, tidak perlu hitung
                 continue;
             }
 

@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="icon" href="/image/logo/tutwuri-logo.svg">
-    <title>BOE-Space Reserve | Internal Booking Form</title>
+    <title>BOE-Sport Space | Internal Booking Form</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -210,7 +210,7 @@
         <div class="text-center mb-12 relative">
             <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] mb-6">
                 <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                Internal Reserve
+                Internal Booking
             </div>
             <h2 class="text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none mb-3">Form Booking Blocked</h2>
             <p class="text-slate-400 font-medium text-sm">Halaman khusus pemblokiran unit untuk agenda BBPPMPV BOE.</p>

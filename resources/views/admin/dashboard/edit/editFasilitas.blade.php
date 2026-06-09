@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="icon" href="/image/logo/tutwuri-logo.svg">
-    <title>BOE-Space Reserve | Edit Fasilitas</title>
+    <title>BOE-Sport Space | Edit Fasilitas</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
@@ -181,13 +181,13 @@
                     <span class="text-[10px] font-black uppercase tracking-[0.2em] text-[#1265A8]">Update Mode | <span x-text="tipe"></span></span>
                 </div>
                 <h2 class="text-3xl font-black text-slate-900 tracking-tight uppercase">
-                    Edit <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#1265A8] to-blue-400" x-text="tipe === 'asrama' ? 'Asrama' : 'Aula'">Facility</span> Data
+                    Edit <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#1265A8] to-blue-400" x-text="tipe === 'lapangan' ? 'Lapangan' : 'Kolam Renang'">Facility</span> Data
                 </h2>
                 <div class="h-1.5 w-12 bg-gradient-to-r from-[#1265A8] to-blue-400 mx-auto mt-4 rounded-full"></div>
 
                 <div class="flex justify-center gap-4 mt-8">
-                    <button type="button" @click="confirmTypeChange('asrama')" :class="tipe === 'asrama' ? 'bg-[#1265A8] text-white shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'" class="px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300">Asrama</button>
-                    <button type="button" @click="confirmTypeChange('aula')" :class="tipe === 'aula' ? 'bg-[#1265A8] text-white shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'" class="px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300">Aula</button>
+                    <button type="button" @click="confirmTypeChange('lapangan')" :class="tipe === 'lapangan' ? 'bg-[#1265A8] text-white shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'" class="px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300">Lapangan</button>
+                    <button type="button" @click="confirmTypeChange('kolam_renang')" :class="tipe === 'kolam_renang' ? 'bg-[#1265A8] text-white shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'" class="px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300">Kolam Renang</button>
                     <input type="hidden" name="tipe" :value="tipe">
                 </div>
             </div>
@@ -229,15 +229,11 @@
                                 <input type="text" name="jam_operasional" value="{{ old('jam_operasional', $fasilitas->jam_operasional) }}" placeholder="08.00 - 22.00"
                                     class="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all duration-300 shadow-sm font-semibold">
                             </div>
-                            <div x-show="tipe === 'aula'">
-                                <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Kapasitas (Orang)</label>
-                                <input type="number" name="max_dewasa" value="{{ old('max_dewasa', $fasilitas->max_dewasa) }}" placeholder="Total"
-                                    class="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all duration-300 shadow-sm font-semibold">
-                            </div>
+
                         </div>
 
-                        {{-- Max Durasi Sewa — full-width 4-column grid, asrama only --}}
-                        <div x-show="tipe === 'asrama'">
+                        {{-- Max Durasi Sewa — full-width 4-column grid, lapangan only --}}
+                        <div x-show="tipe === 'lapangan'">
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Max Durasi Sewa</label>
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
 
@@ -272,31 +268,31 @@
                             </div>
                         </div>
 
-                        <div x-show="tipe === 'asrama'">
+                        <div x-show="tipe === 'lapangan'">
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                                Jumlah Kamar Tersedia
+                                Jumlah Lapangan Tersedia
                             </label>
                             <div class="kamar-stepper-wrap" id="kamarStepperWrap">
                                 <button type="button" class="kamar-stepper-btn"
                                     @click="adjustKamar(-1)"
                                     :disabled="jumlahKamar <= 1"
-                                    aria-label="Kurangi kamar">−</button>
+                                    aria-label="Kurangi lapangan">−</button>
                                 <input type="number"
                                     name="jumlah_kamar"
                                     x-model.number="jumlahKamar"
                                     min="1" max="999"
                                     class="kamar-stepper-input"
-                                    aria-label="Jumlah kamar">
+                                    aria-label="Jumlah lapangan">
                                 <button type="button" class="kamar-stepper-btn"
                                     @click="adjustKamar(1)"
-                                    aria-label="Tambah kamar">+</button>
+                                    aria-label="Tambah lapangan">+</button>
                             </div>
                             <div class="kamar-badge-edit">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                         d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                                 </svg>
-                                <span x-text="jumlahKamar + ' kamar tersedia'"></span>
+                                <span x-text="jumlahKamar + ' lapangan tersedia'"></span>
                             </div>
                         </div>
 
@@ -366,7 +362,7 @@
                             </div>
                         </div>
 
-                        <div x-show="tipe === 'asrama'" x-cloak class="w-full bg-gradient-to-br from-blue-50/40 to-indigo-50/30 rounded-3xl border border-blue-100/60 p-6 space-y-4">
+                        <div x-show="tipe === 'lapangan'" x-cloak class="w-full bg-gradient-to-br from-blue-50/40 to-indigo-50/30 rounded-3xl border border-blue-100/60 p-6 space-y-4">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
                                     <div class="w-8 h-8 rounded-full bg-[#1265A8]/10 flex items-center justify-center">
@@ -375,8 +371,8 @@
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 class="text-xs font-black uppercase tracking-widest text-slate-500">Room Specifications</h3>
-                                        <p class="text-[10px] font-semibold text-slate-400" x-text="'Room ' + (currentRoomIndex + 1) + ' of ' + rooms.length"></p>
+                                        <h3 class="text-xs font-black uppercase tracking-widest text-slate-500">Lapangan Specifications</h3>
+                                        <p class="text-[10px] font-semibold text-slate-400" x-text="'Lapangan ' + (currentRoomIndex + 1) + ' dari ' + rooms.length"></p>
                                     </div>
                                 </div>
                                 <div class="flex gap-2">
@@ -389,7 +385,7 @@
                                 <template x-for="(r, ri) in rooms" :key="ri">
                                     <div @click="currentRoomIndex = ri"
                                         :class="ri === currentRoomIndex ? 'room-dot active' : 'room-dot'"
-                                        :title="'Room ' + (ri + 1)"></div>
+                                        :title="'Lapangan ' + (ri + 1)"></div>
                                 </template>
                             </div>
 
@@ -400,112 +396,46 @@
                                         x-transition:enter-start="opacity-0 translate-x-8"
                                         x-transition:enter-end="opacity-100 translate-x-0"
                                         :data-room-index="ri"
-                                        class="bg-white rounded-2xl border border-slate-200/80 p-5 space-y-4">
+                                         class="bg-white rounded-2xl border border-slate-200/80 p-5">
 
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Tipe Kamar</label>
-                                                @include('admin.dashboard.partials._room_type_dropdown', ['roomIndex' => 'ri', 'roomsVar' => 'rooms'])
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div x-show="jumlahKamar > 1">
+                                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Tipe</label>
+                                                <input type="text" x-bind:name="'rooms[' + ri + '][tipe]'" x-model="rooms[ri].tipe" placeholder="Nama lapangan" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] transition-all">
                                             </div>
-                                            <div class="grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Jumlah</label>
-                                                    <input type="number" x-model.number="rooms[ri].jumlah" min="1"
-                                                        class="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all font-semibold text-sm">
-                                                </div>
+                                            <div>
+                                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Jumlah</label>
+                                                <input type="number" x-model.number="rooms[ri].jumlah" min="1" :name="'rooms[' + ri + '][jumlah]'" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-sm">
                                             </div>
                                         </div>
 
-                                        {{-- Keunggulan Tipe Kamar --}}
-                                        <div>
-                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Keunggulan Tipe Kamar</label>
+                                        {{-- Keunggulan Tipe Lapangan --}}
+                                        <div x-show="jumlahKamar > 1">
+                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Keunggulan Tipe Lapangan</label>
                                             <textarea x-model="rooms[ri].keunggulan" rows="2"
-                                                placeholder="Deskripsi singkat keunggulan tipe kamar ini..."
+                                                placeholder="Deskripsi singkat keunggulan tipe lapangan ini..."
                                                 class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-medium text-sm resize-none"></textarea>
                                         </div>
 
-                                        {{-- Ukuran (Panjang × Lebar) & Konfigurasi Ranjang --}}
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Ukuran Kamar</label>
-                                                <div class="flex items-center gap-2">
-                                                    <div class="relative flex-1">
-                                                        <input type="number" x-model="rooms[ri].panjang" min="0" step="0.1"
-                                                            placeholder="0"
-                                                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-sm text-center">
-                                                    </div>
-                                                    <span class="text-lg font-black text-slate-400 flex-shrink-0">×</span>
-                                                    <div class="relative flex-1">
-                                                        <input type="number" x-model="rooms[ri].lebar" min="0" step="0.1"
-                                                            placeholder="0"
-                                                            class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-sm text-center">
-                                                    </div>
-                                                    <span class="text-xs font-black text-slate-400 flex-shrink-0 whitespace-nowrap">m²</span>
+                                        <div>
+                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Ukuran</label>
+                                            <div class="flex items-center gap-2">
+                                                <div class="relative flex-1">
+                                                    <input type="number" x-model="rooms[ri].panjang" min="0" step="0.1"
+                                                        placeholder="0"
+                                                        class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-sm text-center">
                                                 </div>
-                                            </div>
-                                            <div>
-                                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Konfigurasi Ranjang</label>
-                                                <input type="text" x-model="rooms[ri].ranjang"
-                                                    placeholder="Contoh: 1 King Bed"
-                                                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-sm">
-                                            </div>
-                                        </div>
-
-                                        {{-- Nomor Kamar Tagging --}}
-                                        <div>
-                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Nomor Kamar</label>
-                                            <div class="flex gap-2">
-                                                <input type="text"
-                                                    x-model="rooms[ri].temp_input"
-                                                    @keydown.enter.prevent="addNomorKamar(ri)"
-                                                    :disabled="rooms[ri].nomor_kamar.length >= rooms[ri].jumlah"
-                                                    :class="rooms[ri].nomor_kamar.length >= rooms[ri].jumlah ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'bg-white'"
-                                                    placeholder="Ketik nomor lalu Enter..."
-                                                    class="flex-1 px-4 py-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-semibold text-sm transition-all">
-                                                <button type="button"
-                                                    @click="addNomorKamar(ri)"
-                                                    :disabled="rooms[ri].nomor_kamar.length >= rooms[ri].jumlah"
-                                                    :class="rooms[ri].nomor_kamar.length >= rooms[ri].jumlah ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'bg-[#1265A8] text-white hover:bg-slate-800'"
-                                                    class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all font-black text-lg">
-                                                    +
-                                                </button>
-                                            </div>
-                                            <div class="mt-1.5 text-[10px] font-bold">
-                                                <span x-show="rooms[ri].nomor_kamar.length < rooms[ri].jumlah" class="text-red-500">
-                                                    🔴 Input Belum Selesai (<span x-text="rooms[ri].nomor_kamar.length"></span> dari <span x-text="rooms[ri].jumlah"></span>)
-                                                </span>
-                                                <span x-show="rooms[ri].nomor_kamar.length >= rooms[ri].jumlah && rooms[ri].jumlah > 0" class="text-green-600">
-                                                    🟢 Semua Nomor Kamar Telah Di-input (<span x-text="rooms[ri].jumlah"></span> dari <span x-text="rooms[ri].jumlah"></span>)
-                                                </span>
-                                            </div>
-                                            <div class="flex flex-wrap gap-1.5 mt-2">
-                                                <template x-for="(tag, tagIdx) in rooms[ri].nomor_kamar" :key="tagIdx">
-                                                    <span @click="removeNomorKamar(ri, tagIdx)"
-                                                        class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#1265A8] text-[10px] font-black cursor-pointer hover:bg-red-50 hover:border-red-200 hover:text-red-500 transition-all select-none">
-                                                        <span x-text="tag"></span>
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                    </span>
-                                                </template>
-                                            </div>
-                                        </div>
-
-                                        <div class="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Cap. Dewasa (Kamar)</label>
-                                                <input type="number" x-model.number="rooms[ri].max_dewasa" min="1"
-                                                    :name="'rooms[' + ri + '][max_dewasa]'"
-                                                    class="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all font-semibold text-sm">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Cap. Anak (Kamar)</label>
-                                                <input type="number" x-model.number="rooms[ri].max_anak" min="0"
-                                                    :name="'rooms[' + ri + '][max_anak]'"
-                                                    class="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all font-semibold text-sm">
+                                                <span class="text-lg font-black text-slate-400 flex-shrink-0">×</span>
+                                                <div class="relative flex-1">
+                                                    <input type="number" x-model="rooms[ri].lebar" min="0" step="0.1"
+                                                        placeholder="0"
+                                                        class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-sm text-center">
+                                                </div>
+                                                <span class="text-xs font-black text-slate-400 flex-shrink-0 whitespace-nowrap">m²</span>
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Foto Kamar (3 foto)</label>
                                             <div class="grid grid-cols-3 gap-3">
                                                 <template x-for="fi in [0, 1, 2]" :key="fi">
                                                     <div class="relative overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#1265A8] transition-all duration-300 h-20 flex items-center justify-center group/foto cursor-pointer">
@@ -525,68 +455,67 @@
                                             </div>
                                         </div>
 
-                                        {{-- Fasilitas Kamar — 10 icon cards with micro-inputs --}}
+                                        {{-- Fasilitas Lapangan — 10 icon cards with micro-inputs --}}
                                         <div>
-                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-0.5">Fasilitas Kamar</label>
                                             <div class="grid grid-cols-5 sm:grid-cols-5 gap-1.5">
                                                 <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
                                                     <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3-3m0 0l3 3m-3-3v8M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">AC</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.ac" min="0" placeholder="0"
+                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Lampu</span>
+                                                    <input type="number" x-model.number="rooms[ri].fasilitas.lampu" min="0" placeholder="0"
                                                         class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
                                                 </div>
                                                 <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
                                                     <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5m0-5l-2 1m2-1l-2-1m2 1v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5m0 5l-2-1m2 1l2-1"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Kipas Angin</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.kipas_angin" min="0" placeholder="0"
+                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Parkir</span>
+                                                    <input type="number" x-model.number="rooms[ri].fasilitas.parkir" min="0" placeholder="0"
                                                         class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
                                                 </div>
                                                 <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
                                                     <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a1 1 0 001 1h16a1 1 0 001-1V7a1 1 0 00-1-1H4a1 1 0 00-1 1zm0 0l8 5 8-5M12 12l-8 5m8-5l8 5"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Meja & Kursi</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.meja_kursi" min="0" placeholder="0"
+                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Toilet</span>
+                                                    <input type="number" x-model.number="rooms[ri].fasilitas.toilet" min="0" placeholder="0"
                                                         class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
                                                 </div>
                                                 <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
                                                     <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Lemari / Locker</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.lemari_locker" min="0" placeholder="0"
+                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Mushola</span>
+                                                    <input type="number" x-model.number="rooms[ri].fasilitas.mushola" min="0" placeholder="0"
                                                         class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
                                                 </div>
                                                 <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
                                                     <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Stopkontak</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.stopkontak" min="0" placeholder="0"
+                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Kursi Tribun</span>
+                                                    <input type="number" x-model.number="rooms[ri].fasilitas.kursi_tribun" min="0" placeholder="0"
                                                         class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
                                                 </div>
                                                 <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
                                                     <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16M4 20V4a2 2 0 012-2h12a2 2 0 012 2v16M4 20h16M8 12h8M8 8h8M8 16h4"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">K. Mandi Dalam</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.kamar_mandi_dalam" min="0" placeholder="0"
+                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Ruang Ganti</span>
+                                                    <input type="number" x-model.number="rooms[ri].fasilitas.ruang_ganti" min="0" placeholder="0"
                                                         class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
                                                 </div>
                                                 <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
                                                     <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Water Heater</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.water_heater" min="0" placeholder="0"
+                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Papan Skor</span>
+                                                    <input type="number" x-model.number="rooms[ri].fasilitas.papan_skor" min="0" placeholder="0"
                                                         class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
                                                 </div>
                                                 <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
                                                     <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Bantal & Sprei</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.bantal_set_sprei" min="0" placeholder="0"
+                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Sound System</span>
+                                                    <input type="number" x-model.number="rooms[ri].fasilitas.sound_system" min="0" placeholder="0"
                                                         class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
                                                 </div>
                                                 <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
                                                     <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m0 4v1m-6-7a2 2 0 00-2 2m0 4v1M6 21h6m-3-3v3"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Gantungan Baju</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.gantungan_baju" min="0" placeholder="0"
+                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Air Minum</span>
+                                                    <input type="number" x-model.number="rooms[ri].fasilitas.air_minum" min="0" placeholder="0"
                                                         class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
                                                 </div>
                                                 <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
                                                     <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Kaca Rias</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.kaca_rias" min="0" placeholder="0"
+                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Wifi</span>
+                                                    <input type="number" x-model.number="rooms[ri].fasilitas.wifi" min="0" placeholder="0"
                                                         class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
                                                 </div>
                                             </div>
@@ -684,17 +613,16 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('facilityEditor', () => ({
-                tipe: '{{ $fasilitas->tipe ?? 'asrama' }}',
+                tipe: '{{ $fasilitas->tipe ?? 'lapangan' }}',
                 jumlahKamar: {{ $fasilitas->jumlah_kamar ?? 1 }},
                 rooms: @json($rooms),
                 currentRoomIndex: 0,
-                roomTypes: @json($roomTypes->toArray()),
                 customRoomType: '',
                 showCustomRoomInput: false,
 
                 labels: {
-                    asrama: [...new Set(['Shower', 'AC', 'Wifi', 'Parkir', 'TV', 'Lemari', ...@json($fasilitas->labels ?? [])])],
-                    aula:   [...new Set(['Wifi', 'Sound System', 'AC', 'Kursi', 'Meja', 'Panggung', 'Proyektor', ...@json($fasilitas->labels ?? [])])]
+                    lapangan: [...new Set(['Lampu Penerangan', 'Parkir', 'Toilet', 'Mushola', 'Kantin', 'Tempat Duduk', ...@json($fasilitas->labels ?? [])])],
+                    kolam_renang: ['Loker', 'Bilik Bilas', 'Toilet', 'Lifeguard', 'Tempat Duduk', 'Parkir', 'Mushola', ...@json($fasilitas->labels ?? [])]
                 },
                 selectedLabels: @json($fasilitas->labels ?? []),
                 customLabel: '',
@@ -706,9 +634,6 @@
                 galleryErrors: [false, false, false],
 
                 init() {
-                    // Expose this component to window so roomTypeDropdown instances
-                    // can access the shared roomTypes array and per-room tipe values.
-                    // Requirements: 6.4, 11.2
                     window.__alpineRoot = this;
 
                     if (!this.rooms || this.rooms.length === 0) {
@@ -733,9 +658,7 @@
                         if (!r.nomor_kamar) {
                             r.nomor_kamar = [];
                         }
-                        if (r.temp_input === undefined) {
-                            r.temp_input = '';
-                        }
+
                         if (r.keunggulan === undefined) {
                             r.keunggulan = '';
                         }
@@ -745,11 +668,8 @@
                         if (r.lebar === undefined) {
                             r.lebar = '';
                         }
-                        if (r.ranjang === undefined) {
-                            r.ranjang = '';
-                        }
                         if (!r.fasilitas) {
-                            r.fasilitas = { ac: 0, kipas_angin: 0, meja_kursi: 0, lemari_locker: 0, stopkontak: 0, kamar_mandi_dalam: 0, water_heater: 0, bantal_set_sprei: 0, gantungan_baju: 0, kaca_rias: 0 };
+                            r.fasilitas = { lampu: 0, parkir: 0, toilet: 0, mushola: 0, kursi_tribun: 0, ruang_ganti: 0, papan_skor: 0, sound_system: 0, air_minum: 0, wifi: 0 };
                         }
                         // Ensure numeric prices are stored as numbers (not strings) to avoid 0 display bug
                         r.harga_harian   = r.harga_harian   !== '' && r.harga_harian   != null ? Number(r.harga_harian)   : '';
@@ -772,15 +692,7 @@
                         this.syncPaketHarian();
                     });
 
-                    this.$watch('rooms', () => {
-                        // Auto-trim nomor_kamar tags if jumlah was decreased
-                        this.rooms.forEach(r => {
-                            if (r.nomor_kamar.length > r.jumlah) {
-                                r.nomor_kamar.splice(r.jumlah);
-                            }
-                        });
-                        this.syncPaketHarian();
-                    }, { deep: true });
+
 
                     if (this.rooms.length > 0) {
                         this.syncPaketHarian();
@@ -792,10 +704,8 @@
                         tipe: '',
                         jumlah: 1,
                         nomor_kamar: [],
-                        temp_input: '',
                         kode_blok: '',
-                        max_dewasa: {{ $fasilitas->max_dewasa ?? 1 }},
-                        max_anak: {{ $fasilitas->max_anak ?? 0 }},
+
                         foto: [],
                         fotoPreviews: [null, null, null],
                         harga_harian: index === 0 ? '{{ $fasilitas->harga }}' : '',
@@ -805,18 +715,17 @@
                         keunggulan: '',
                         panjang: '',
                         lebar: '',
-                        ranjang: '',
                         fasilitas: {
-                            ac: 0,
-                            kipas_angin: 0,
-                            meja_kursi: 0,
-                            lemari_locker: 0,
-                            stopkontak: 0,
-                            kamar_mandi_dalam: 0,
-                            water_heater: 0,
-                            bantal_set_sprei: 0,
-                            gantungan_baju: 0,
-                            kaca_rias: 0,
+                            lampu: 0,
+                            parkir: 0,
+                            toilet: 0,
+                            mushola: 0,
+                            kursi_tribun: 0,
+                            ruang_ganti: 0,
+                            papan_skor: 0,
+                            sound_system: 0,
+                            air_minum: 0,
+                            wifi: 0,
                         },
                     };
                 },
@@ -845,16 +754,13 @@
                     const rd = document.getElementById('roomsDataInput');
                     if (rd) rd.value = JSON.stringify(payload);
 
-                    // ── Strict submit guard (asrama only) ──────────────────────
+                    // ── Strict submit guard (lapangan only) ──────────────────────
                     const btnSimpan = document.querySelector('#mainForm button[type="submit"]');
-                    if (btnSimpan && this.tipe === 'asrama') {
+                    if (btnSimpan && this.tipe === 'lapangan') {
                         const reasons = [];
 
-                        const hasMismatch = this.rooms.some(r => r.nomor_kamar.length < r.jumlah);
-                        if (hasMismatch) reasons.push('Nomor kamar belum lengkap.');
-
                         const missingTipe = this.rooms.some(r => !r.tipe || r.tipe.trim() === '');
-                        if (missingTipe) reasons.push('Tipe kamar belum dipilih.');
+                        if (missingTipe) reasons.push('Tipe lapangan belum dipilih.');
 
                         const missingPrice = this.rooms.some(r =>
                             !r.harga_harian   || Number(r.harga_harian)   <= 0 ||
@@ -911,27 +817,7 @@
                     }
                 },
 
-                addNomorKamar(ri) {
-                    const room = this.rooms[ri];
-                    if (!room) return;
-                    const val = (room.temp_input || '').trim();
-                    if (!val) return;
-                    if (room.nomor_kamar.includes(val)) return;
-                    if (room.nomor_kamar.length >= room.jumlah) return;
-                    room.nomor_kamar.push(val);
-                    room.temp_input = '';
-                    this.syncPaketHarian();
-                },
 
-                removeNomorKamar(ri, idx) {
-                    const room = this.rooms[ri];
-                    if (!room) return;
-                    const removed = room.nomor_kamar.splice(idx, 1);
-                    if (removed.length > 0) {
-                        room.temp_input = removed[0];
-                    }
-                    this.syncPaketHarian();
-                },
 
                 handleGalleryChange(event, index) {
                     const file = event.target.files[0];
@@ -964,7 +850,7 @@
                     if (file.size > MAX) {
                         Swal.fire({
                             title: 'File Terlalu Besar',
-                            text: 'Foto kamar maksimal 2 MB.',
+                            text: 'Foto lapangan maksimal 2 MB.',
                             icon: 'warning',
                             confirmButtonColor: '#1265A8',
                             confirmButtonText: 'OK',
@@ -1116,25 +1002,6 @@
                     if (inp && inp.files[0] && inp.files[0].size > MAX_SIZE) galleryOk = false;
                 });
 
-                // Room nomor kamar completeness guard (asrama only)
-                let roomsOk = true;
-                const alpineRoot = window.__alpineRoot;
-                if (alpineRoot && alpineRoot.tipe === 'asrama' && alpineRoot.rooms) {
-                    const incomplete = alpineRoot.rooms.filter(r => r.nomor_kamar.length < r.jumlah);
-                    if (incomplete.length > 0) {
-                        roomsOk = false;
-                        Swal.fire({
-                            title: 'Nomor Kamar Belum Lengkap',
-                            text: `${incomplete.length} tipe kamar masih memiliki nomor kamar yang belum di-input. Lengkapi sebelum menyimpan.`,
-                            icon: 'warning',
-                            confirmButtonColor: '#1265A8',
-                            confirmButtonText: 'OK',
-                            customClass: { popup: 'rounded-[2.5rem] p-8' }
-                        });
-                        return;
-                    }
-                }
-
                 if (!namaOk || !deskOk || !galleryOk) {
                     const firstErr = document.querySelector('.field-error, .dropzone-error');
                     if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1178,165 +1045,7 @@
             });
         });
 
-        // ── roomTypeDropdown Alpine component ─────────────────────────────────
-        // Registered here so it is available on this page in addition to the
-        // Create Fasilitas page. Both pages use the same component definition.
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('roomTypeDropdown', function () {
-                const el   = this.$el;
-                const csrf = '{{ csrf_token() }}';
 
-                return {
-                    open:         false,
-                    addMode:      false,
-                    editingId:    null,
-                    editingName:  '',
-                    newTypeName:  '',
-                    saving:       false,
-                    deleting:     null,
-                    errorMessage: '',
-                    // Local reactive copy keeps the button label in sync
-                    // without depending on cross-component window.__alpineRoot.
-                    selectedTipe: '',
-
-                    get rVar()  { return el.dataset.roomsVar; },
-                    get rIdx()  { return parseInt(el.dataset.roomIndex); },
-                    get hiddenName() { return `${this.rVar}[${this.rIdx}][tipe]`; },
-
-                    init() {
-                        const arr = window.__alpineRoot?.[this.rVar];
-                        this.selectedTipe = arr?.[this.rIdx]?.tipe ?? '';
-
-                        // When the room slider changes, data-room-index is updated
-                        // reactively by Alpine; observe it to re-seed selectedTipe.
-                        const obs = new MutationObserver(() => {
-                            const a2 = window.__alpineRoot?.[this.rVar];
-                            this.selectedTipe = a2?.[this.rIdx]?.tipe ?? '';
-                        });
-                        obs.observe(el, { attributes: true, attributeFilter: ['data-room-index'] });
-                    },
-
-                    allTypes() {
-                        return window.__alpineRoot?.roomTypes ?? [];
-                    },
-
-                    currentTipe() {
-                        return this.selectedTipe;
-                    },
-
-                    setTipe(val) {
-                        this.selectedTipe = val;
-                        const arr = window.__alpineRoot?.[this.rVar];
-                        if (arr?.[this.rIdx] !== undefined) {
-                            arr[this.rIdx].tipe = val;
-                            if (window.__alpineRoot?.syncPaketHarian) {
-                                window.__alpineRoot.syncPaketHarian();
-                            }
-                        }
-                    },
-
-                    toggle() {
-                        this.open = !this.open;
-                        if (!this.open) { this.addMode = false; this.editingId = null; this.errorMessage = ''; }
-                    },
-
-                    close() {
-                        this.open = false; this.addMode = false; this.editingId = null; this.errorMessage = '';
-                    },
-
-                    selectType(name) { this.setTipe(name); this.close(); },
-
-                    handleEscape() { this.close(); },
-
-                    startAdd() {
-                        this.addMode = true; this.newTypeName = ''; this.errorMessage = '';
-                        this.$nextTick(() => this.$refs.newInput?.focus());
-                    },
-
-                    async saveNew() {
-                        const name = this.newTypeName.trim();
-                        if (!name || this.saving) return;
-                        this.saving = true; this.errorMessage = '';
-                        try {
-                            const res  = await fetch('/admin/room-types', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-                                body: JSON.stringify({ name }),
-                            });
-                            const data = await res.json();
-                            if (res.ok) {
-                                window.__alpineRoot?.roomTypes.push({ id: data.id, name: data.name });
-                                this.selectType(data.name); this.newTypeName = ''; this.addMode = false;
-                            } else if (res.status === 422) {
-                                const errors = data.errors?.name ?? [];
-                                this.errorMessage = errors.some(m => String(m).toLowerCase().includes('unique'))
-                                    ? 'Tipe kamar ini sudah ada.' : (data.message || 'Validasi gagal.');
-                            } else { this.errorMessage = data.message || 'Gagal menyimpan tipe kamar.'; }
-                        } catch { this.errorMessage = 'Terjadi kesalahan jaringan.'; }
-                        finally  { this.saving = false; }
-                    },
-
-                    startEdit(id, name) { this.editingId = id; this.editingName = name; this.errorMessage = ''; },
-
-                    async saveEdit(id) {
-                        const name = this.editingName.trim();
-                        if (!name || this.saving) return;
-                        this.saving = true; this.errorMessage = '';
-                        try {
-                            const res  = await fetch(`/admin/room-types/${id}`, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-                                body: JSON.stringify({ name }),
-                            });
-                            const data = await res.json();
-                            if (res.ok) {
-                                const types = window.__alpineRoot?.roomTypes ?? [];
-                                const idx   = types.findIndex(t => t.id === id);
-                                if (idx !== -1) {
-                                    const old = types[idx].name; types[idx].name = data.name;
-                                    if (this.currentTipe() === old) this.setTipe(data.name);
-                                }
-                                this.editingId = null;
-                            } else if (res.status === 422) {
-                                this.errorMessage = String(data.message || '').toLowerCase().includes('unique')
-                                    ? 'Nama sudah digunakan.' : (data.message || 'Validasi gagal.');
-                            } else { this.errorMessage = data.message || 'Gagal mengubah tipe kamar.'; }
-                        } catch { this.errorMessage = 'Terjadi kesalahan jaringan.'; }
-                        finally  { this.saving = false; }
-                    },
-
-                    async deleteType(index) {
-                        const types = window.__alpineRoot?.roomTypes ?? [];
-                        const t     = types[index];
-                        if (!t) return;
-                        const result = await Swal.fire({
-                            title: `Hapus "${t.name}"?`,
-                            text: `Tipe kamar "${t.name}" akan dihapus permanen.`,
-                            icon: 'warning', showCancelButton: true,
-                            confirmButtonColor: '#E24B4A', cancelButtonColor: '#94a3b8',
-                            confirmButtonText: 'Ya, Hapus', cancelButtonText: 'Batal',
-                            reverseButtons: true, customClass: { popup: 'rounded-[2.5rem] p-8' },
-                        });
-                        if (!result.isConfirmed) return;
-                        this.deleting = index;
-                        this.errorMessage = '';
-                        try {
-                            if (t.id) {
-                                await window.axios.delete(`/admin/room-types/${t.id}`, {
-                                    headers: { 'X-CSRF-TOKEN': csrf },
-                                });
-                            }
-                            if (this.currentTipe() === t.name) this.setTipe('');
-                            types.splice(index, 1);
-                        } catch {
-                            this.errorMessage = 'Gagal menghapus tipe kamar.';
-                        } finally {
-                            this.deleting = null;
-                        }
-                    },
-                };
-            });
-        });
     </script>
 </body>
 </html>

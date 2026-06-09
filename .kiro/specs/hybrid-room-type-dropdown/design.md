@@ -2,7 +2,7 @@
 
 ## Overview
 
-Fitur ini mengimplementasikan **Hybrid Dropdown Permanen untuk Tipe Kamar** pada aplikasi BOE Space Reserve Booking (Laravel + Alpine.js). Komponen ini memungkinkan admin memilih, menambah, mengubah, dan menghapus tipe kamar langsung dari dalam dropdown — tanpa berpindah halaman — saat mengisi form Create atau Edit Fasilitas.
+Fitur ini mengimplementasikan **Hybrid Dropdown Permanen untuk Tipe Kamar** pada aplikasi BOE Sport Space Booking (Laravel + Alpine.js). Komponen ini memungkinkan admin memilih, menambah, mengubah, dan menghapus tipe kamar langsung dari dalam dropdown — tanpa berpindah halaman — saat mengisi form Create atau Edit Fasilitas.
 
 Komponen terdiri dari tiga lapisan utama:
 

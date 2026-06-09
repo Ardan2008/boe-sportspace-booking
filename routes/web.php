@@ -15,9 +15,9 @@ use App\Http\Controllers\RoomAvailabilityController;
 use App\Http\Controllers\ValidationController;
 use App\Http\Controllers\HomeController;
 
-// --- Helper: hitung stok kamar per tipe ---
+// --- Helper: hitung stok lapangan tersedia ---
 function calculateRoomStock($fasilitas) {
-    if ($fasilitas->tipe !== 'asrama' || !is_array($fasilitas->paket_harian)) {
+    if ($fasilitas->tipe !== 'lapangan' || !is_array($fasilitas->paket_harian)) {
         return $fasilitas;
     }
 
@@ -26,98 +26,44 @@ function calculateRoomStock($fasilitas) {
         ->where('tgl_selesai', '>=', now()->subDay())
         ->get();
 
-    $roomToTypeName = [];
-    foreach ($fasilitas->paket_harian as $rt) {
-        foreach (($rt['nomor_kamar'] ?? []) as $nr) {
-            $roomToTypeName[strval($nr)] = strtolower(trim($rt['tipe'] ?? ''));
-        }
-    }
-
-    $globalTypes = \App\Models\GlobalRoomType::whereIn('id', $activeBookings->pluck('tipe_kamar_id')->filter()->unique())->get()->keyBy('id');
-
-    $bookedPerType = [];
+    $bookedRooms = [];
+    $placeholderCount = 0;
     foreach ($activeBookings as $b) {
-        if ($b->tipe_kamar_id && isset($globalTypes[$b->tipe_kamar_id])) {
-            $typeName = strtolower(trim($globalTypes[$b->tipe_kamar_id]->name ?? ''));
-        } elseif (!empty($b->allocated_rooms)) {
-            $matchedType = null;
+        if (!empty($b->allocated_rooms) && is_array($b->allocated_rooms)) {
             foreach ($b->allocated_rooms as $room) {
-                if (isset($roomToTypeName[strval($room)])) {
-                    $matchedType = $roomToTypeName[strval($room)];
-                    break;
-                }
-            }
-            if (!$matchedType) continue;
-            $typeName = $matchedType;
-        } else {
-            $packages = ($b->selected_packages ?? []);
-            $tipeKamarName = $packages['tipe_kamar'] ?? null;
-            if (!$tipeKamarName) continue;
-            $typeName = strtolower(trim($tipeKamarName));
-        }
-
-        if (!isset($bookedPerType[$typeName])) {
-            $bookedPerType[$typeName] = [];
-        }
-        if (!empty($b->allocated_rooms)) {
-            foreach ($b->allocated_rooms as $room) {
-                $bookedPerType[$typeName][] = $room;
+                $bookedRooms[strval($room)] = true;
             }
         } else {
             $packages = ($b->selected_packages ?? []);
-            $roomsBooked = (int) ($packages['rooms'] ?? 1);
-            for ($i = 0; $i < $roomsBooked; $i++) {
-                $bookedPerType[$typeName][] = '__placeholder__';
-            }
+            $placeholderCount += (int) ($packages['rooms'] ?? 1);
         }
     }
 
+    $maintenanceRooms = [];
+    $fullMaintenance = false;
     $activeMaintenance = \App\Models\JadwalBlokir::where('fasilitas_id', $fasilitas->id)
         ->where('tipe', 'maintenance')
         ->get();
-
-    $maintenanceRoomsByType = [];
     foreach ($activeMaintenance as $m) {
         $rooms = $m->nomor_kamar;
-        if (empty($rooms)) {
-            $maintenanceRoomsByType = null;
-            break;
-        }
-        foreach ($rooms as $nr) {
-            if (!isset($maintenanceRoomsByType['__all'])) {
-                $maintenanceRoomsByType['__all'] = [];
-            }
-            $maintenanceRoomsByType['__all'][] = $nr;
-        }
+        if (empty($rooms)) { $fullMaintenance = true; break; }
+        foreach ((array) $rooms as $nr) { $maintenanceRooms[$nr] = true; }
     }
 
     $paket = $fasilitas->paket_harian;
     foreach ($paket as &$rt) {
-        $typeName = strtolower(trim($rt['tipe'] ?? ''));
         $allRooms = $rt['nomor_kamar'] ?? [];
-        $totalRooms = count($allRooms) > 0 ? count($allRooms) : (int) ($rt['jumlah'] ?? 0);
-        $typeBookedList = $bookedPerType[$typeName] ?? [];
+        $total = count($allRooms) > 0 ? count($allRooms) : (int) ($rt['jumlah'] ?? 0);
 
         if (!empty($allRooms)) {
-            $bookedRooms = array_filter($typeBookedList, fn($r) => $r !== '__placeholder__');
-            $placeholderCount = count(array_filter($typeBookedList, fn($r) => $r === '__placeholder__'));
-            $available = count(array_diff($allRooms, array_values($bookedRooms))) - $placeholderCount;
-
-            if ($maintenanceRoomsByType !== null && isset($maintenanceRoomsByType['__all'])) {
-                $available -= count(array_intersect($allRooms, $maintenanceRoomsByType['__all']));
-            } elseif ($maintenanceRoomsByType === null) {
-                $available = 0;
-            }
+            $booked = count(array_intersect($allRooms, array_keys($bookedRooms)));
+            $maint = count(array_intersect($allRooms, array_keys($maintenanceRooms)));
+            $available = $total - $booked - $maint - $placeholderCount;
         } else {
-            $placeholderCount = count(array_filter($typeBookedList, fn($r) => $r === '__placeholder__'));
-            $namedCount = count(array_filter($typeBookedList, fn($r) => $r !== '__placeholder__'));
-            $available = max(0, $totalRooms - $placeholderCount - $namedCount);
-            if ($maintenanceRoomsByType === null) {
-                $available = 0;
-            }
+            $available = $total - $placeholderCount;
         }
 
-        $rt['jumlah'] = max(0, $available);
+        $rt['jumlah'] = $fullMaintenance ? 0 : max(0, $available);
     }
     unset($rt);
     $fasilitas->paket_harian = $paket;
@@ -160,7 +106,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/formBooking', function (\Illuminate\Http\Request $request) {
     $facilities = \App\Models\Fasilitas::all();
     foreach ($facilities as $fasilitas) {
-        if ($fasilitas->tipe === 'asrama' && is_array($fasilitas->paket_harian)) {
+        if ($fasilitas->tipe === 'lapangan' && is_array($fasilitas->paket_harian)) {
             calculateRoomStock($fasilitas);
         }
     }
@@ -172,7 +118,7 @@ Route::get('/formBooking', function (\Illuminate\Http\Request $request) {
 Route::get('/fasilitas/{id}/detail', function ($id) {
     $fasilitas = \App\Models\Fasilitas::findOrFail($id);
 
-    if ($fasilitas->tipe === 'asrama' && is_array($fasilitas->paket_harian)) {
+    if ($fasilitas->tipe === 'lapangan' && is_array($fasilitas->paket_harian)) {
         calculateRoomStock($fasilitas);
     }
 
@@ -285,8 +231,7 @@ Route::middleware(['admin.access'])->group(function () {
     // Route edit/update/create perlu can_edit (readonly check)
     Route::middleware(['admin.access:can_edit'])->group(function () {
         Route::get('/admin/dashboard/create/createFasilitas', function () {
-            $roomTypes = \App\Models\GlobalRoomType::orderBy('name')->get(['id', 'name']);
-            return view('admin.dashboard.create.createFasilitas', compact('roomTypes'));
+            return view('admin.dashboard.create.createFasilitas');
         })->name('dashboardcreateFasilitas');
         
         Route::post('/admin/fasilitas/store', [FasilitasController::class, 'store'])->name('fasilitas.store');
@@ -295,12 +240,6 @@ Route::middleware(['admin.access'])->group(function () {
         Route::put('/admin/fasilitas/paket-harian/{id}', [FasilitasController::class, 'updatePaketHarian'])->name('fasilitas.updatePaketHarian');
         Route::delete('/admin/fasilitas/delete/{id}', [FasilitasController::class, 'destroy'])->name('fasilitas.destroy');
         Route::put('/admin/update/{id_log}', [AdminsController::class, 'update'])->name('admin.update');
-
-        // Global Room Types CRUD (AJAX)
-        Route::get('/admin/room-types', [\App\Http\Controllers\GlobalRoomTypeController::class, 'index'])->name('roomTypes.index');
-        Route::post('/admin/room-types', [\App\Http\Controllers\GlobalRoomTypeController::class, 'store'])->name('roomTypes.store');
-        Route::put('/admin/room-types/{id}', [\App\Http\Controllers\GlobalRoomTypeController::class, 'update'])->name('roomTypes.update');
-        Route::delete('/admin/room-types/{id}', [\App\Http\Controllers\GlobalRoomTypeController::class, 'destroy'])->name('roomTypes.destroy');
     });
 
     Route::get('/admin/manage/{id_log}', [AdminsController::class, 'manage'])->name('admin.manage');

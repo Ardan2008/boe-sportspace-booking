@@ -53,7 +53,7 @@
         if (field === 'rooms' && this.rooms >= this.adults) {
             Swal.fire({
                 title: 'Peringatan',
-                text: 'Maximal 1 orang 1 kamar, mohon tambah jumlah orang/dewasa',
+                text: 'Maximal 1 orang 1 lapangan, mohon tambah jumlah orang/dewasa',
                 icon: 'warning',
                 confirmButtonColor: '#276AD7'
             });
@@ -72,7 +72,7 @@
     },
 
     updateParentPrice() {
-        // Simple price calculation for asrama: duration * adults * facility_price
+        // Simple price calculation for lapangan
         // This is a placeholder, adjust based on actual business logic if needed
         const facility = this.$parent.currentFacility;
         if (!facility) return;
@@ -228,7 +228,7 @@
 
         {{-- Rooms --}}
         <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
-            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Jumlah Kamar</label>
+            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Jumlah Lapangan</label>
             <div class="flex items-center justify-between">
                 <button type="button" @click="decrement('rooms', 1)" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-gray-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 font-black text-xl">-</button>
                 <div class="text-3xl font-black text-gray-800" x-text="rooms"></div>

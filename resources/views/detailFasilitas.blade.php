@@ -11,14 +11,14 @@
     @php
         $seoImage = $fasilitas->image ? asset('storage/fasilitas/' . $fasilitas->image) : url('/image/logo/tutwuri-logo.svg');
         $seoDesc = Str::limit(strip_tags($fasilitas->deskripsi ?? ''), 160);
-        $seoKeywords = $fasilitas->nama . ', ' . $fasilitas->tipe . ', BOE Malang, booking ' . $fasilitas->tipe . ', BBPPMPV';
+        $seoKeywords = $fasilitas->nama . ', BOE Malang, booking lapangan, BBPPMPV, ' . $fasilitas->tipe;
         if (is_array($fasilitas->labels)) {
             $seoKeywords .= ', ' . implode(', ', $fasilitas->labels);
         }
     @endphp
 
     <x-seo.head
-        :title="$fasilitas->nama . ' - BOE-Space Reserve'"
+        :title="$fasilitas->nama . ' - BOE-Sport Space'"
         :description="$seoDesc"
         :keywords="$seoKeywords"
         :image="$seoImage"
@@ -117,7 +117,7 @@
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-3">Informasi Operasional</p>
                         <div class="space-y-3 bg-slate-50 p-5 rounded-2xl border border-slate-100 mb-6">
-                            @if($fasilitas->tipe === 'asrama' && $fasilitas->jumlah_kamar)
+                            @if($fasilitas->tipe === 'lapangan' && $fasilitas->jumlah_kamar)
                             <div class="flex items-center justify-between">
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Jumlah Kamar</span>
                                 <span class="text-xs font-black text-[#1d6fa5]">{{ $fasilitas->jumlah_kamar }} Kamar</span>
@@ -125,11 +125,11 @@
                             @endif
                             <div class="flex items-center justify-between">
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                                    {{ $fasilitas->tipe === 'aula' ? 'Cap. Orang' : 'Cap. Dewasa' }}
+                                    {{ $fasilitas->tipe === 'kolam_renang' ? 'Kapasitas Kolam' : 'Kapasitas Pemain' }}
                                 </span>
                                 <span class="text-xs font-black text-slate-800">{{ $fasilitas->max_dewasa ?? '-' }}</span>
                             </div>
-                            @if($fasilitas->tipe === 'asrama')
+                            @if($fasilitas->tipe === 'lapangan')
                             <div class="flex items-center justify-between">
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Cap. Anak</span>
                                 <span class="text-xs font-black text-slate-800">{{ $fasilitas->max_anak ?? '-' }}</span>
@@ -166,10 +166,10 @@
             </div>
         </div>{{-- /hero card --}}
 
-        {{-- ══════════════════════════════════════════════
-             ROOM TYPE CARDS  (asrama only)
-             ══════════════════════════════════════════════ --}}
-        @if($fasilitas->tipe === 'asrama' && $fasilitas->paket_harian && count($fasilitas->paket_harian))
+         {{-- ══════════════════════════════════════════════
+              ROOM TYPE CARDS  (lapangan only)
+              ══════════════════════════════════════════════ --}}
+        @if($fasilitas->tipe === 'lapangan' && $fasilitas->paket_harian && count($fasilitas->paket_harian))
         <div class="mb-8">
             <div class="flex items-center gap-3 mb-6">
                 <div class="h-px flex-1 bg-slate-200"></div>
@@ -190,11 +190,11 @@
                 $photosJson = json_encode($photos);
                 $fas = $rt['fasilitas'] ?? [];
                 $fasMap = [
-                    ['ac','AC'],['kipas_angin','Kipas Angin'],['meja_kursi','Meja & Kursi'],
-                    ['lemari_locker','Lemari/Locker'],['stopkontak','Stopkontak'],
-                    ['kamar_mandi_dalam','KM Dalam'],['water_heater','Water Heater'],
-                    ['bantal_set_sprei','Bantal & Sprei'],['gantungan_baju','Gantungan'],
-                    ['kaca_rias','Kaca Rias'],
+                    ['lampu','Lampu'],['parkir','Parkir'],['toilet','Toilet'],
+                    ['mushola','Mushola'],['kursi_tribun','Kursi Tribun'],
+                    ['ruang_ganti','Ruang Ganti'],['papan_skor','Papan Skor'],
+                    ['sound_system','Sound System'],['air_minum','Air Minum'],
+                    ['wifi','WiFi'],
                 ];
                 $bookUrl = route('formBooking', ['id' => $fasilitas->id, 'tipe_id' => $rtIdx]);
             @endphp
@@ -311,12 +311,7 @@
                                     {{ $rt['max_dewasa'] ?? 1 }} Dws{{ ($rt['max_anak'] ?? 0) > 0 ? '+' . $rt['max_anak'] . 'Ank' : '' }}
                                 </p>
                             </div>
-                            @if(!empty($rt['ranjang']))
-                            <div class="bg-slate-50 rounded-xl px-2 py-1.5 text-center">
-                                <p class="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Kasur</p>
-                                <p class="text-[10px] font-black text-slate-700">{{ $rt['ranjang'] }}</p>
-                            </div>
-                            @endif
+
                         </div>
 
                         {{-- Fasilitas chips --}}

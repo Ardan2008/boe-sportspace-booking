@@ -32,7 +32,7 @@ async function startSocket() {
             version,
             auth: state,
             printQRInTerminal: false,
-            browser: ['BOE SpaceReserve', 'Chrome', '1.0'],
+            browser: ['BOE SportSpace', 'Chrome', '1.0'],
             syncFullHistory: false,
             markOnlineOnConnect: false,
             logger,

@@ -6,7 +6,7 @@
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
     <h2>Halo, {{ $booking->penyewa->nama }},</h2>
     
-    <p>Terima kasih atas permohonan reservasi Anda di <strong>BOE Space Reserve</strong>.</p>
+    <p>Terima kasih atas permohonan reservasi Anda di <strong>BOE Sport Space</strong>.</p>
 
     <p>Mohon maaf, permohonan booking Anda untuk fasilitas <strong>{{ $booking->fasilitas->nama }}</strong> pada tanggal {{ \Carbon\Carbon::parse($booking->tgl_mulai)->format('d M Y') }} terpaksa kami <strong>TOLAK</strong>.</p>
     
@@ -18,6 +18,6 @@
     <p>Kami memohon maaf atas ketidaknyamanan ini. Silakan mengajukan permohonan jadwal baru pada tanggal yang berbeda, atau hubungi Admin kami untuk informasi lebih lanjut.</p>
 
     <p>Terima kasih atas pengertiannya,<br>
-    Tim BOE Space Reserve</p>
+    Tim BOE Sport Space</p>
 </body>
 </html>

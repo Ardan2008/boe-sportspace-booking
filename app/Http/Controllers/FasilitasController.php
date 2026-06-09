@@ -34,7 +34,7 @@ class FasilitasController extends Controller
 
         $request->validate([
             'nama' => 'required|string|max:255',
-            'tipe' => 'required|in:asrama,aula',
+            'tipe' => 'required|in:lapangan,kolam_renang',
             'deskripsi' => 'required',
             'detail' => 'nullable',
             'harga' => 'nullable|numeric',
@@ -240,26 +240,23 @@ class FasilitasController extends Controller
                     'keunggulan' => '',
                     'panjang' => '',
                     'lebar' => '',
-                    'ranjang' => '',
                     'fasilitas' => [
-                        'ac' => 0,
-                        'kipas_angin' => 0,
-                        'meja_kursi' => 0,
-                        'lemari_locker' => 0,
-                        'stopkontak' => 0,
-                        'kamar_mandi_dalam' => 0,
-                        'water_heater' => 0,
-                        'bantal_set_sprei' => 0,
-                        'gantungan_baju' => 0,
-                        'kaca_rias' => 0,
+                        'lampu' => 0,
+                        'parkir' => 0,
+                        'toilet' => 0,
+                        'mushola' => 0,
+                        'kursi_tribun' => 0,
+                        'ruang_ganti' => 0,
+                        'papan_skor' => 0,
+                        'sound_system' => 0,
+                        'air_minum' => 0,
+                        'wifi' => 0,
                     ],
                 ];
             }
         }
 
-        $roomTypes = \App\Models\GlobalRoomType::orderBy('name')->get(['id', 'name']);
-
-        return view('admin.dashboard.edit.editFasilitas', compact('fasilitas', 'rooms', 'roomTypes'));
+        return view('admin.dashboard.edit.editFasilitas', compact('fasilitas', 'rooms'));
     }
 
     public function destroy($id) {
@@ -290,10 +287,10 @@ class FasilitasController extends Controller
         try {
             $request->validate([
                 'nama' => 'required|string|max:255',
-                'tipe' => 'required|in:asrama,aula',
+                'tipe' => 'required|in:lapangan,kolam_renang',
                 'deskripsi' => 'required',
                 'detail' => 'nullable',
-                'max_dewasa_aula' => 'nullable|integer',
+                'max_dewasa_kolam_renang' => 'nullable|integer',
                 'max_durasi_harian' => 'nullable|integer',
                 'max_durasi_hari' => 'nullable|integer|min:0',
                 'max_durasi_minggu' => 'nullable|integer|min:0',
@@ -381,9 +378,9 @@ class FasilitasController extends Controller
                 'detail' => $request->detail,
                 'harga' => $h_harian,
                 'harga_bulanan' => $h_bulanan,
-                'max_dewasa' => $request->tipe === 'asrama'
+                'max_dewasa' => $request->tipe === 'lapangan'
                     ? (int) ($firstRoom['max_dewasa'] ?? 1)
-                    : (int) $request->max_dewasa_aula,
+                    : (int) $request->max_dewasa_kolam_renang,
                 'max_anak' => (int) ($firstRoom['max_anak'] ?? 0),
                 'max_durasi_harian' => $request->max_durasi_harian,
                 'max_durasi_hari' => $request->max_durasi_hari ? (int) $request->max_durasi_hari : null,

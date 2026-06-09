@@ -1,4 +1,4 @@
-# BOE Space Reserve — Booking System
+# BOE Sport Space — Booking System
 
 Laravel 12 app (PHP ^8.2) for facility/space booking. Tailwind 4 + Vite 7 frontend.
 Codebase language: **Indonesian** (comments, error messages, route names).

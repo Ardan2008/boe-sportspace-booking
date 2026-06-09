@@ -7,9 +7,9 @@
     <link rel="icon" href="/image/logo/tutwuri-logo.svg">
 
     <x-seo.head
-        title="Jadwal Pembookingan - BOE-Space Reserve"
-        description="Cek ketersediaan jadwal aula, asrama, dan fasilitas BBPPMPV BOE Malang secara real-time. Pantau status pemakaian ruangan."
-        keywords="jadwal booking, cek ketersediaan, kalendar booking, BOE Malang, ruangan tersedia"
+        title="Jadwal Pembookingan - BOE-Sport Space"
+        description="Cek ketersediaan jadwal lapangan olahraga BBPPMPV BOE Malang secara real-time. Pantau status pemakaian lapangan."
+        keywords="jadwal booking, cek ketersediaan, kalendar booking, BOE Malang, lapangan tersedia"
         :url="url()->current()"
         :image="url('/image/logo/tutwuri-logo.svg')"
         type="website"
@@ -292,7 +292,7 @@
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                                 <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
                             </span>
-                            <span class="text-white font-black uppercase tracking-[0.2em] text-[10px]">Ready to Reservate</span>
+                            <span class="text-white font-black uppercase tracking-[0.2em] text-[10px]">Ready to Booking</span>
                         </div>
                         <h4 class="text-white text-3xl md:text-4xl font-black mb-4 leading-tight tracking-tighter">Sudah Menemukan Jadwal Kosong?</h4>
                         <p class="text-blue-100 text-lg font-medium opacity-90 leading-relaxed">Lanjutkan ke pengisian form reservasi sekarang juga.</p>
@@ -301,7 +301,7 @@
                     <div class="relative z-10 shrink-0">
                         <a :href="'{{ route('formBooking') }}?id=' + selectedId" 
                             class="px-12 py-6 bg-white text-[#1265A8] font-black rounded-[2rem] shadow-[0_20px_40px_rgba(255,255,255,0.2)] hover:bg-slate-900 hover:text-white hover:-translate-y-2 transition-all active:scale-95 text-xs uppercase tracking-[0.3em] flex items-center gap-4 group/btn">
-                            Booking Room Ini
+                            Booking Lapangan
                             <svg class="w-5 h-5 group-hover/btn:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </a>
                     </div>

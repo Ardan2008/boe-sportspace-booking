@@ -13,11 +13,6 @@ foreach ($f as $item) {
         }
     }
 }
-echo "--- GlobalRoomTypes ---\n";
-$t = App\Models\GlobalRoomType::all();
-foreach ($t as $item) {
-    echo "ID: {$item->id} | Name: {$item->name}\n";
-}
 echo "--- Bookings ---\n";
 $b = App\Models\Booking::all();
 foreach ($b as $item) {

@@ -27,7 +27,7 @@ Target Files: BookingController.php, App/Mail/ApproveBookingMail.php, App/Mail/R
     - Desain layout bersih menyontek struktur pop-up Detail Reservasi milik Admin.
     - Cantumkan pesan ucapan terima kasih yang hangat di bagian atas.
     - Tampilkan ringkasan detail transaksi di bagian badan email.
-    - Bagian kaki email (Footer): Tambahkan baris informasi kontak pengelola penginapan jika terjadi kekeliruan data (Contoh: "Jika ada kesalahan data, hubungi admin di support@boespacereserve.com").
+    - Bagian kaki email (Footer): Tambahkan baris informasi kontak pengelola penginapan jika terjadi kekeliruan data (Contoh: "Jika ada kesalahan data, hubungi admin di support@boesportspace.com").
 - **emails.reject (Tampilan Email Tolak):**
     - Tampilkan detail reservasi asal sebagai referensi pengguna.
     - Tampilkan kotak peringatan berwarna merah/abu-abu terang yang memuat alasan penolakan dari admin secara jelas.

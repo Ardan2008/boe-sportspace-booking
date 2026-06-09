@@ -122,7 +122,7 @@
 
                         <div class="p-2 space-y-1">
                             {{-- 2. Clickable WhatsApp Link --}}
-                            <a href="https://wa.me/6281234567890?text=Halo%20Owner,%20saya%20ingin%20mengajukan%20perubahan%20data%20atau%20reset%20password%20admin%20BOE-Space." 
+                            <a href="https://wa.me/6281234567890?text=Halo%20Owner,%20saya%20ingin%20mengajukan%20perubahan%20data%20atau%20reset%20password%20admin%20BOE-Sport." 
                                 target="_blank"
                                 class="flex items-start gap-4 px-4 py-4 bg-amber-50/50 hover:bg-amber-50 rounded-2xl border border-amber-100/30 transition-all group/item">
                                 <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-amber-500 shadow-sm border border-amber-100/50 shrink-0 group-hover/item:scale-110 transition-transform">
