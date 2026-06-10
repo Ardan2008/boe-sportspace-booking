@@ -119,22 +119,11 @@
                         <div class="space-y-3 bg-slate-50 p-5 rounded-2xl border border-slate-100 mb-6">
                             @if($fasilitas->tipe === 'lapangan' && $fasilitas->jumlah_kamar)
                             <div class="flex items-center justify-between">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Jumlah Kamar</span>
-                                <span class="text-xs font-black text-[#1d6fa5]">{{ $fasilitas->jumlah_kamar }} Kamar</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Jumlah Lapangan</span>
+                                <span class="text-xs font-black text-[#1d6fa5]">{{ $fasilitas->jumlah_kamar }} Lapangan</span>
                             </div>
                             @endif
-                            <div class="flex items-center justify-between">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                                    {{ $fasilitas->tipe === 'kolam_renang' ? 'Kapasitas Kolam' : 'Kapasitas Pemain' }}
-                                </span>
-                                <span class="text-xs font-black text-slate-800">{{ $fasilitas->max_dewasa ?? '-' }}</span>
-                            </div>
-                            @if($fasilitas->tipe === 'lapangan')
-                            <div class="flex items-center justify-between">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Cap. Anak</span>
-                                <span class="text-xs font-black text-slate-800">{{ $fasilitas->max_anak ?? '-' }}</span>
-                            </div>
-                            @endif
+
                             <div class="flex items-center justify-between">
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Jam Operasional</span>
                                 <span class="text-xs font-black text-[#1d6fa5]">{{ $fasilitas->jam_operasional ?? '-' }}</span>
@@ -173,7 +162,7 @@
         <div class="mb-8">
             <div class="flex items-center gap-3 mb-6">
                 <div class="h-px flex-1 bg-slate-200"></div>
-                <h2 class="text-sm font-black uppercase tracking-[0.25em] text-[#1d6fa5] whitespace-nowrap">Tipe Kamar Tersedia</h2>
+                <h2 class="text-sm font-black uppercase tracking-[0.25em] text-[#1d6fa5] whitespace-nowrap">Tipe Lapangan Tersedia</h2>
                 <div class="h-px flex-1 bg-slate-200"></div>
             </div>
 
@@ -189,13 +178,8 @@
                 }
                 $photosJson = json_encode($photos);
                 $fas = $rt['fasilitas'] ?? [];
-                $fasMap = [
-                    ['lampu','Lampu'],['parkir','Parkir'],['toilet','Toilet'],
-                    ['mushola','Mushola'],['kursi_tribun','Kursi Tribun'],
-                    ['ruang_ganti','Ruang Ganti'],['papan_skor','Papan Skor'],
-                    ['sound_system','Sound System'],['air_minum','Air Minum'],
-                    ['wifi','WiFi'],
-                ];
+                $fasKeys = array_keys($fas);
+                $fasMap = array_map(fn($k) => [$k, str_replace('_', ' ', ucwords($k, '_'))], $fasKeys);
                 $bookUrl = route('formBooking', ['id' => $fasilitas->id, 'tipe_id' => $rtIdx]);
             @endphp
 
@@ -212,6 +196,7 @@
                  @open-detail-lb.window="openLightbox($event.detail.photos, $event.detail.idx)">
                 <div class="flex flex-col sm:flex-row">
 
+                    @if(count($fasilitas->paket_harian) > 1)
                     {{-- ── Static photo thumbnail with hover blur + eye icon ── --}}
                     <div class="relative w-full sm:w-48 aspect-[4/3] flex-shrink-0 overflow-hidden bg-gray-100 rounded-t-2xl sm:rounded-none sm:rounded-l-2xl cursor-pointer"
                          @mouseenter="hovered = true"
@@ -221,7 +206,7 @@
                         @if(count($photos) > 0)
                         {{-- Static first-photo thumbnail --}}
                         <img src="{{ $photos[0] }}"
-                             alt="Foto Kamar"
+                             alt="Foto Lapangan"
                              :class="hovered ? 'blur-sm brightness-75 scale-105' : ''"
                              class="w-full h-full object-cover transition-all duration-300">
 
@@ -252,100 +237,72 @@
                         </div>
                         @endif
                     </div>{{-- /static photo thumbnail --}}
+                    @endif
 
                     {{-- ── Info panel ── --}}
-                    <div class="flex-1 p-5 flex flex-col gap-3">
-                        {{-- Name + blok + count --}}
+                    <div class="flex-1 p-5 flex flex-col gap-4">
+                        {{-- Name + blok --}}
                         <div class="flex items-center gap-2 flex-wrap">
-                            <p class="font-black text-slate-900 text-sm">{{ $rt['tipe'] ?? ('Tipe ' . ($rtIdx + 1)) }}</p>
+                            <p class="font-black text-slate-900 text-sm">{{ is_array($rt['tipe'] ?? null) ? implode(', ', $rt['tipe']) : ($rt['tipe'] ?? ('Tipe ' . ($rtIdx + 1))) }}</p>
                             @if(!empty($rt['kode_blok']))
                             <span class="text-[9px] font-bold text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded-full">Blok {{ $rt['kode_blok'] }}</span>
                             @endif
-                            <span id="avail-badge-{{ $rtIdx }}" class="text-[9px] font-bold {{ ($rt['jumlah'] ?? 0) > 0 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-red-700 bg-red-50 border border-red-200' }} px-2 py-0.5 rounded-full ml-auto"
-                                  data-init-text="{{ ($rt['jumlah'] ?? 0) > 0 ? 'Tersedia ' . $rt['jumlah'] . ' Kamar' : 'Kamar Penuh' }}">
-                                {{ ($rt['jumlah'] ?? 0) > 0 ? 'Tersedia ' . $rt['jumlah'] . ' Kamar' : 'Kamar Penuh' }}
-                            </span>
                         </div>
-                        {{-- Keunggulan --}}
-                        @if(!empty($rt['keunggulan']))
-                        <p class="text-[11px] text-slate-500 font-medium leading-snug">{{ $rt['keunggulan'] }}</p>
-                        @endif
-                        {{-- Pricing --}}
-                        <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                            @if(!empty($rt['harga_harian']) && $rt['harga_harian'] > 0)
-                            <span class="inline-flex items-baseline gap-1">
-                                <span class="text-sm font-black text-slate-800">Rp {{ number_format($rt['harga_harian'],0,',','.') }}</span>
-                                <span class="text-[10px] font-medium text-slate-400">/hari</span>
-                            </span>
-                            @endif
-                            @if(!empty($rt['harga_mingguan']) && $rt['harga_mingguan'] > 0)
-                            <span class="inline-flex items-baseline gap-1">
-                                <span class="text-sm font-black text-slate-800">Rp {{ number_format($rt['harga_mingguan'],0,',','.') }}</span>
-                                <span class="text-[10px] font-medium text-slate-400">/minggu</span>
-                            </span>
-                            @endif
-                            @if(!empty($rt['harga_bulanan']) && $rt['harga_bulanan'] > 0)
-                            <span class="inline-flex items-baseline gap-1">
-                                <span class="text-sm font-black text-slate-800">Rp {{ number_format($rt['harga_bulanan'],0,',','.') }}</span>
-                                <span class="text-[10px] font-medium text-slate-400">/bulan</span>
-                            </span>
-                            @endif
-                            @if(!empty($rt['harga_tahunan']) && $rt['harga_tahunan'] > 0)
-                            <span class="inline-flex items-baseline gap-1">
-                                <span class="text-sm font-black text-slate-800">Rp {{ number_format($rt['harga_tahunan'],0,',','.') }}</span>
-                                <span class="text-[10px] font-medium text-slate-400">/tahun</span>
-                            </span>
-                            @endif
-                        </div>
-                        {{-- Specs --}}
-                        <div class="grid grid-cols-3 gap-1.5">
-                            @if(!empty($rt['panjang']) && !empty($rt['lebar']))
-                            <div class="bg-slate-50 rounded-xl px-2 py-1.5 text-center">
-                                <p class="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Ukuran</p>
-                                <p class="text-[10px] font-black text-slate-700">{{ $rt['panjang'] }}×{{ $rt['lebar'] }} m²</p>
-                            </div>
-                            @endif
-                            <div class="bg-slate-50 rounded-xl px-2 py-1.5 text-center">
-                                <p class="text-[8px] font-black text-slate-400 uppercase leading-none mb-0.5">Kapasitas</p>
-                                <p class="text-[10px] font-black text-slate-700">
-                                    {{ $rt['max_dewasa'] ?? 1 }} Dws{{ ($rt['max_anak'] ?? 0) > 0 ? '+' . $rt['max_anak'] . 'Ank' : '' }}
-                                </p>
-                            </div>
 
+                        {{-- Pricing --}}
+                        <div class="flex flex-wrap items-center gap-3">
+                            @php
+                                $tiers = [
+                                    'harian'   => ['label' => 'Hari',   'val' => $rt['harga_harian'] ?? null],
+                                    'mingguan' => ['label' => 'Minggu', 'val' => $rt['harga_mingguan'] ?? null],
+                                    'bulanan'  => ['label' => 'Bulan',  'val' => $rt['harga_bulanan'] ?? null],
+                                    'tahunan'  => ['label' => 'Tahun',  'val' => $rt['harga_tahunan'] ?? null],
+                                ];
+                            @endphp
+                            @foreach($tiers as $key => $tier)
+                                @if(!empty($tier['val']) && $tier['val'] > 0)
+                                <span class="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                                    <span class="text-sm font-black text-slate-800">Rp {{ number_format($tier['val'],0,',','.') }}</span>
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase">/{{ $tier['label'] }}</span>
+                                </span>
+                                @endif
+                            @endforeach
                         </div>
+
+                        {{-- Ukuran --}}
+                        @if(!empty($rt['panjang']) && !empty($rt['lebar']))
+                        <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 w-fit">
+                            <span class="text-[9px] font-black text-slate-400 uppercase">Ukuran</span>
+                            <span class="text-xs font-black text-slate-700">{{ $rt['panjang'] }}×{{ $rt['lebar'] }} m²</span>
+                        </div>
+                        @endif
 
                         {{-- Fasilitas chips --}}
-                        @php $hasChips = false; @endphp
+                        @php
+                            $hasAnyFas = false;
+                            foreach ($fasMap as [$key, $label]) { if (!empty($fas[$key]) && $fas[$key] > 0) { $hasAnyFas = true; break; } }
+                        @endphp
+                        @if($hasAnyFas)
                         <div class="flex flex-wrap gap-1">
                             @foreach($fasMap as [$key, $label])
                                 @if(!empty($fas[$key]) && $fas[$key] > 0)
-                                @php $hasChips = true; @endphp
                                 <span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
                                     {{ $label }} × {{ $fas[$key] }}
                                 </span>
                                 @endif
                             @endforeach
                         </div>
+                        @endif
+
                         {{-- Booking CTA --}}
                         <div class="mt-auto pt-3 border-t border-slate-100">
-                            @if(($rt['jumlah'] ?? 0) > 0)
                             <a href="{{ $bookUrl }}"
                                class="inline-flex items-center gap-2 bg-[#1d6fa5] hover:bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-xl transition-all shadow-sm hover:shadow-md">
-                                Booking Kamar Ini
+                                Booking Lapangan Ini
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
                                 </svg>
                             </a>
-                            @else
-                            <button disabled
-                               onclick="alert('Maaf, semua kamar pada tipe ini sudah penuh untuk tanggal yang Anda pilih.')"
-                               class="inline-flex items-center gap-2 bg-gray-400 text-white text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-xl cursor-not-allowed opacity-70 pointer-events-none">
-                                Kamar Penuh
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                                </svg>
-                            </button>
-                            @endif
                         </div>
                     </div>{{-- /info panel --}}
                 </div>

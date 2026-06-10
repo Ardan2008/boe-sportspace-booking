@@ -305,26 +305,13 @@
                                 Lihat Detail
                             </a>
                             
-                            @if($item->tipe === 'lapangan' && isset($availableStok[$item->id]) && $availableStok[$item->id] === 0)
-                                {{-- Lapangan penuh: tombol dinonaktifkan --}}
-                                <button type="button"
-                                    onclick="alert('Maaf, semua lapangan pada tipe ini sudah penuh untuk tanggal yang Anda pilih.')"
-                                    class="relative flex-[1.2] bg-gray-400 text-white py-4 rounded-2xl font-bold text-xs transition-all duration-300 shadow-lg flex items-center justify-center gap-2 overflow-hidden cursor-not-allowed opacity-80"
-                                    disabled>
-                                    <span>Lapangan Penuh</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                                    </svg>
-                                </button>
-                            @else
-                                <a href="{{ route('formBooking', ['id' => $item->id]) }}" 
-                                    class="relative flex-[1.2] bg-[#1d6fa5] hover:bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs transition-all duration-300 shadow-lg flex items-center justify-center gap-2 group/btn overflow-hidden">
-                                    <span>Book Now</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform group-hover/btn:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                    </svg>
-                                </a>
-                            @endif
+                            <a href="{{ route('formBooking', ['id' => $item->id]) }}" 
+                                class="relative flex-[1.2] bg-[#1d6fa5] hover:bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs transition-all duration-300 shadow-lg flex items-center justify-center gap-2 group/btn overflow-hidden">
+                                <span>Book Now</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform group-hover/btn:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -492,7 +479,7 @@
     let currentPreviewImg = "";
 
     // Logika Modal Deskripsi & Preview Gambar
-    function openDescription(title, body, imgUrl, detail, gallery, labels, tipe, max_dewasa, max_anak, jam_operasional, jumlahKamar, paketHarian, facilityId) {
+    function openDescription(title, body, imgUrl, detail, gallery, labels, tipe, max_dewasa, max_anak, jam_operasional, jumlahLapangan, paketHarian, facilityId) {
         const modal = document.getElementById('descModal');
         const modalContent = document.getElementById('modalContent');
         // Store paket_harian for room cards
@@ -527,8 +514,8 @@
         // kamar logic
         const kamarEl = document.getElementById('modal-jumlah-kamar');
         if (kamarEl) {
-            if (tipe === 'lapangan' && jumlahKamar > 0) {
-                kamarEl.textContent = jumlahKamar + ' Lapangan Tersedia';
+            if (tipe === 'lapangan' && jumlahLapangan > 0) {
+                kamarEl.textContent = jumlahLapangan + ' Lapangan Tersedia';
                 kamarEl.closest('[data-kamar-wrap]').classList.remove('hidden');
             } else {
                 kamarEl.closest('[data-kamar-wrap]').classList.add('hidden');

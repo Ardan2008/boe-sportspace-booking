@@ -43,8 +43,8 @@ class BookingController extends Controller
             'fasilitas_id' => 'required|exists:fasilitas,id',
             'tgl_mulai' => 'required|date',
             'package_type' => 'required|in:harian,mingguan,bulanan,tahunan',
+            'selected_days' => 'nullable|string|regex:/^[1-7](,[1-7])*$/',
             'duration' => 'required|integer|min:1',
-            'adults' => 'required|integer|min:1',
             'rooms_count' => 'required|integer|min:1',
             'provinsi' => 'required|string|max:255',
             'kabupaten' => 'required|string|max:255',
@@ -57,26 +57,43 @@ class BookingController extends Controller
         $duration = (int)$request->duration;
         $tgl_mulai = $request->tgl_mulai;
 
+        $selectedDays = $request->selected_days
+            ? array_map('intval', explode(',', $request->selected_days))
+            : [1,2,3,4,5,6,7];
+        $sc = count($selectedDays);
+
         if ($request->package_type === 'harian') {
             $totalPrice = $duration * $fasilitas->harga;
-            $tgl_selesai = \Carbon\Carbon::parse($tgl_mulai)->addDays($duration - 1)->format('Y-m-d');
+            if ($fasilitas->tipe === 'lapangan') {
+                $tgl_selesai = $tgl_mulai;
+            } else {
+                $tgl_selesai = \Carbon\Carbon::parse($tgl_mulai)->addDays($duration - 1)->format('Y-m-d');
+            }
         } elseif ($request->package_type === 'mingguan') {
-            $totalPrice = $duration * $fasilitas->harga * 7;
+            $firstRoom = is_array($fasilitas->paket_harian) ? ($fasilitas->paket_harian[0] ?? []) : [];
+            $hargaMingguan = isset($firstRoom['harga_mingguan']) && (float)$firstRoom['harga_mingguan'] > 0
+                ? (float)$firstRoom['harga_mingguan']
+                : $fasilitas->harga * 7;
+            $totalPrice = $duration * $hargaMingguan * ($sc / 7);
             $tgl_selesai = \Carbon\Carbon::parse($tgl_mulai)->addWeeks($duration)->subDay()->format('Y-m-d');
         } elseif ($request->package_type === 'bulanan') {
             if (!$fasilitas->harga_bulanan) {
                 return response()->json(['success' => false, 'message' => 'Fasilitas ini tidak mendukung paket bulanan.'], 422);
             }
-            $totalPrice = $duration * $fasilitas->harga_bulanan;
+            $totalPrice = $duration * $fasilitas->harga_bulanan * ($sc / 7);
             $tgl_selesai = \Carbon\Carbon::parse($tgl_mulai)->addMonths($duration)->subDay()->format('Y-m-d');
         } elseif ($request->package_type === 'tahunan') {
-            $hargaTahunan = $fasilitas->harga_bulanan ? $fasilitas->harga_bulanan * 12 : $fasilitas->harga * 365;
-            $totalPrice = $duration * $hargaTahunan;
+            $firstRoom = is_array($fasilitas->paket_harian) ? ($fasilitas->paket_harian[0] ?? []) : [];
+            $hargaTahunan = isset($firstRoom['harga_tahunan']) && (float)$firstRoom['harga_tahunan'] > 0
+                ? (float)$firstRoom['harga_tahunan']
+                : ($fasilitas->harga_bulanan ? $fasilitas->harga_bulanan * 12 : $fasilitas->harga * 365);
+            $totalPrice = $duration * $hargaTahunan * ($sc / 7);
             $tgl_selesai = \Carbon\Carbon::parse($tgl_mulai)->addYears($duration)->subDay()->format('Y-m-d');
         }
 
-        // --- VALIDASI OVERLAP ---
-        $isOverlapping = \App\Models\Booking::where('fasilitas_id', $request->fasilitas_id)
+        // --- VALIDASI OVERLAP (per selected day) ---
+        $isOverlapping = false;
+        $existingBookings = \App\Models\Booking::where('fasilitas_id', $request->fasilitas_id)
             ->whereIn('status', ['pending', 'confirmed', 'booked'])
             ->where(function ($q) use ($tgl_mulai, $tgl_selesai) {
                 $q->whereBetween('tgl_mulai', [$tgl_mulai, $tgl_selesai])
@@ -86,7 +103,30 @@ class BookingController extends Controller
                          ->where('tgl_selesai', '>=', $tgl_selesai);
                   });
             })
-            ->exists();
+            ->get();
+
+        $startDate = \Carbon\Carbon::parse($tgl_mulai);
+        $endDate = \Carbon\Carbon::parse($tgl_selesai);
+
+        foreach ($existingBookings as $eb) {
+            $ebDays = $eb->selected_days
+                ? array_map('intval', explode(',', $eb->selected_days))
+                : [1,2,3,4,5,6,7];
+            $ebStart = \Carbon\Carbon::parse($eb->tgl_mulai);
+            $ebEnd = \Carbon\Carbon::parse($eb->tgl_selesai);
+
+            $check = $startDate->copy()->max($ebStart);
+            $overlapEnd = $endDate->copy()->min($ebEnd);
+
+            while ($check <= $overlapEnd) {
+                if (in_array($check->dayOfWeekIso(), $selectedDays)
+                    && in_array($check->dayOfWeekIso(), $ebDays)) {
+                    $isOverlapping = true;
+                    break 2;
+                }
+                $check->addDay();
+            }
+        }
 
         $blockedRecords = \App\Models\JadwalBlokir::where('fasilitas_id', $request->fasilitas_id)
             ->where(function ($q) use ($tgl_mulai, $tgl_selesai) {
@@ -199,12 +239,12 @@ class BookingController extends Controller
             'tgl_mulai'        => $request->tgl_mulai,
             'tgl_selesai'      => $tgl_selesai,
             'package_type'     => $request->package_type,
+            'selected_days'    => $request->package_type !== 'harian' ? $request->selected_days : null,
             'selected_packages' => [
                 'duration'    => $duration,
-                'adults'      => $request->adults,
-                'children'    => $request->children_count ?? 0,
+                'adults'      => 1,
                 'rooms'       => $request->rooms_count,
-                'child_ages'  => $request->child_age ?? [],
+                'start_hour'  => $request->start_hour,
                 'kode_blok'   => $request->selected_kode_blok ?? null,
             ],
             'total_harga' => $totalPrice,

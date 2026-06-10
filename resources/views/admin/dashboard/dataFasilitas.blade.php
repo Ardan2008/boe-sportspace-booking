@@ -75,7 +75,8 @@
                 data.forEach(rt => {
                     const rooms = Array.isArray(rt.nomor_kamar) ? rt.nomor_kamar : [];
                     rooms.forEach(nr => {
-                        list.push({ room: nr, type: rt.tipe || 'Tipe', blok: rt.kode_blok || '' });
+                        const tipeLabel = Array.isArray(rt.tipe) ? rt.tipe.join(', ') : (rt.tipe || 'Tipe');
+                        list.push({ room: nr, type: tipeLabel, blok: rt.kode_blok || '' });
                     });
                 });
                 return list;
@@ -96,6 +97,16 @@
                 } else {
                     this.selectedRooms = this.facilityRoomList.map(r => r.room);
                 }
+            },
+            closeMaintModal() {
+                window.dispatchEvent(new CustomEvent('reset-maint-toggle', { detail: this.maintData.id }));
+                this.maintenanceModal = false;
+                this.dateStartErr = '';
+                this.dateEndErr = '';
+                this.reasonErr = '';
+                this.roomErr = '';
+                this.durationDays = 0;
+                this.reasonLen = 0;
             },
             openMaintenanceModal(id, name) {
                 this.maintData = { id: id, name: name, start_date: new Date().toISOString().split('T')[0], end_date: '', reason: '' };
@@ -382,9 +393,10 @@
                                     </span>
                                 </div>
                                 
-                                <div x-data="{ active: {{ $item->is_maintenance ? 'true' : 'false' }} }"
+                                <div x-data="{ active: {{ $item->is_maintenance ? 'true' : 'false' }}, fid: {{ $item->id }} }"
                                     class="relative inline-flex items-center cursor-pointer"
-                                    @click="(() => { const a = active; if (!a) active = true; handleMaintenanceToggle({{ $item->id }}, '{{ addslashes($item->nama) }}', a); })()">
+                                    @click="handleMaintenanceToggle(fid, @js($item->nama), active)"
+                                    @reset-maint-toggle.window="if ($event.detail === fid) active = false">
                                     
                                     {{-- Track --}}
                                     <div class="w-10 h-5 rounded-full transition-all duration-300 relative"
@@ -529,7 +541,7 @@
                 >
 
                 <div class="flex items-center justify-center min-h-screen p-4">
-                    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="maintenanceModal = false"></div>
+                    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="closeMaintModal()"></div>
 
                     <div class="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100"
                         x-transition:enter="transition ease-out duration-300 transform"
@@ -694,7 +706,7 @@
 
                             {{-- Action buttons --}}
                             <div class="pt-2 flex items-center gap-3">
-                                <button type="button" @click="maintenanceModal = false; dateStartErr = ''; dateEndErr = ''; reasonErr = ''; roomErr = ''; durationDays = 0; reasonLen = 0;"
+                                <button type="button" @click="closeMaintModal()"
                                     class="flex-1 px-6 py-4 bg-slate-100 text-slate-500 rounded-2xl border border-slate-200 font-bold text-sm hover:bg-slate-200 transition-all">
                                     Batal
                                 </button>

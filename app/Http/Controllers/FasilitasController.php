@@ -308,6 +308,11 @@ class FasilitasController extends Controller
             ]);
 
             $imageName = null;
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imageName = time() . '.' . $image->getClientOriginalExtension();
+                $image->move(public_path('storage/fasilitas'), $imageName);
+            }
 
             $gallery = [];
             if ($request->hasFile('gallery')) {

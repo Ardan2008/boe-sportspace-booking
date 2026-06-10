@@ -160,6 +160,97 @@
         .room-dot:hover:not(.active) {
             border-color: #1265A8;
         }
+
+        .v-char-counter {
+            position: absolute;
+            right: 14px;
+            bottom: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+            pointer-events: none;
+            transition: color .2s;
+        }
+        .v-char-counter.warn   { color: #BA7517; }
+        .v-char-counter.danger { color: #E24B4A; }
+
+        .field-success {
+            border-color: #97C459 !important;
+            box-shadow: 0 0 0 4px rgba(151,196,89,0.12) !important;
+        }
+
+        @keyframes vShake {
+            0%,100% { transform: translateX(0); }
+            20%     { transform: translateX(-5px); }
+            40%     { transform: translateX(5px); }
+            60%     { transform: translateX(-4px); }
+            80%     { transform: translateX(4px); }
+        }
+
+        .v-field {
+            transition: border-color .2s, box-shadow .2s, background-color .2s;
+        }
+        .v-field.v-error {
+            border-color: #E24B4A !important;
+            background-color: #fff9f9 !important;
+            box-shadow: 0 0 0 4px rgba(226,75,74,.10) !important;
+            animation: vShake .35s ease;
+        }
+        .v-field.v-success {
+            border-color: #97C459 !important;
+            background-color: #fafffe !important;
+            box-shadow: 0 0 0 4px rgba(97,196,89,.10) !important;
+        }
+
+        .v-hint {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            padding-left: 2px;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height .25s ease, opacity .2s ease, margin-top .2s ease;
+        }
+        .v-hint.show {
+            max-height: 40px;
+            opacity: 1;
+            margin-top: 6px;
+        }
+        .v-hint.hint-error   { color: #A32D2D; }
+        .v-hint.hint-warning { color: #854F0B; }
+        .v-hint.hint-success { color: #3B6D11; }
+
+        .v-icon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s;
+        }
+        .v-icon.show { opacity: 1; }
+
+        .v-progress-wrap {
+            height: 3px;
+            border-radius: 99px;
+            background: #e2e8f0;
+            margin-top: 8px;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity .2s;
+        }
+        .v-progress-wrap.show { opacity: 1; }
+        .v-progress-bar {
+            height: 100%;
+            border-radius: 99px;
+            width: 0%;
+            transition: width .3s ease, background-color .3s ease;
+        }
     </style>
 </head>
 <body class="bg-[#F8FAFC] font-sans antialiased text-slate-800">
@@ -181,13 +272,13 @@
                     <span class="text-[10px] font-black uppercase tracking-[0.2em] text-[#1265A8]">Update Mode | <span x-text="tipe"></span></span>
                 </div>
                 <h2 class="text-3xl font-black text-slate-900 tracking-tight uppercase">
-                    Edit <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#1265A8] to-blue-400" x-text="tipe === 'lapangan' ? 'Lapangan' : 'Kolam Renang'">Facility</span> Data
+                    Edit <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#1265A8] to-blue-400" x-text="tipe === 'lapangan' ? 'Lapangan' : 'Renang'">Facility</span> Data
                 </h2>
                 <div class="h-1.5 w-12 bg-gradient-to-r from-[#1265A8] to-blue-400 mx-auto mt-4 rounded-full"></div>
 
                 <div class="flex justify-center gap-4 mt-8">
                     <button type="button" @click="confirmTypeChange('lapangan')" :class="tipe === 'lapangan' ? 'bg-[#1265A8] text-white shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'" class="px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300">Lapangan</button>
-                    <button type="button" @click="confirmTypeChange('kolam_renang')" :class="tipe === 'kolam_renang' ? 'bg-[#1265A8] text-white shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'" class="px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300">Kolam Renang</button>
+                    <button type="button" @click="confirmTypeChange('kolam_renang')" :class="tipe === 'kolam_renang' ? 'bg-[#1265A8] text-white shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'" class="px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300">Renang</button>
                     <input type="hidden" name="tipe" :value="tipe">
                 </div>
             </div>
@@ -205,15 +296,29 @@
 
                         <div class="group">
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nama Fasilitas</label>
-                            <input type="text" id="inputNama" name="nama" value="{{ old('nama', $fasilitas->nama) }}"
-                                class="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all duration-300 shadow-sm font-semibold" required>
-                            <span class="error-msg" id="errNama">⚠ Nama minimal 2 huruf dan tidak boleh mengandung angka.</span>
+                            <div class="relative">
+                                <input type="text" id="inputNama" name="nama" maxlength="60" value="{{ old('nama', $fasilitas->nama) }}"
+                                    class="v-field w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all duration-300 shadow-sm font-semibold" required>
+                                <svg id="icon-nama-ok" class="v-icon text-green-500 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <svg id="icon-nama-err" class="v-icon text-red-500 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                </svg>
+                            </div>
+                            <div class="v-progress-wrap" id="pb-nama-wrap">
+                                <div class="v-progress-bar" id="pb-nama"></div>
+                            </div>
+                            <p class="v-hint" id="hint-nama"></p>
                         </div>
 
                         <div class="group">
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Deskripsi Singkat</label>
-                            <textarea id="inputDeskripsi" name="deskripsi" rows="3"
-                                class="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all duration-300 shadow-sm resize-none font-medium leading-relaxed" required>{{ old('deskripsi', $fasilitas->deskripsi) }}</textarea>
+                            <div class="relative">
+                                <textarea id="inputDeskripsi" name="deskripsi" rows="3" maxlength="200"
+                                    class="w-full px-6 py-4 pb-8 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all duration-300 shadow-sm resize-none font-medium leading-relaxed" required>{{ old('deskripsi', $fasilitas->deskripsi) }}</textarea>
+                                <span class="v-char-counter" id="cc-desc">200</span>
+                            </div>
                             <span class="error-msg" id="errDeskripsi">⚠ Deskripsi tidak boleh kosong.</span>
                         </div>
 
@@ -226,19 +331,20 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Jam Operasional</label>
-                                <input type="text" name="jam_operasional" value="{{ old('jam_operasional', $fasilitas->jam_operasional) }}" placeholder="08.00 - 22.00"
+                                <input type="text" id="inputJam" name="jam_operasional" value="{{ old('jam_operasional', $fasilitas->jam_operasional) }}" placeholder="08.00 - 22.00"
                                     class="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all duration-300 shadow-sm font-semibold">
+                                <span class="error-msg" id="errJam">⚠ Gunakan format: 08.00 - 22.00</span>
                             </div>
 
                         </div>
 
-                        {{-- Max Durasi Sewa — full-width 4-column grid, lapangan only --}}
-                        <div x-show="tipe === 'lapangan'">
+                        {{-- Max Durasi Sewa — full-width 4-column grid --}}
+                        <div x-show="tipe === 'lapangan' || tipe === 'kolam_renang'">
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Max Durasi Sewa</label>
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
 
                                 <div>
-                                    <label class="block text-[10px] font-black text-[#1265A8] uppercase tracking-widest mb-2 ml-1">Hari</label>
+                                    <label class="block text-[10px] font-black text-[#1265A8] uppercase tracking-widest mb-2 ml-1" x-text="tipe === 'lapangan' ? 'Jam' : 'Hari'"></label>
                                     <input type="number" name="max_durasi_hari" min="0"
                                         value="{{ old('max_durasi_hari', $fasilitas->max_durasi_hari) }}"
                                         class="w-full px-4 py-3 text-center bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all duration-300 shadow-sm font-semibold text-gray-800">
@@ -268,31 +374,31 @@
                             </div>
                         </div>
 
-                        <div x-show="tipe === 'lapangan'">
+                        <div x-show="tipe === 'lapangan' || tipe === 'kolam_renang'">
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                                Jumlah Lapangan Tersedia
+                                <span x-text="tipe === 'lapangan' ? 'Jumlah Lapangan Tersedia' : 'Jumlah Kolam Tersedia'"></span>
                             </label>
                             <div class="kamar-stepper-wrap" id="kamarStepperWrap">
                                 <button type="button" class="kamar-stepper-btn"
                                     @click="adjustKamar(-1)"
-                                    :disabled="jumlahKamar <= 1"
-                                    aria-label="Kurangi lapangan">−</button>
+                                    :disabled="jumlahLapangan <= 1"
+                                    :aria-label="'Kurangi ' + (tipe === 'lapangan' ? 'lapangan' : 'kolam')">−</button>
                                 <input type="number"
                                     name="jumlah_kamar"
-                                    x-model.number="jumlahKamar"
+                                    x-model.number="jumlahLapangan"
                                     min="1" max="999"
                                     class="kamar-stepper-input"
-                                    aria-label="Jumlah lapangan">
+                                    :aria-label="'Jumlah ' + (tipe === 'lapangan' ? 'lapangan' : 'kolam')">
                                 <button type="button" class="kamar-stepper-btn"
                                     @click="adjustKamar(1)"
-                                    aria-label="Tambah lapangan">+</button>
+                                    :aria-label="'Tambah ' + (tipe === 'lapangan' ? 'lapangan' : 'kolam')">+</button>
                             </div>
                             <div class="kamar-badge-edit">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                         d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                                 </svg>
-                                <span x-text="jumlahKamar + ' lapangan tersedia'"></span>
+                                <span x-text="jumlahLapangan + ' ' + (tipe === 'lapangan' ? 'lapangan' : 'kolam') + ' tersedia'"></span>
                             </div>
                         </div>
 
@@ -300,12 +406,16 @@
                             <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Labels / Fitur</label>
                             <div class="flex flex-wrap gap-2 mb-3">
                                 <template x-for="label in labels[tipe]" :key="label">
-                                    <label class="cursor-pointer">
-                                        <input type="checkbox" name="labels[]" :value="label" x-model="selectedLabels" class="hidden">
-                                        <span :class="selectedLabels.includes(label) ? 'bg-[#1265A8] text-white border-[#1265A8]' : 'bg-white text-slate-400 border-slate-200'"
-                                            class="px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all duration-300 block"
-                                            x-text="label"></span>
-                                    </label>
+                                    <div class="relative group">
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" name="labels[]" :value="label" x-model="selectedLabels" class="hidden">
+                                            <span :class="selectedLabels.includes(label) ? 'bg-[#1265A8] text-white border-[#1265A8]' : 'bg-white text-slate-400 border-slate-200'"
+                                                class="px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all duration-300 block"
+                                                x-text="label"></span>
+                                        </label>
+                                        <button type="button" @click="removeLabel(label)"
+                                            class="absolute inset-0 flex items-center justify-center rounded-xl bg-red-500/80 text-white text-lg transition-all opacity-0 group-hover:opacity-100">&times;</button>
+                                    </div>
                                 </template>
                             </div>
                             <div class="flex gap-2">
@@ -362,7 +472,7 @@
                             </div>
                         </div>
 
-                        <div x-show="tipe === 'lapangan'" x-cloak class="w-full bg-gradient-to-br from-blue-50/40 to-indigo-50/30 rounded-3xl border border-blue-100/60 p-6 space-y-4">
+                        <div x-show="tipe === 'lapangan' || tipe === 'kolam_renang'" x-cloak class="w-full bg-gradient-to-br from-blue-50/40 to-indigo-50/30 rounded-3xl border border-blue-100/60 p-6 space-y-4">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
                                     <div class="w-8 h-8 rounded-full bg-[#1265A8]/10 flex items-center justify-center">
@@ -371,50 +481,59 @@
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 class="text-xs font-black uppercase tracking-widest text-slate-500">Lapangan Specifications</h3>
-                                        <p class="text-[10px] font-semibold text-slate-400" x-text="'Lapangan ' + (currentRoomIndex + 1) + ' dari ' + rooms.length"></p>
+                                        <h3 class="text-xs font-black uppercase tracking-widest text-slate-500" x-text="tipe === 'lapangan' ? 'Lapangan Specifications' : 'Kolam Specifications'"></h3>
+                                        <p class="text-[10px] font-semibold text-slate-400" x-show="!allSame" x-text="(tipe === 'lapangan' ? 'Lapangan ' : 'Kolam ') + (currentRoomIndex + 1) + ' dari ' + rooms.length"></p>
+                                        <p class="text-[10px] font-semibold text-[#1265A8]" x-show="allSame" x-text="'Semua ' + rooms.length + ' ' + (tipe === 'lapangan' ? 'lapangan' : 'kolam') + ' sama'"></p>
                                     </div>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button type="button" class="room-slider-btn" @click="prevRoom" :disabled="currentRoomIndex <= 0">‹</button>
-                                    <button type="button" class="room-slider-btn" @click="nextRoom" :disabled="currentRoomIndex >= rooms.length - 1">›</button>
+                                    <template x-if="rooms.length > 1">
+                                        <label class="flex items-center gap-2 cursor-pointer select-none mr-2">
+                                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400" x-text="allSame ? 'Sama' : 'Beda'"></span>
+                                            <div class="relative">
+                                                <input type="checkbox" x-model="allSame" class="sr-only">
+                                                <div class="w-9 h-5 rounded-full transition-colors" :class="allSame ? 'bg-[#1265A8]' : 'bg-slate-300'"></div>
+                                                <div class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform" :class="allSame ? 'translate-x-4' : ''"></div>
+                                            </div>
+                                        </label>
+                                    </template>
+                                    <button type="button" class="room-slider-btn" @click="prevRoom" :disabled="currentRoomIndex <= 0 || allSame">‹</button>
+                                    <button type="button" class="room-slider-btn" @click="nextRoom" :disabled="currentRoomIndex >= rooms.length - 1 || allSame">›</button>
                                 </div>
                             </div>
 
-                            <div class="flex justify-center gap-2">
+                            <div class="flex justify-center gap-2" x-show="!allSame">
                                 <template x-for="(r, ri) in rooms" :key="ri">
                                     <div @click="currentRoomIndex = ri"
                                         :class="ri === currentRoomIndex ? 'room-dot active' : 'room-dot'"
-                                        :title="'Lapangan ' + (ri + 1)"></div>
+                                        :title="(tipe === 'lapangan' ? 'Lapangan ' : 'Kolam ') + (ri + 1)"></div>
                                 </template>
                             </div>
 
                             <div class="relative">
                                 <template x-for="(room, ri) in rooms" :key="ri">
-                                    <div x-show="ri === currentRoomIndex"
+                                    <div x-show="ri === (allSame ? 0 : currentRoomIndex)"
                                         x-transition:enter="transition ease-out duration-300"
                                         x-transition:enter-start="opacity-0 translate-x-8"
                                         x-transition:enter-end="opacity-100 translate-x-0"
                                         :data-room-index="ri"
-                                         class="bg-white rounded-2xl border border-slate-200/80 p-5">
+                                         class="bg-white rounded-2xl border border-slate-200/80 p-5" @change="syncAllSame()">
 
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div x-show="jumlahKamar > 1">
-                                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Tipe</label>
-                                                <input type="text" x-bind:name="'rooms[' + ri + '][tipe]'" x-model="rooms[ri].tipe" placeholder="Nama lapangan" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] transition-all">
+                                        <div x-show="jumlahLapangan > 1">
+                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5" x-text="tipe === 'lapangan' ? 'Tipe Lapangan' : 'Tipe Kolam'"></label>
+                                            <div class="flex flex-col gap-2">
+                                                <div class="flex flex-wrap gap-1.5" x-show="rooms[ri].tipe.length">
+                                                    <template x-for="(tag, tIdx) in rooms[ri].tipe" :key="tIdx">
+                                                        <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 group/tag">
+                                                            <span x-text="tag"></span>
+                                                            <button type="button" @click="removeTipeTag(rooms[ri], tIdx)" class="text-red-300 hover:text-red-600 opacity-0 group-hover/tag:opacity-100 transition-opacity">
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                            </button>
+                                                        </span>
+                                                    </template>
+                                                </div>
+                                                <input type="text" @keydown.enter.prevent="addTipeTag(rooms[ri], $event)" @input.stop placeholder="Ketik lalu Enter..." class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] transition-all">
                                             </div>
-                                            <div>
-                                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Jumlah</label>
-                                                <input type="number" x-model.number="rooms[ri].jumlah" min="1" :name="'rooms[' + ri + '][jumlah]'" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-sm">
-                                            </div>
-                                        </div>
-
-                                        {{-- Keunggulan Tipe Lapangan --}}
-                                        <div x-show="jumlahKamar > 1">
-                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Keunggulan Tipe Lapangan</label>
-                                            <textarea x-model="rooms[ri].keunggulan" rows="2"
-                                                placeholder="Deskripsi singkat keunggulan tipe lapangan ini..."
-                                                class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-medium text-sm resize-none"></textarea>
                                         </div>
 
                                         <div>
@@ -435,7 +554,7 @@
                                             </div>
                                         </div>
 
-                                        <div>
+                                        <div x-show="jumlahLapangan > 1">
                                             <div class="grid grid-cols-3 gap-3">
                                                 <template x-for="fi in [0, 1, 2]" :key="fi">
                                                     <div class="relative overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#1265A8] transition-all duration-300 h-20 flex items-center justify-center group/foto cursor-pointer">
@@ -455,69 +574,25 @@
                                             </div>
                                         </div>
 
-                                        {{-- Fasilitas Lapangan — 10 icon cards with micro-inputs --}}
-                                        <div>
+                                        {{-- Fasilitas --}}
+                                        <div x-show="jumlahLapangan > 1" class="space-y-3">
                                             <div class="grid grid-cols-5 sm:grid-cols-5 gap-1.5">
-                                                <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
-                                                    <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3-3m0 0l3 3m-3-3v8M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Lampu</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.lampu" min="0" placeholder="0"
-                                                        class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
-                                                </div>
-                                                <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
-                                                    <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5m0-5l-2 1m2-1l-2-1m2 1v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5m0 5l-2-1m2 1l2-1"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Parkir</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.parkir" min="0" placeholder="0"
-                                                        class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
-                                                </div>
-                                                <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
-                                                    <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a1 1 0 001 1h16a1 1 0 001-1V7a1 1 0 00-1-1H4a1 1 0 00-1 1zm0 0l8 5 8-5M12 12l-8 5m8-5l8 5"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Toilet</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.toilet" min="0" placeholder="0"
-                                                        class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
-                                                </div>
-                                                <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
-                                                    <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Mushola</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.mushola" min="0" placeholder="0"
-                                                        class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
-                                                </div>
-                                                <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
-                                                    <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Kursi Tribun</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.kursi_tribun" min="0" placeholder="0"
-                                                        class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
-                                                </div>
-                                                <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
-                                                    <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16M4 20V4a2 2 0 012-2h12a2 2 0 012 2v16M4 20h16M8 12h8M8 8h8M8 16h4"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Ruang Ganti</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.ruang_ganti" min="0" placeholder="0"
-                                                        class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
-                                                </div>
-                                                <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
-                                                    <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Papan Skor</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.papan_skor" min="0" placeholder="0"
-                                                        class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
-                                                </div>
-                                                <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
-                                                    <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Sound System</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.sound_system" min="0" placeholder="0"
-                                                        class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
-                                                </div>
-                                                <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
-                                                    <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m0 4v1m-6-7a2 2 0 00-2 2m0 4v1M6 21h6m-3-3v3"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Air Minum</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.air_minum" min="0" placeholder="0"
-                                                        class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
-                                                </div>
-                                                <div class="flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
-                                                    <svg class="w-4 h-4 text-[#1265A8] mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
-                                                    <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center">Wifi</span>
-                                                    <input type="number" x-model.number="rooms[ri].fasilitas.wifi" min="0" placeholder="0"
-                                                        class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
-                                                </div>
+                                                <template x-for="(item, fIdx) in rooms[ri].fasilitasKeys" :key="item.key">
+                                                    <div class="relative group flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
+                                                        <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center" x-text="item.label"></span>
+                                                        <input type="number" x-model.number="rooms[ri].fasilitas[item.key]" min="0" placeholder="0"
+                                                            class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
+                                                        <button type="button" @click="removeFasilitas(ri, fIdx)"
+                                                            class="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-red-500/80 text-white text-xs opacity-0 group-hover:opacity-100 transition-all">&times;</button>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <input type="text" x-model="rooms[ri].newFasilitasLabel" @keydown.enter.prevent="addFasilitas(ri)"
+                                                    placeholder="Tambah fasilitas..."
+                                                    class="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold outline-none focus:border-[#1265A8] transition-all">
+                                                <button type="button" @click="addFasilitas(ri)"
+                                                    class="px-4 py-2 bg-[#1265A8] text-white rounded-xl hover:bg-slate-800 transition-all font-black text-sm">+</button>
                                             </div>
                                         </div>
 
@@ -525,13 +600,13 @@
                                             <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-0.5">Harga Sewa</label>
                                             <div class="grid grid-cols-2 gap-3">
                                                 <div>
-                                                    <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-0.5">Harian <span class="text-red-400">*</span></label>
+                                                    <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-0.5"><span x-text="tipe === 'lapangan' ? 'Jam' : 'Harian'"></span> <span class="text-red-400">*</span></label>
                                                     <div class="relative">
                                                         <span class="absolute left-3 top-1/2 -translate-y-1/2 font-black text-[#1265A8] text-xs">Rp</span>
                                                         <input type="text"
                                                             data-price-field="harga_harian"
                                                             :value="(room.harga_harian !== '' && room.harga_harian != null) ? new Intl.NumberFormat('id-ID').format(room.harga_harian) : ''"
-                                                            @input="room.harga_harian = $event.target.value.replace(/\D/g, '') !== '' ? Number($event.target.value.replace(/\D/g, '')) : ''; $event.target.value = (room.harga_harian !== '' && room.harga_harian != null) ? new Intl.NumberFormat('id-ID').format(room.harga_harian) : ''; syncPaketHarian()"
+                                                            @input="room.harga_harian = $event.target.value.replace(/\D/g, '') !== '' ? Number($event.target.value.replace(/\D/g, '')) : ''; $event.target.value = (room.harga_harian !== '' && room.harga_harian != null) ? new Intl.NumberFormat('id-ID').format(room.harga_harian) : ''"
                                                             :class="(!room.harga_harian || Number(room.harga_harian) <= 0) ? 'field-error' : ''"
                                                             class="w-full pl-8 pr-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all font-bold text-sm"
                                                             placeholder="0">
@@ -544,7 +619,7 @@
                                                         <input type="text"
                                                             data-price-field="harga_mingguan"
                                                             :value="(room.harga_mingguan !== '' && room.harga_mingguan != null) ? new Intl.NumberFormat('id-ID').format(room.harga_mingguan) : ''"
-                                                            @input="room.harga_mingguan = $event.target.value.replace(/\D/g, '') !== '' ? Number($event.target.value.replace(/\D/g, '')) : ''; $event.target.value = (room.harga_mingguan !== '' && room.harga_mingguan != null) ? new Intl.NumberFormat('id-ID').format(room.harga_mingguan) : ''; syncPaketHarian()"
+                                                            @input="room.harga_mingguan = $event.target.value.replace(/\D/g, '') !== '' ? Number($event.target.value.replace(/\D/g, '')) : ''; $event.target.value = (room.harga_mingguan !== '' && room.harga_mingguan != null) ? new Intl.NumberFormat('id-ID').format(room.harga_mingguan) : ''"
                                                             :class="(!room.harga_mingguan || Number(room.harga_mingguan) <= 0) ? 'field-error' : ''"
                                                             class="w-full pl-8 pr-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all font-bold text-sm"
                                                             placeholder="0">
@@ -557,7 +632,7 @@
                                                         <input type="text"
                                                             data-price-field="harga_bulanan"
                                                             :value="(room.harga_bulanan !== '' && room.harga_bulanan != null) ? new Intl.NumberFormat('id-ID').format(room.harga_bulanan) : ''"
-                                                            @input="room.harga_bulanan = $event.target.value.replace(/\D/g, '') !== '' ? Number($event.target.value.replace(/\D/g, '')) : ''; $event.target.value = (room.harga_bulanan !== '' && room.harga_bulanan != null) ? new Intl.NumberFormat('id-ID').format(room.harga_bulanan) : ''; syncPaketHarian()"
+                                                            @input="room.harga_bulanan = $event.target.value.replace(/\D/g, '') !== '' ? Number($event.target.value.replace(/\D/g, '')) : ''; $event.target.value = (room.harga_bulanan !== '' && room.harga_bulanan != null) ? new Intl.NumberFormat('id-ID').format(room.harga_bulanan) : ''"
                                                             :class="(!room.harga_bulanan || Number(room.harga_bulanan) <= 0) ? 'field-error' : ''"
                                                             class="w-full pl-8 pr-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all font-bold text-sm"
                                                             placeholder="0">
@@ -570,7 +645,7 @@
                                                         <input type="text"
                                                             data-price-field="harga_tahunan"
                                                             :value="(room.harga_tahunan !== '' && room.harga_tahunan != null) ? new Intl.NumberFormat('id-ID').format(room.harga_tahunan) : ''"
-                                                            @input="room.harga_tahunan = $event.target.value.replace(/\D/g, '') !== '' ? Number($event.target.value.replace(/\D/g, '')) : ''; $event.target.value = (room.harga_tahunan !== '' && room.harga_tahunan != null) ? new Intl.NumberFormat('id-ID').format(room.harga_tahunan) : ''; syncPaketHarian()"
+                                                            @input="room.harga_tahunan = $event.target.value.replace(/\D/g, '') !== '' ? Number($event.target.value.replace(/\D/g, '')) : ''; $event.target.value = (room.harga_tahunan !== '' && room.harga_tahunan != null) ? new Intl.NumberFormat('id-ID').format(room.harga_tahunan) : ''"
                                                             :class="(!room.harga_tahunan || Number(room.harga_tahunan) <= 0) ? 'field-error' : ''"
                                                             class="w-full pl-8 pr-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] outline-none transition-all font-bold text-sm"
                                                             placeholder="0">
@@ -614,9 +689,10 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('facilityEditor', () => ({
                 tipe: '{{ $fasilitas->tipe ?? 'lapangan' }}',
-                jumlahKamar: {{ $fasilitas->jumlah_kamar ?? 1 }},
+                jumlahLapangan: {{ $fasilitas->jumlah_kamar ?? 1 }},
                 rooms: @json($rooms),
                 currentRoomIndex: 0,
+                allSame: false,
                 customRoomType: '',
                 showCustomRoomInput: false,
 
@@ -659,6 +735,9 @@
                             r.nomor_kamar = [];
                         }
 
+                        if (typeof r.tipe === 'string') {
+                            r.tipe = r.tipe ? [r.tipe] : [];
+                        }
                         if (r.keunggulan === undefined) {
                             r.keunggulan = '';
                         }
@@ -671,6 +750,8 @@
                         if (!r.fasilitas) {
                             r.fasilitas = { lampu: 0, parkir: 0, toilet: 0, mushola: 0, kursi_tribun: 0, ruang_ganti: 0, papan_skor: 0, sound_system: 0, air_minum: 0, wifi: 0 };
                         }
+                        r.fasilitasKeys = Object.keys(r.fasilitas).map(k => ({ key: k, label: k.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') }));
+                        r.newFasilitasLabel = '';
                         // Ensure numeric prices are stored as numbers (not strings) to avoid 0 display bug
                         r.harga_harian   = r.harga_harian   !== '' && r.harga_harian   != null ? Number(r.harga_harian)   : '';
                         r.harga_mingguan = r.harga_mingguan !== '' && r.harga_mingguan != null ? Number(r.harga_mingguan) : '';
@@ -678,7 +759,7 @@
                         r.harga_tahunan  = r.harga_tahunan  !== '' && r.harga_tahunan  != null ? Number(r.harga_tahunan)  : '';
                     });
 
-                    this.$watch('jumlahKamar', (newVal) => {
+                    this.$watch('jumlahLapangan', (newVal) => {
                         if (newVal > this.rooms.length) {
                             for (let i = this.rooms.length; i < newVal; i++) {
                                 this.rooms.push(this.createEmptyRoom(i));
@@ -694,12 +775,38 @@
 
 
 
+                    this.$watch('allSame', (val) => {
+                        if (val && this.jumlahLapangan > 1) this.syncAllSame();
+                    });
+
                     if (this.rooms.length > 0) {
                         this.syncPaketHarian();
                     }
                 },
 
+                defaultFasKeys() {
+                    if (this.tipe === 'kolam_renang') {
+                        return [
+                            {key:'loker',label:'Loker'},{key:'bilik_bilas',label:'Bilik Bilas'},
+                            {key:'toilet',label:'Toilet'},{key:'lifeguard',label:'Lifeguard'},
+                            {key:'tempat_duduk',label:'Tempat Duduk'},{key:'parkir',label:'Parkir'},
+                            {key:'mushola',label:'Mushola'},{key:'ruang_ganti',label:'Ruang Ganti'},
+                            {key:'wifi',label:'WiFi'},
+                        ];
+                    }
+                    return [
+                        {key:'lampu',label:'Lampu'},{key:'parkir',label:'Parkir'},
+                        {key:'toilet',label:'Toilet'},{key:'mushola',label:'Mushola'},
+                        {key:'kursi_tribun',label:'Kursi Tribun'},{key:'ruang_ganti',label:'Ruang Ganti'},
+                        {key:'papan_skor',label:'Papan Skor'},{key:'sound_system',label:'Sound System'},
+                        {key:'air_minum',label:'Air Minum'},{key:'wifi',label:'WiFi'},
+                    ];
+                },
+
                 createEmptyRoom(index) {
+                    const fasKeys = this.defaultFasKeys();
+                    const fas = {};
+                    fasKeys.forEach(f => { fas[f.key] = 0; });
                     return {
                         tipe: '',
                         jumlah: 1,
@@ -715,33 +822,56 @@
                         keunggulan: '',
                         panjang: '',
                         lebar: '',
-                        fasilitas: {
-                            lampu: 0,
-                            parkir: 0,
-                            toilet: 0,
-                            mushola: 0,
-                            kursi_tribun: 0,
-                            ruang_ganti: 0,
-                            papan_skor: 0,
-                            sound_system: 0,
-                            air_minum: 0,
-                            wifi: 0,
-                        },
+                        fasilitas: fas,
+                        newFasilitasLabel: '',
+                        fasilitasKeys: [...fasKeys],
                     };
+                },
+
+                syncAllSame() {
+                    if (!this.allSame || this.jumlahLapangan <= 1) return;
+                    for (let i = 1; i < this.rooms.length; i++) {
+                        this.rooms[i] = { ...this.rooms[0], fotoPreviews: [...this.rooms[0].fotoPreviews] };
+                    }
+                    this.syncPaketHarian();
                 },
 
                 generateDefaultRooms() {
                     const rooms = [];
-                    const count = this.jumlahKamar;
+                    const count = this.jumlahLapangan;
                     for (let i = 0; i < count; i++) {
                         rooms.push(this.createEmptyRoom(i));
                     }
                     return rooms;
                 },
 
+                addFasilitas(ri) {
+                    const room = this.rooms[ri];
+                    if (!room) return;
+                    const label = room.newFasilitasLabel?.trim();
+                    if (!label) return;
+                    const key = label.toLowerCase().replace(/\s+/g, '_');
+                    if (room.fasilitasKeys.some(f => f.key === key)) return;
+                    room.fasilitasKeys.push({ key, label });
+                    room.fasilitas[key] = 0;
+                    room.newFasilitasLabel = '';
+                },
+
+                removeFasilitas(ri, index) {
+                    const room = this.rooms[ri];
+                    if (!room) return;
+                    const item = room.fasilitasKeys[index];
+                    if (!item) return;
+                    room.fasilitasKeys.splice(index, 1);
+                    delete room.fasilitas[item.key];
+                },
+
                 syncPaketHarian() {
+                    if (this.allSame && this.jumlahLapangan > 1) {
+                        this.syncAllSame();
+                    }
                     const payload = this.rooms.map(r => {
-                        const { fotoPreviews, ...rest } = r;
+                        const { fotoPreviews, fasilitasKeys, newFasilitasLabel, ...rest } = r;
                         // Ensure prices are stored as numbers, not empty strings
                         rest.harga_harian   = rest.harga_harian   !== '' && rest.harga_harian   != null ? Number(rest.harga_harian)   : 0;
                         rest.harga_mingguan = rest.harga_mingguan !== '' && rest.harga_mingguan != null ? Number(rest.harga_mingguan) : 0;
@@ -754,46 +884,23 @@
                     const rd = document.getElementById('roomsDataInput');
                     if (rd) rd.value = JSON.stringify(payload);
 
-                    // ── Strict submit guard (lapangan only) ──────────────────────
-                    const btnSimpan = document.querySelector('#mainForm button[type="submit"]');
-                    if (btnSimpan && this.tipe === 'lapangan') {
-                        const reasons = [];
 
-                        const missingTipe = this.rooms.some(r => !r.tipe || r.tipe.trim() === '');
-                        if (missingTipe) reasons.push('Tipe lapangan belum dipilih.');
-
-                        const missingPrice = this.rooms.some(r =>
-                            !r.harga_harian   || Number(r.harga_harian)   <= 0 ||
-                            !r.harga_mingguan || Number(r.harga_mingguan) <= 0 ||
-                            !r.harga_bulanan  || Number(r.harga_bulanan)  <= 0 ||
-                            !r.harga_tahunan  || Number(r.harga_tahunan)  <= 0
-                        );
-                        if (missingPrice) reasons.push('Semua harga sewa harus diisi dan lebih dari 0.');
-
-                        btnSimpan.disabled = reasons.length > 0;
-                        btnSimpan.title    = reasons.join(' ');
-
-                        // Visual: red border on empty price inputs
-                        this.rooms.forEach((r, ri) => {
-                            const card = document.querySelector(`[data-room-index="${ri}"]`);
-                            if (!card) return;
-                            ['harga_harian','harga_mingguan','harga_bulanan','harga_tahunan'].forEach(field => {
-                                const inp = card.querySelector(`[data-price-field="${field}"]`);
-                                if (!inp) return;
-                                const val = Number(r[field]);
-                                if (!val || val <= 0) {
-                                    inp.classList.add('field-error');
-                                } else {
-                                    inp.classList.remove('field-error');
-                                }
-                            });
-                        });
-                    }
                 },
 
                 adjustKamar(delta) {
-                    const next = Math.min(999, Math.max(1, this.jumlahKamar + delta));
-                    this.jumlahKamar = next;
+                    const next = Math.min(999, Math.max(1, this.jumlahLapangan + delta));
+                    this.jumlahLapangan = next;
+                },
+
+                addTipeTag(room, event) {
+                    const val = event.target.value.trim();
+                    if (val && !room.tipe.includes(val)) {
+                        room.tipe.push(val);
+                    }
+                    event.target.value = '';
+                },
+                removeTipeTag(room, idx) {
+                    room.tipe.splice(idx, 1);
                 },
 
                 nextRoom() {
@@ -817,7 +924,10 @@
                     }
                 },
 
-
+                removeLabel(label) {
+                    this.labels[this.tipe] = this.labels[this.tipe].filter(l => l !== label);
+                    this.selectedLabels = this.selectedLabels.filter(l => l !== label);
+                },
 
                 handleGalleryChange(event, index) {
                     const file = event.target.files[0];
@@ -955,26 +1065,133 @@
                 reader.readAsDataURL(file);
             });
 
-            const inputNama = document.getElementById('inputNama');
-            const errNama   = document.getElementById('errNama');
+            function setFieldState(inputEl, state, hintEl, hintText, hintClass, iconOkEl, iconErrEl) {
+                inputEl.classList.remove('v-error', 'v-success');
+                if (iconOkEl) iconOkEl.classList.remove('show');
+                if (iconErrEl) iconErrEl.classList.remove('show');
+                if (state === 'error') {
+                    inputEl.classList.add('v-error');
+                    if (iconErrEl) iconErrEl.classList.add('show');
+                } else if (state === 'success') {
+                    inputEl.classList.add('v-success');
+                    if (iconOkEl) iconOkEl.classList.add('show');
+                }
+                if (hintEl) {
+                    hintEl.className = 'v-hint';
+                    if (hintText) {
+                        hintEl.textContent = hintText;
+                        hintEl.classList.add('show', hintClass || 'hint-error');
+                    }
+                }
+            }
+
+            function clearField(inputEl, hintEl, iconOkEl, iconErrEl) {
+                inputEl.classList.remove('v-error', 'v-success');
+                if (hintEl)    { hintEl.className = 'v-hint'; }
+                if (iconOkEl)  iconOkEl.classList.remove('show');
+                if (iconErrEl) iconErrEl.classList.remove('show');
+            }
+
+            const inputNama   = document.getElementById('inputNama');
+            const hintNama    = document.getElementById('hint-nama');
+            const iconNamaOk  = document.getElementById('icon-nama-ok');
+            const iconNamaErr = document.getElementById('icon-nama-err');
+            const pbWrap      = document.getElementById('pb-nama-wrap');
+            const pb          = document.getElementById('pb-nama');
+            const rgxNama     = /^[a-zA-Z\s]+$/;
+
+            inputNama.addEventListener('input', function () {
+                const val = this.value;
+                const len = val.trim().length;
+
+                if (!val) {
+                    clearField(this, hintNama, iconNamaOk, iconNamaErr);
+                    pbWrap.classList.remove('show');
+                    return;
+                }
+
+                pbWrap.classList.add('show');
+                pb.style.width = Math.min(len / 60 * 100, 100) + '%';
+
+                if (!rgxNama.test(val)) {
+                    pb.style.backgroundColor = '#E24B4A';
+                    setFieldState(this, 'error', hintNama, 'Hanya huruf dan spasi yang diperbolehkan.', 'hint-error', iconNamaOk, iconNamaErr);
+                } else if (len < 2) {
+                    pb.style.backgroundColor = '#EF9F27';
+                    setFieldState(this, 'error', hintNama, 'Minimal 2 karakter.', 'hint-warning', iconNamaOk, iconNamaErr);
+                } else {
+                    pb.style.backgroundColor = '#97C459';
+                    setFieldState(this, 'success', hintNama, 'Nama terlihat bagus!', 'hint-success', iconNamaOk, iconNamaErr);
+                }
+            });
 
             function validateNama() {
                 const val = inputNama.value.trim();
-                if (val.length < 2 || /\d/.test(val)) {
-                    showError(errNama, inputNama);
+                if (!val || !rgxNama.test(val) || val.length < 2) {
+                    const msg = !val ? 'Nama wajib diisi.'
+                              : !rgxNama.test(val) ? 'Nama hanya boleh berisi huruf dan spasi.'
+                              : 'Nama minimal 2 karakter.';
+                    setFieldState(inputNama, 'error', hintNama, msg, 'hint-error', iconNamaOk, iconNamaErr);
+                    const len = inputNama.value.length;
+                    pbWrap.classList.add('show');
+                    pb.style.width = Math.min(len / 60 * 100, 100) + '%';
+                    pb.style.backgroundColor = '#E24B4A';
                     return false;
                 }
-                clearError(errNama, inputNama);
+                setFieldState(inputNama, 'success', hintNama, 'Nama terlihat bagus!', 'hint-success', iconNamaOk, iconNamaErr);
+                pbWrap.classList.add('show');
+                pb.style.width = Math.min(inputNama.value.length / 60 * 100, 100) + '%';
+                pb.style.backgroundColor = '#97C459';
                 return true;
             }
             inputNama.addEventListener('blur', validateNama);
-            inputNama.addEventListener('input', function () {
-                const val = this.value.trim();
-                if (val.length >= 2 && !/\d/.test(val)) clearError(errNama, inputNama);
-            });
+            validateNama();
 
             const inputDeskripsi = document.getElementById('inputDeskripsi');
             const errDeskripsi   = document.getElementById('errDeskripsi');
+            const ccDesc         = document.getElementById('cc-desc');
+
+            function updateCharCounter() {
+                if (!ccDesc) return;
+                const left = 200 - inputDeskripsi.value.length;
+                ccDesc.textContent = left;
+                ccDesc.className = 'v-char-counter' + (left < 10 ? ' danger' : left < 30 ? ' warn' : '');
+            }
+
+            /* ── JAM OPERASIONAL ── */
+            const inputJam  = document.getElementById('inputJam');
+            const errJam    = document.getElementById('errJam');
+            const rgxJam    = /^\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2}$/;
+
+            function validateJam() {
+                const val = inputJam.value.trim();
+                if (!val) {
+                    showError(errJam, inputJam);
+                    inputJam.classList.remove('field-success');
+                    return false;
+                }
+                if (!rgxJam.test(val)) {
+                    showError(errJam, inputJam);
+                    inputJam.classList.remove('field-success');
+                    return false;
+                }
+                clearError(errJam, inputJam);
+                inputJam.classList.add('field-success');
+                return true;
+            }
+            inputJam.addEventListener('blur', validateJam);
+            inputJam.addEventListener('input', function () {
+                const val = this.value.trim();
+                if (val && rgxJam.test(val)) {
+                    clearError(errJam, this);
+                    this.classList.add('field-success');
+                } else if (!val) {
+                    clearError(errJam, this);
+                    this.classList.remove('field-success');
+                } else {
+                    this.classList.remove('field-success');
+                }
+            });
 
             function validateDeskripsi() {
                 if (inputDeskripsi.value.trim() === '') {
@@ -987,7 +1204,9 @@
             inputDeskripsi.addEventListener('blur', validateDeskripsi);
             inputDeskripsi.addEventListener('input', function () {
                 if (this.value.trim() !== '') clearError(errDeskripsi, inputDeskripsi);
+                updateCharCounter();
             });
+            updateCharCounter();
 
             const form = document.getElementById('mainForm');
             form.addEventListener('submit', function (e) {
@@ -995,6 +1214,7 @@
 
                 const namaOk     = validateNama();
                 const deskOk     = validateDeskripsi();
+                const jamOk      = validateJam();
 
                 let galleryOk = true;
                 [0, 1, 2].forEach(i => {
@@ -1002,7 +1222,35 @@
                     if (inp && inp.files[0] && inp.files[0].size > MAX_SIZE) galleryOk = false;
                 });
 
-                if (!namaOk || !deskOk || !galleryOk) {
+                const alpine = window.__alpineRoot;
+                let priceOk = true;
+                if (alpine && alpine.rooms) {
+                    priceOk = !alpine.rooms.some(r =>
+                        !r.harga_harian || Number(r.harga_harian) <= 0 ||
+                        !r.harga_mingguan || Number(r.harga_mingguan) <= 0 ||
+                        !r.harga_bulanan || Number(r.harga_bulanan) <= 0 ||
+                        !r.harga_tahunan || Number(r.harga_tahunan) <= 0
+                    );
+                }
+                let tipeOk = true;
+                if (alpine && alpine.rooms && alpine.jumlahLapangan > 1) {
+                    tipeOk = !alpine.rooms.some(r => {
+                        if (Array.isArray(r.tipe)) return r.tipe.length === 0 || r.tipe.every(t => !t.trim());
+                        return !r.tipe || r.tipe.trim() === '';
+                    });
+                }
+
+                if (!namaOk || !deskOk || !jamOk || !galleryOk || !priceOk || !tipeOk) {
+                    if (!priceOk) {
+                        Swal.fire({
+                            title: 'Harga Belum Lengkap',
+                            text: 'Semua harga sewa (Jam/Harian, Mingguan, Bulanan, Tahunan) harus diisi dan lebih dari 0.',
+                            icon: 'warning',
+                            confirmButtonColor: '#1265A8',
+                            confirmButtonText: 'OK',
+                            customClass: { popup: 'rounded-[2.5rem] p-8' }
+                        });
+                    }
                     const firstErr = document.querySelector('.field-error, .dropzone-error');
                     if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;

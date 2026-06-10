@@ -211,31 +211,13 @@
                                 </p>
                             </td>
 
-                            {{-- TAMU & KAMAR --}}
+                            {{-- LAPANGAN --}}
                             <td class="p-5">
                                 @if($tipe === 'lapangan')
                                 <div class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-[9px] font-bold px-2 py-0.5 rounded-full mb-1.5">
-                                    {{ $rooms }} Kamar
+                                    {{ $rooms }} Lapangan
                                 </div>
                                 @endif
-                                <div class="flex flex-wrap gap-1">
-                                    <span class="bg-blue-50 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full">
-                                        {{ $adults }} Dewasa
-                                    </span>
-                                    @if($billable > 0)
-                                    <span class="bg-amber-50 text-amber-700 text-[9px] font-bold px-2 py-0.5 rounded-full">
-                                        {{ $billable }} Anak ≥12
-                                    </span>
-                                    @endif
-                                    @if($free > 0)
-                                    <span class="bg-emerald-50 text-emerald-700 text-[9px] font-bold px-2 py-0.5 rounded-full">
-                                        {{ $free }} Anak &lt;12
-                                    </span>
-                                    @endif
-                                </div>
-                                <p class="text-[9px] text-slate-500 font-semibold mt-1">
-                                    Total berbayar: <strong class="text-slate-700">{{ $totalBillable }}</strong>
-                                </p>
                             </td>
 
                             {{-- TAGIHAN --}}
@@ -373,46 +355,21 @@
                         </div>
                     </div>
 
-                    {{-- Konfigurasi Tamu & Kamar --}}
+                    {{-- Detail Pesanan --}}
                     <h4 class="text-xs font-black uppercase text-slate-400 tracking-wider mb-4 border-b border-slate-100 pb-2">
-                        Konfigurasi Tamu &amp; Kamar
+                        Detail Pesanan
                     </h4>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
                             x-show="detailPayload.fasilitas_tipe === 'lapangan'">
-                            <span class="block text-[10px] uppercase text-purple-500 font-bold mb-1">Kamar</span>
+                            <span class="block text-[10px] uppercase text-purple-500 font-bold mb-1">Lapangan</span>
                             <span class="font-black text-purple-700 text-xl"
                                 x-text="detailPayload.details?.rooms_count || detailPayload.details?.rooms || '1'"></span>
-                            <span class="block text-[9px] text-purple-400 mt-1"
-                                x-text="'maks ' + ((detailPayload.details?.rooms_count || detailPayload.details?.rooms || 1) * 2) + ' slot'"></span>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
-                            <span class="block text-[10px] uppercase text-blue-500 font-bold mb-1">Dewasa</span>
-                            <span class="font-black text-blue-700 text-xl" x-text="detailPayload.details?.adults || '1'"></span>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.fasilitas_tipe === 'lapangan'">
-                            <span class="block text-[10px] uppercase text-amber-500 font-bold mb-1">Anak ≥12</span>
-                            <span class="font-black text-amber-600 text-xl"
-                                x-text="detailPayload.details?.billable_children || '0'"></span>
-                            <span class="block text-[9px] text-amber-400 mt-1">Tarif dewasa</span>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.fasilitas_tipe === 'lapangan'">
-                            <span class="block text-[10px] uppercase text-emerald-500 font-bold mb-1">Anak &lt;12</span>
-                            <span class="font-black text-emerald-600 text-xl"
-                                x-text="detailPayload.details?.free_children || '0'"></span>
-                            <span class="block text-[9px] text-emerald-400 mt-1">Gratis</span>
                         </div>
                     </div>
 
                     <div class="bg-amber-50 p-5 rounded-2xl border border-amber-200 flex flex-wrap justify-between items-center gap-3 mt-4 mb-8">
                         <div>
-                            <span class="block text-[10px] uppercase text-amber-600 font-bold mb-1">Total Tamu Berbayar</span>
-                            <span class="text-base font-black text-amber-700"
-                                x-text="(detailPayload.details?.total_billable_guests || detailPayload.details?.adults || 1) + ' orang'"></span>
-                        </div>
-                        <div class="text-right">
                             <span class="block text-[10px] uppercase text-amber-600 font-bold mb-1">Total Tagihan Final</span>
                             <span class="text-2xl font-black text-amber-700" x-text="detailPayload.total"></span>
                         </div>
@@ -440,6 +397,20 @@
                                     <div x-show="!room.fasilitas || Object.keys(room.fasilitas).filter(k => room.fasilitas[k] > 0).length === 0" class="text-xs text-slate-400 italic">
                                         Tidak ada fasilitas khusus untuk kamar ini
                                     </div>
+
+                                    {{-- Room photos — only if more than 1 room type --}}
+                                    <template x-if="detailPayload.rooms_data.length > 1 && room.foto && room.foto.filter(f => f).length">
+                                        <div class="mt-3 pt-3 border-t border-slate-200">
+                                            <span class="block text-[9px] uppercase text-slate-400 font-bold mb-2">Foto Tipe Kamar</span>
+                                            <div class="flex flex-wrap gap-2">
+                                                <template x-for="(f, fi) in room.foto.filter(f => f)" :key="fi">
+                                                    <img :src="'/storage/fasilitas/rooms/' + f"
+                                                         class="w-20 h-16 object-cover rounded-lg border border-slate-200 hover:scale-105 transition-transform cursor-pointer shadow-sm"
+                                                         @click="window.open('/storage/fasilitas/rooms/' + f, '_blank')">
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
                             </template>
                         </div>

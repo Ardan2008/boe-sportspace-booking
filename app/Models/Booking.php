@@ -14,6 +14,7 @@ class Booking extends Model
         'tgl_mulai',
         'tgl_selesai',
         'package_type',
+        'selected_days',
         'selected_packages',
         'total_harga',
         'status',

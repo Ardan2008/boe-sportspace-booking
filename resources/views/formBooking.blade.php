@@ -56,7 +56,6 @@
         .room-slot .person-dot { width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;transition:all .3s ease; }
         .person-dot.filled { background:#2563eb;color:#fff; }
         .person-dot.empty  { background:#e2e8f0;color:#94a3b8;border:2px dashed #cbd5e1; }
-        .person-dot.child  { background:#f59e0b;color:#fff; }
 
         @keyframes popIn { 0%{transform:scale(.7);opacity:0} 70%{transform:scale(1.05);opacity:1} 100%{transform:scale(1)} }
         .pop-in { animation: popIn .35s ease forwards; }
@@ -215,9 +214,9 @@
                             <h4 class="font-black text-gray-800 uppercase tracking-tighter text-sm">Durasi Sewa</h4>
                             <p class="text-[10px] font-bold uppercase tracking-widest mt-0.5"
                                :class="step2Errors.duration ? 'text-red-400' : 'text-gray-400'"
-                               x-text="packageType==='harian'?'Satuan: Hari':packageType==='mingguan'?'Satuan: Minggu':packageType==='bulanan'?'Satuan: Bulan':'Satuan: Tahun'"></p>
-                            <p x-show="selectedRoomMaxDurasi > 0" class="text-[9px] text-amber-600 font-bold mt-0.5"
-                               x-text="'Maks: ' + selectedRoomMaxDurasi + ' (dari DB)'"></p>
+                                x-text="packageType==='harian' ? (isLapanganHarian ? 'Satuan: Jam' : 'Satuan: Hari') : packageType==='mingguan' ? 'Satuan: Minggu' : packageType==='bulanan' ? 'Satuan: Bulan' : 'Satuan: Tahun'"></p>
+                             <p x-show="selectedRoomMaxDurasi > 0" class="text-[9px] text-amber-600 font-bold mt-0.5"
+                                x-text="'Maks: ' + selectedRoomMaxDurasi + ' ' + (isLapanganHarian ? 'jam' : packageType === 'harian' ? 'hari' : packageType === 'mingguan' ? 'minggu' : packageType === 'bulanan' ? 'bulan' : 'tahun')"></p>
                         </div>
                         <div class="flex items-center gap-4">
                             <button @click="decDuration()"
@@ -232,12 +231,53 @@
                     </div>
                     <div class="mt-3 pt-3 border-t border-gray-200">
                         <p class="text-[10px] text-gray-400 font-semibold">
-                            Total: <span class="text-gray-700 font-black" x-text="totalDays + ' hari'"></span>
+                            Total: <span class="text-gray-700 font-black" x-text="totalDays + (isLapanganHarian ? ' jam' : ' hari')"></span>
                         </p>
                     </div>
+
+                    <div x-show="isLapanganHarian" x-transition class="mt-3 pt-3 border-t border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Jam Mulai</p>
+                            <select x-model="startHour"
+                                class="p-2 bg-white border-2 border-gray-200 rounded-xl font-bold text-sm outline-none focus:border-blue-400">
+                                <template x-for="h in Array.from({length: 14}, (_, i) => i + 7)" :key="h">
+                                    <option :value="h" x-text="String(h).padStart(2,'0')+':00'"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <p class="text-[9px] text-gray-400 font-semibold mt-1">
+                            Selesai: <span class="font-black text-gray-700" x-text="formattedEndTime + ':00'"></span>
+                        </p>
+                    </div>
+
                     <p x-show="step2Errors.duration" x-transition class="text-[10px] text-red-500 font-semibold mt-2 flex items-center gap-1">
                         <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                         Durasi minimal 1
+                    </p>
+                </div>
+
+                {{-- ── PILIH HARI (mingguan/bulanan/tahunan only) ── --}}
+                <div x-show="packageType !== 'harian'"
+                     class="p-5 bg-gray-50 rounded-3xl border-2 border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-black text-gray-800 uppercase tracking-tighter text-sm">Hari Sewa</h4>
+                        <button @click="selectedDays = selectedDays.length === 7 ? [] : [1,2,3,4,5,6,7]"
+                                class="text-[9px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wider"
+                                x-text="selectedDays.length === 7 ? 'Hapus Semua' : 'Pilih Semua'"></button>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="(label, idx) in ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu']" :key="idx">
+                            <button @click="toggleDay(idx+1)"
+                                    class="px-4 py-2.5 rounded-xl border-2 text-[10px] font-black uppercase tracking-wider transition-all duration-200"
+                                    :class="selectedDays.includes(idx+1)
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                        : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'">
+                                <span x-text="label"></span>
+                            </button>
+                        </template>
+                    </div>
+                    <p class="text-[10px] text-gray-400 font-semibold mt-2">
+                        Total hari sewa: <span class="text-gray-700 font-black" x-text="totalDays"></span> hari
                     </p>
                 </div>
 
@@ -248,7 +288,7 @@
                     <div class="flex items-start justify-between gap-4 mb-4">
                         <div>
                             <h4 class="font-black text-blue-800 uppercase tracking-tighter text-sm">Jumlah Lapangan</h4>
-                            <p class="text-[10px] font-bold text-blue-600">1 Lapangan = Maks <strong>2 Dewasa</strong> + Maks <strong>2 Anak</strong></p>
+                             <p class="text-[10px] font-bold text-blue-600">1 Lapangan = Maks <strong>2 Pemain</strong></p>
                         </div>
                         <div class="flex items-center gap-3 flex-shrink-0">
                             <button @click="decRooms()"
@@ -266,184 +306,18 @@
                     </p>
                 </div>
 
-                {{-- ── LAPANGAN SLOT VISUAL (guest indicators) � lapangan only --
-                <div x-show="currentFacility?.tipe === 'lapangan'"
-                     x-transition class="p-5 rounded-3xl border-2 border-blue-100 bg-blue-50/30">
-                    <div class="grid gap-3 mb-3" :style="'grid-template-columns: repeat(' + Math.min(rooms,3) + ', 1fr)'">
-                        <template x-for="r in rooms" :key="r">
-                            <div class="room-slot bg-white border-2 border-blue-200 rounded-2xl p-3 pop-in">
-                                <p class="text-[9px] font-black text-blue-500 uppercase tracking-wider mb-2" x-text="roomSlotLabel(r)"></p>
-                                <div class="flex flex-col gap-1.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <template x-for="slot in [1,2]" :key="'a'+slot">
-                                            <div class="person-dot" :class="occupantSlot(r, slot) === 'adult' ? 'filled' : 'empty'">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                            </div>
-                                        </template>
-                                        <span class="text-[8px] text-blue-400 font-bold">Dewasa</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <template x-for="slot in [3,4]" :key="'c'+slot">
-                                            <div class="person-dot" :class="occupantSlot(r, slot) === 'child' ? 'child' : 'empty'">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                            </div>
-                                        </template>
-                                        <span class="text-[8px] text-amber-400 font-bold">Anak</span>
-                                    </div>
-                                    <p class="text-[8px] text-slate-400 font-semibold mt-1" x-text="roomLabel(r)"></p>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <div class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-blue-600"></div><span class="text-[9px] text-blue-600 font-bold">Dewasa</span></div>
-                        <div class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-amber-400"></div><span class="text-[9px] text-amber-600 font-bold">Anak</span></div>
-                        <div class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-slate-200 border-2 border-dashed border-slate-300"></div><span class="text-[9px] text-slate-400 font-bold">Kosong</span></div>
-                    </div>
-                </div>
-
-                {{-- ── DEWASA ── --}}
-                <div class="p-5 bg-gray-50 rounded-3xl border-2 transition-all"
-                     :class="step2Errors.adults ? 'border-red-300 bg-red-50/30' : 'border-gray-100'">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h4 class="font-black text-gray-800 uppercase tracking-tighter text-sm"
-                                x-text="currentFacility?.tipe==='kolam_renang' ? 'Total Peserta / Kapasitas Kolam' : 'Jumlah Pemain'"></h4>
-                            <p class="text-[10px] font-bold mt-0.5"
-                               :class="step2Errors.adults ? 'text-red-400' : 'text-gray-400'">
-                                <span x-show="currentFacility?.tipe==='lapangan'"
-                                      x-text="'Maks pemain: ' + maxAdultsAllowed + ' (dari ' + (rooms*2) + ' slot lapangan)'"></span>
-                                <span x-show="currentFacility?.tipe==='kolam_renang'"
-                                      x-text="'Maks. ' + (currentFacility?.max_dewasa||'–') + ' orang'"></span>
-                            </p>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <button @click="decAdults()"
-                                class="w-11 h-11 bg-white shadow-sm rounded-2xl flex items-center justify-center font-black text-xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all"
-                                :class="adults<=1?'opacity-40 cursor-not-allowed':''">−</button>
-                            <span class="text-2xl font-black w-8 text-center"
-                                  :class="step2Errors.adults?'text-red-600':'text-gray-800'"
-                                  x-text="adults"></span>
-                            <button @click="incAdults()"
-                                class="w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xl transition-all"
-                                :class="adults >= maxAdultsAllowed
-                                    ? 'bg-amber-100 text-amber-500 hover:bg-amber-200'
-                                    : 'bg-white shadow-sm text-blue-600 hover:bg-blue-600 hover:text-white'">
-                                <span x-show="adults < maxAdultsAllowed">+</span>
-                                <svg x-show="adults >= maxAdultsAllowed" class="w-5 h-5 text-amber-500"
-                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div x-show="showRoomHint && currentFacility?.tipe==='lapangan'" x-transition
-                         class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-2">
-                        <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <p class="text-[11px] text-blue-700 font-semibold">Slot penuh — tambah lapangan untuk menambah tamu.</p>
-                    </div>
-                    <div x-show="showRoomHint && currentFacility?.tipe==='kolam_renang'" x-transition
-                         class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-2">
-                        <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <p class="text-[11px] text-amber-700 font-semibold">Kapasitas kolam renang penuh. Maks. <span x-text="currentFacility?.max_dewasa"></span> peserta.</p>
-                    </div>
-                    <p x-show="step2Errors.adults" x-transition class="text-[10px] text-red-500 font-semibold mt-2 flex items-center gap-1">
-                        <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                        <span x-text="step2Errors.adultsMsg"></span>
-                    </p>
-                </div>
-
-                {{-- ── ANAK (lapangan only) ── --}}
-                <div x-show="currentFacility?.tipe === 'lapangan'"
-                     class="p-5 bg-gray-50 rounded-3xl border-2 transition-all"
-                     :class="step2Errors.childAges ? 'border-red-300 bg-red-50/30' : 'border-gray-100'">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h4 class="font-black text-gray-800 uppercase tracking-tighter text-sm">Jumlah Anak</h4>
-                            <p class="text-[10px] font-bold mt-0.5"
-                               :class="step2Errors.childAges ? 'text-red-400' : 'text-gray-400'"
-                               x-text="'Maks anak: ' + maxChildrenAllowed + ' (slot anak per lapangan)'"></p>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <button @click="decChildren()"
-                                class="w-11 h-11 bg-white shadow-sm rounded-2xl flex items-center justify-center font-black text-xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all"
-                                :class="children<=0?'opacity-40 cursor-not-allowed':''">−</button>
-                            <span class="text-2xl font-black text-gray-800 w-8 text-center" x-text="children"></span>
-                            <button @click="incChildren()"
-                                class="w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xl transition-all"
-                                :class="children >= maxChildrenAllowed
-                                    ? 'bg-amber-100 text-amber-500 hover:bg-amber-200'
-                                    : 'bg-white shadow-sm text-blue-600 hover:bg-blue-600 hover:text-white'">
-                                <span x-show="children < maxChildrenAllowed">+</span>
-                                <svg x-show="children >= maxChildrenAllowed" class="w-5 h-5 text-amber-500"
-                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div x-show="showChildHint" x-transition class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-2">
-                        <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <p class="text-[11px] text-amber-700 font-semibold">Slot penuh — tambah lapangan untuk menambah anak.</p>
-                    </div>
-                </div>
-
-                {{-- ── INPUT UMUR ANAK ── --}}
-                <div x-show="currentFacility?.tipe==='lapangan' && children > 0" x-transition
-                    class="p-5 bg-blue-50/30 rounded-3xl border border-blue-100">
-                    <h4 class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Umur Anak (Tahun)</h4>
-                    <p class="text-[10px] text-blue-400 font-medium mb-4">
-                        Anak &lt; 12 tahun = <span class="font-black text-emerald-600">Gratis</span> ·
-                        Anak ≥ 12 tahun = <span class="font-black text-amber-600">Tarif Dewasa</span>
-                    </p>
-                    <div class="grid grid-cols-3 gap-3">
-                        <template x-for="(age, idx) in childAges" :key="idx">
-                            <div class="text-center">
-                                <label class="text-[9px] text-blue-500 font-bold uppercase block mb-1">Anak <span x-text="idx+1"></span></label>
-                                <input type="number" x-model.number="childAges[idx]" min="0" max="17" placeholder="0"
-                                    class="w-full p-2.5 bg-white border-2 rounded-xl text-center font-bold text-sm outline-none focus:border-blue-400 transition-all"
-                                    :class="step2Submitted && (childAges[idx] === '' || childAges[idx] === null || childAges[idx] === undefined)
-                                        ? 'field-error'
-                                        : (childAges[idx] !== '' && childAges[idx] !== null && childAges[idx] !== undefined)
-                                            ? (parseInt(childAges[idx]) >= 12 ? 'border-amber-400 bg-amber-50/30' : 'border-emerald-400 bg-emerald-50/30')
-                                            : 'border-gray-200'">
-                                <div x-show="childAges[idx] !== '' && childAges[idx] !== null && childAges[idx] !== undefined" x-transition class="mt-1.5 text-center">
-                                    <template x-if="parseInt(childAges[idx]) >= 12">
-                                        <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-[8px] font-black px-2 py-0.5 rounded-full border border-amber-200">Tarif Dewasa</span>
-                                    </template>
-                                    <template x-if="childAges[idx] !== '' && childAges[idx] !== null && childAges[idx] !== undefined && parseInt(childAges[idx]) < 12">
-                                        <span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 text-[8px] font-black px-2 py-0.5 rounded-full border border-emerald-200">Gratis</span>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-                    <p x-show="step2Errors.childAges" x-transition class="text-[10px] text-red-500 font-semibold mt-2 flex items-center gap-1">
-                        <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                        Mohon isi umur semua anak
-                    </p>
-                </div>
-
                 {{-- ── RINGKASAN MINI ── --}}
                 <div class="mt-2 p-4 bg-slate-900 rounded-2xl">
-                    <div class="grid gap-3 text-center"
-                        :style="currentFacility?.tipe==='lapangan' ? 'grid-template-columns: repeat(3, 1fr)' : 'grid-template-columns: repeat(2, 1fr)'">
+                    <div class="grid gap-3 text-center grid-cols-2">
                         <div>
                             <p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Durasi</p>
                             <p class="text-white font-black text-sm"
-                               x-text="duration + ' ' + (packageType==='harian'?'Hari':packageType==='mingguan'?'Minggu':packageType==='bulanan'?'Bln':'Thn')"></p>
+                               x-text="duration + ' ' + (packageType==='harian' ? (isLapanganHarian ? 'Jam' : 'Hari') : packageType==='mingguan' ? 'Minggu' : packageType==='bulanan' ? 'Bln' : 'Thn')"></p>
                         </div>
                         <div x-show="currentFacility?.tipe==='lapangan'">
                             <p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Lapangan</p>
-                            <p class="font-black text-sm"
-                               :class="((adults + billableChildren) > rooms*2 || freeChildren > rooms*2) ? 'text-amber-400' : 'text-white'"
+                            <p class="font-black text-sm text-white"
                                x-text="rooms + ' Lapangan'"></p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Tamu Berbayar</p>
-                            <p class="font-black text-sm text-white" x-text="totalBillableGuests + ' Orang'"></p>
                         </div>
                     </div>
                 </div>
@@ -538,7 +412,7 @@
                             <p class="text-xs font-black" :class="hasConflictInRange ? 'text-red-700' : 'text-emerald-700'"
                                x-text="hasConflictInRange ? 'Ada hari dalam range yang tidak tersedia!' : 'Semua hari tersedia ✓'"></p>
                             <p class="text-[11px] font-semibold mt-0.5" :class="hasConflictInRange ? 'text-red-600' : 'text-emerald-600'"
-                               x-text="'Check-in: ' + formatDisplay(selectedDate) + '  →  Check-out: ' + formatDisplay(endDate)"></p>
+                                x-text="'Check-in: ' + formatDisplay(selectedDate) + (isLapanganHarian ? ' (' + formattedStartTime + ')' : '') + '  →  Check-out: ' + formatDisplay(endDate) + (isLapanganHarian ? ' (' + formattedEndTime + ':00)' : '')"></p>
                         </div>
                     </div>
                 </div>
@@ -850,19 +724,15 @@
                         <div class="bg-[#1e293b] rounded-xl p-3">
                             <p class="text-[9px] text-slate-500 uppercase tracking-wider mb-1">Check-In</p>
                             <p class="text-[13px] font-bold text-slate-100"
-                               x-text="selectedDate ? new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'short'}).format(selectedDate) : '-'"></p>
+                               x-text="selectedDate ? new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'short'}).format(selectedDate) + (isLapanganHarian ? ' (' + formattedStartTime + ')' : '') : '-'"></p>
                         </div>
                         <div class="bg-[#1e293b] rounded-xl p-3">
                             <p class="text-[9px] text-slate-500 uppercase tracking-wider mb-1">Durasi</p>
                             <p class="text-[13px] font-bold text-slate-100"
-                               x-text="duration + ' ' + (packageType==='harian'?'Hari':packageType==='mingguan'?'Minggu':packageType==='bulanan'?'Bln':'Thn')"></p>
+                               x-text="duration + ' ' + (packageType==='harian' ? (isLapanganHarian ? 'Jam' : 'Hari') : packageType==='mingguan' ? 'Minggu' : packageType==='bulanan' ? 'Bln' : 'Thn') + (isLapanganHarian ? ' (' + formattedStartTime + '-' + formattedEndTime + ':00)' : '')"></p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 bg-[#1e293b] rounded-xl px-3.5 py-2.5 mb-5">
-                        <svg class="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                        <span class="text-[11px] text-slate-400 font-medium"
-                            x-text="adults + ' Dewasa' + (children>0 ? ' + '+children+' Anak ('+totalOccupants+' total)' : '')"></span>
-                    </div>
+
                 </div>
                 <div class="bg-[#0a1628] px-6 py-4 flex items-center justify-between border-t border-slate-800">
                     <div>
@@ -978,10 +848,9 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('bookingForm', (config) => ({
         step: 1,
         packageType: '',
+        selectedDays: [1,2,3,4,5,6,7],
         duration: 1,
-        adults: 1,
-        children: 0,
-        childAges: [],
+        startHour: 8,
         rooms: 1,
         selectedDate: null,
         facilities: config.facilities || [],
@@ -994,8 +863,6 @@ document.addEventListener('alpine:init', () => {
         availableRooms: [],
         maxStock: 0,
         availabilityFetched: false,
-        showRoomHint:  false,
-        showChildHint: false,
 
         // ── Lightbox state (independent overlay) ──
         __lbOpen:   false,
@@ -1007,8 +874,6 @@ document.addEventListener('alpine:init', () => {
         step2Errors: {
             duration: false,
             rooms: false, roomsMsg: '',
-            adults: false, adultsMsg: '',
-            childAges: false,
         },
 
         // ── Step 3 (Data Diri) state ──
@@ -1044,11 +909,6 @@ document.addEventListener('alpine:init', () => {
 
         async init() {
             this.updateDaysInMonth();
-            this.$watch('children', val => {
-                const count = parseInt(val) || 0;
-                while (this.childAges.length < count) this.childAges.push('');
-                this.childAges = this.childAges.slice(0, count);
-            });
             this.$watch('currentMonth', () => { this.updateDaysInMonth(); this.fetchCalendarData(); });
             this.$watch('currentYear',  () => { this.updateDaysInMonth(); this.fetchCalendarData(); });
             this.$watch('selectedFacilityId', () => { this.fetchCalendarData(); });
@@ -1066,6 +926,10 @@ document.addEventListener('alpine:init', () => {
         },
 
         // Max durasi from the selected room type's parent facility field
+        get isLapanganHarian() {
+            return this.currentFacility?.tipe === 'lapangan' && this.packageType === 'harian';
+        },
+
         get selectedRoomMaxDurasi() {
             const f = this.currentFacility;
             if (!f) return 0;
@@ -1087,41 +951,23 @@ document.addEventListener('alpine:init', () => {
             return f.jumlah_kamar || 999;
         },
 
-        get totalOccupants() { return this.adults + this.children; },
-
-        get roomsNeeded() {
-            const adultSlots = this.adults + this.billableChildren;
-            const childSlots = this.freeChildren;
-            return Math.max(Math.ceil(adultSlots / 2), Math.ceil(childSlots / 2));
-        },
-
-        get maxAdultsAllowed() {
-            const f = this.currentFacility;
-            if (!f) return 999;
-            if (f.tipe === 'lapangan') return Math.max(0, (this.rooms * 2) - this.billableChildren);
-            return f.max_dewasa || 999;
-        },
-
-        get maxChildrenAllowed() {
-            const f = this.currentFacility;
-            if (!f || f.tipe !== 'lapangan') return 999;
-            return Math.min(f.max_anak || 999, this.rooms * 2);
-        },
-
-        get billableChildren() {
-            return this.childAges.filter(a => a !== '' && a !== null && a !== undefined && parseInt(a) >= 12).length;
-        },
-        get freeChildren() {
-            return this.childAges.filter(a => a !== '' && a !== null && a !== undefined && parseInt(a) < 12).length;
-        },
-        get totalBillableGuests() { return this.adults + this.billableChildren; },
-
         get totalDays() {
             const d = parseInt(this.duration) || 1;
-            if (this.packageType === 'mingguan') return d * 7;
-            if (this.packageType === 'bulanan')  return d * 30;
-            if (this.packageType === 'tahunan')  return d * 365;
+            const sc = this.selectedDays.length || 7;
+            if (this.packageType === 'mingguan') return sc * d;
+            if (this.packageType === 'bulanan')  return Math.round(30 * d * sc / 7);
+            if (this.packageType === 'tahunan')  return Math.round(365 * d * sc / 7);
             return d;
+        },
+
+        get formattedStartTime() {
+            return String(this.startHour).padStart(2, '0') + ':00';
+        },
+
+        get formattedEndTime() {
+            const totalMin = this.startHour * 60 + (parseInt(this.duration) || 1) * 60;
+            const h = Math.floor(totalMin / 60) % 24;
+            return String(h).padStart(2, '0');
         },
 
         get endDate() {
@@ -1135,6 +981,11 @@ document.addEventListener('alpine:init', () => {
             } else if (this.packageType === 'tahunan') {
                 end = new Date(start.getFullYear() + d, start.getMonth(), start.getDate());
                 end.setDate(end.getDate() - 1);
+            } else if (this.packageType === 'mingguan') {
+                end = new Date(start);
+                end.setDate(start.getDate() + (7 * d) - 1);
+            } else if (this.isLapanganHarian) {
+                end = new Date(start);
             } else {
                 end = new Date(start);
                 end.setDate(start.getDate() + this.totalDays - 1);
@@ -1147,10 +998,12 @@ document.addEventListener('alpine:init', () => {
             const f = this.currentFacility; if (!f) return '';
             const h  = parseFloat(f.harga        || 0);
             const hb = parseFloat(f.harga_bulanan || h * 30);
-            const hm = h * 7;
-            const ht = hb * 12;
+            const p  = f.paket_harian;
+            const pr = p && p[0] ? p[0] : {};
+            const hm = (pr.harga_mingguan && parseFloat(pr.harga_mingguan) > 0) ? parseFloat(pr.harga_mingguan) : h * 7;
+            const ht = (pr.harga_tahunan  && parseFloat(pr.harga_tahunan)  > 0) ? parseFloat(pr.harga_tahunan)  : hb * 12;
             const fmt = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(n);
-            if (this.packageType === 'harian')   return 'Tarif: ' + fmt(h)  + ' / hari';
+            if (this.packageType === 'harian')   return 'Tarif: ' + fmt(h)  + (this.isLapanganHarian ? ' / jam' : ' / hari');
             if (this.packageType === 'mingguan') return 'Tarif: ' + fmt(hm) + ' / minggu';
             if (this.packageType === 'bulanan')  return 'Tarif: ' + fmt(hb) + ' / bulan';
             if (this.packageType === 'tahunan')  return 'Tarif: ' + fmt(ht) + ' / tahun';
@@ -1161,14 +1014,17 @@ document.addEventListener('alpine:init', () => {
             const f = this.currentFacility; if (!f) return 0;
             const h  = parseFloat(f.harga        || 0);
             const hb = parseFloat(f.harga_bulanan || h * 30);
-            const hm = h * 7;
-            const ht = hb * 12;
+            const p  = f.paket_harian;
+            const pr = p && p[0] ? p[0] : {};
+            const hm = (pr.harga_mingguan && parseFloat(pr.harga_mingguan) > 0) ? parseFloat(pr.harga_mingguan) : h * 7;
+            const ht = (pr.harga_tahunan  && parseFloat(pr.harga_tahunan)  > 0) ? parseFloat(pr.harga_tahunan)  : hb * 12;
             const d = parseInt(this.duration) || 0;
+            const sc = this.selectedDays.length || 7;
             const mult = f.tipe === 'lapangan' ? this.rooms : 1;
             if (this.packageType === 'harian')   return d * h  * mult;
-            if (this.packageType === 'mingguan') return d * hm * mult;
-            if (this.packageType === 'bulanan')  return d * hb * mult;
-            if (this.packageType === 'tahunan')  return d * ht * mult;
+            if (this.packageType === 'mingguan') return d * hm * (sc / 7) * mult;
+            if (this.packageType === 'bulanan')  return d * hb * (sc / 7) * mult;
+            if (this.packageType === 'tahunan')  return d * ht * (sc / 7) * mult;
             return 0;
         },
 
@@ -1178,34 +1034,14 @@ document.addEventListener('alpine:init', () => {
             const end   = new Date(this.endDate);      end.setHours(0,0,0,0);
             let cursor = new Date(start);
             while (cursor <= end) {
-                if (this.getDateStatus(new Date(cursor)) !== 'ready') return true;
+                const jsDay = cursor.getDay();
+                const sd = jsDay === 0 ? 7 : jsDay;
+                if (this.selectedDays.includes(sd)) {
+                    if (this.getDateStatus(new Date(cursor)) !== 'ready') return true;
+                }
                 cursor.setDate(cursor.getDate() + 1);
             }
             return false;
-        },
-
-        // ── Visual helpers ────────────────────────────────────────────
-        occupantSlot(roomNumber, slot) {
-            if (slot <= 2) {
-                const adultIdx = (roomNumber - 1) * 2 + (slot - 1);
-                return adultIdx < this.adults ? 'adult' : 'empty';
-            }
-            const childIdx = (roomNumber - 1) * 2 + (slot - 3);
-            return childIdx < this.children ? 'child' : 'empty';
-        },
-
-        roomLabel(roomNumber) {
-            const adultStart = (roomNumber - 1) * 2;
-            let a = 0;
-            for (let i = adultStart; i < adultStart + 2; i++) { if (i < this.adults) a++; }
-            const childStart = (roomNumber - 1) * 2;
-            let c = 0;
-            for (let i = childStart; i < childStart + 2; i++) { if (i < this.children) c++; }
-            if (a === 0 && c === 0) return 'Kosong';
-            const parts = [];
-            if (a > 0) parts.push(a + ' Dewasa');
-            if (c > 0) parts.push(c + ' Anak');
-            return parts.join(' · ');
         },
 
         roomSlotLabel(r) {
@@ -1233,34 +1069,9 @@ document.addEventListener('alpine:init', () => {
                 this.step2Errors.duration = true; ok = false;
             } else { this.step2Errors.duration = false; }
 
-            // 2. Adults
-            if (!this.adults || parseInt(this.adults) < 1) {
-                this.step2Errors.adults = true; this.step2Errors.adultsMsg = 'Jumlah tamu minimal 1 orang'; ok = false;
-            } else if (f?.tipe === 'kolam_renang' && this.adults > (f.max_dewasa || 999)) {
-                this.step2Errors.adults = true; this.step2Errors.adultsMsg = 'Melebihi kapasitas kolam renang (' + f.max_dewasa + ' orang)'; ok = false;
-            } else if (f?.tipe === 'lapangan' && this.adults > this.maxAdultsAllowed) {
-                this.step2Errors.adults = true; this.step2Errors.adultsMsg = 'Melebihi kapasitas lapangan (maks ' + this.maxAdultsAllowed + ' pemain)'; ok = false;
-            } else { this.step2Errors.adults = false; this.step2Errors.adultsMsg = ''; }
-
-            // 3. ChildAges
-            if (this.children > 0) {
-                const anyEmpty = this.childAges.some(a => a === '' || a === null || a === undefined);
-                this.step2Errors.childAges = anyEmpty;
-                if (anyEmpty) ok = false;
-            } else { this.step2Errors.childAges = false; }
-
-            // 4. Field capacity (lapangan)
-            if (f?.tipe === 'lapangan' && !this.step2Errors.adults && !this.step2Errors.childAges) {
-                const totalAdultSlot = this.adults + this.billableChildren;
-                if (totalAdultSlot > this.rooms * 2 || this.freeChildren > this.rooms * 2) {
-                    this.step2Errors.rooms = true;
-                    const butuh = Math.max(Math.ceil(totalAdultSlot / 2), Math.ceil(this.freeChildren / 2));
-                    this.step2Errors.roomsMsg = 'Lapangan kurang! Butuh min. ' + butuh + ' lapangan. Tambah ' + (butuh - this.rooms) + ' lagi.';
-                    ok = false;
-                } else { this.step2Errors.rooms = false; this.step2Errors.roomsMsg = ''; }
-            }
-
-            // 5. Date selection (calendar merged here)
+            // 2. Date selection
+            if (!this.selectedDate) { ok = false; }
+            if (this.selectedDate && this.hasConflictInRange) { ok = false; }
             if (!this.selectedDate) { ok = false; }
             if (this.selectedDate && this.hasConflictInRange) { ok = false; }
 
@@ -1274,80 +1085,50 @@ document.addEventListener('alpine:init', () => {
         incDuration() {
             const max = this.selectedRoomMaxDurasi;
             if (max > 0 && this.duration >= max) {
-                Swal.fire('Peringatan', 'Maksimal durasi untuk paket ini adalah ' + max + ' ' + (this.packageType === 'harian' ? 'hari' : this.packageType === 'mingguan' ? 'minggu' : this.packageType === 'bulanan' ? 'bulan' : 'tahun') + '.', 'warning');
+                Swal.fire('Peringatan', 'Maksimal durasi untuk paket ini adalah ' + max + ' ' + (this.packageType === 'harian' ? (this.isLapanganHarian ? 'jam' : 'hari') : this.packageType === 'mingguan' ? 'minggu' : this.packageType === 'bulanan' ? 'bulan' : 'tahun') + '.', 'warning');
+                return;
+            }
+            if (this.packageType === 'harian' && !this.isLapanganHarian && this.duration < 7 && (this.duration + 1) >= 7) {
+                Swal.fire({
+                    title: 'Ganti ke Paket Mingguan?',
+                    text: 'Untuk durasi ' + (this.duration + 1) + ' hari atau lebih, kami sarankan menggunakan paket mingguan yang lebih hemat. Apakah Anda ingin beralih?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, ganti ke mingguan',
+                    cancelButtonText: 'Tidak, tetap harian'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.packageType = 'mingguan';
+                        this.duration = Math.ceil((this.duration + 1) / 7);
+                    } else {
+                        this.duration++;
+                    }
+                });
                 return;
             }
             this.duration++;
         },
         decDuration() { if (this.duration > 1) this.duration--; },
+        toggleDay(day) {
+            if (this.selectedDays.includes(day)) {
+                this.selectedDays = this.selectedDays.filter(d => d !== day);
+            } else {
+                this.selectedDays = [...this.selectedDays, day].sort();
+            }
+        },
 
         incRooms() {
             if (this.rooms >= this.maxRoomsFromFacility) {
                 Swal.fire('Kapasitas Penuh', 'Tidak dapat menambah lapangan lagi (maks ' + this.maxRoomsFromFacility + ' lapangan).', 'warning');
                 return;
             }
-            if (this.maxStock > 0 && this.rooms >= this.maxStock) {
-                Swal.fire('Stok Habis', 'Hanya ' + this.maxStock + ' lapangan tersedia untuk tanggal tersebut.', 'warning');
-                return;
-            }
             this.rooms++;
-            const totalAdultSlot = this.adults + this.billableChildren;
-            if (totalAdultSlot <= this.rooms * 2 && this.freeChildren <= this.rooms * 2) {
-                this.step2Errors.rooms = false; this.step2Errors.roomsMsg = '';
-            }
+            this.step2Errors.rooms = false; this.step2Errors.roomsMsg = '';
         },
 
         decRooms() {
-            if (this.rooms <= 1) return;
-            const newRooms = this.rooms - 1;
-            const newCap   = newRooms * 2;
-            const adultsAfter   = Math.min(this.adults, newCap);
-            const childrenAfter = Math.min(this.children, newCap);
-            const adultsRemoved   = this.adults   - adultsAfter;
-            const childrenRemoved = this.children - childrenAfter;
-
-            if (adultsRemoved > 0 || childrenRemoved > 0) {
-                const parts = [];
-                if (adultsRemoved   > 0) parts.push('<strong>' + adultsRemoved   + ' dewasa</strong>');
-                if (childrenRemoved > 0) parts.push('<strong>' + childrenRemoved + ' anak</strong>');
-                Swal.fire({
-                    title: 'Kurangi Lapangan?',
-                    html: 'Menghapus lapangan akan otomatis mengurangi ' + parts.join(' dan ') + '.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8',
-                    confirmButtonText: 'Ya, Kurangi', cancelButtonText: 'Batal',
-                    reverseButtons: true,
-                    customClass: { popup: 'rounded-[2rem] p-8' }
-                }).then(result => {
-                    if (result.isConfirmed) {
-                        this.rooms    = newRooms;
-                        this.adults   = adultsAfter;
-                        this.children = childrenAfter;
-                        this.childAges = this.childAges.slice(0, childrenAfter);
-                        this.step2Errors.rooms = false; this.step2Errors.roomsMsg = '';
-                    }
-                });
-                return;
-            }
-            this.rooms--;
+            if (this.rooms > 1) this.rooms--;
         },
-
-        incAdults() {
-            if (this.adults >= this.maxAdultsAllowed) {
-                this.showRoomHint = true; setTimeout(() => { this.showRoomHint = false; }, 4000); return;
-            }
-            this.adults++;
-        },
-        decAdults() { if (this.adults > 1) this.adults--; },
-        incChildren() {
-            if (this.children >= this.maxChildrenAllowed) {
-                this.showChildHint = true; setTimeout(() => { this.showChildHint = false; }, 4000); return;
-            }
-            this.children++;
-        },
-        decChildren() { if (this.children > 0) this.children--; },
-
         // ── Calendar ──────────────────────────────────────────────────
         updateDaysInMonth() {
             const lastDay  = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
@@ -1432,6 +1213,11 @@ document.addEventListener('alpine:init', () => {
             const today = new Date(); today.setHours(0,0,0,0);
             const d = new Date(date); d.setHours(0,0,0,0);
             if (d < today) return 'past';
+            if (this.packageType !== 'harian' && this.selectedDays.length < 7) {
+                const jsDay = d.getDay(); // 0=Minggu,1=Senin..6=Sabtu
+                const sd = jsDay === 0 ? 7 : jsDay;
+                if (!this.selectedDays.includes(sd)) return 'closed';
+            }
             for (const ev of this.calendarEvents) {
                 const s = new Date(ev.tgl_mulai); s.setHours(0,0,0,0);
                 const e = new Date(ev.tgl_selesai); e.setHours(0,0,0,0);
@@ -1731,19 +1517,15 @@ document.addEventListener('alpine:init', () => {
             fd.append('foto_identitas', this.step4FotoFile);
             fd.append('fasilitas_id', this.selectedFacilityId);
             fd.append('package_type', this.packageType);
+            fd.append('selected_days', this.selectedDays.join(','));
             fd.append('duration', this.duration);
-            fd.append('adults', this.adults);
-            fd.append('billable_children', this.billableChildren);
-            fd.append('free_children', this.freeChildren);
-            fd.append('total_billable_guests', this.totalBillableGuests);
-            fd.append('children_count', this.children);
+            fd.append('start_hour', this.isLapanganHarian ? this.startHour : '');
             fd.append('rooms_count', this.rooms);
             fd.append('max_per_room', 2);
             if (this.availableRooms && this.availableRooms.length > 0) {
                 const allocated = this.availableRooms.slice(0, this.rooms);
                 allocated.forEach(n => fd.append('allocated_rooms[]', n));
             }
-            this.childAges.forEach(a => fd.append('child_age[]', a));
             fd.append('tgl_mulai', this.formatDateLocal(this.selectedDate));
             fd.append('tgl_selesai', this.formatDateLocal(this.endDate));
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';

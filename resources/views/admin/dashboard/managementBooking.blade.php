@@ -116,7 +116,7 @@
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-24">ID</th>
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-52">Pemesan</th>
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-56">Fasilitas &amp; Paket</th>
-                            <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-56">Tamu &amp; Kamar</th>
+                            <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-56">Lapangan</th>
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-36">Tagihan</th>
                             <th class="p-5 text-center text-[10px] uppercase tracking-wider text-slate-400 font-black w-20">KTP</th>
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black">Aksi</th>
@@ -128,11 +128,6 @@
                             $details  = $booking->selected_packages ?? [];
                             $duration = $details['duration']            ?? 1;
                             $rooms    = $details['rooms_count']         ?? 1;
-                            $adults   = $details['adults']              ?? 1;
-                            $children = $details['children_count']      ?? 0;
-                            $billable = $details['billable_children']   ?? 0;
-                            $free     = $details['free_children']       ?? 0;
-                            $totalBillable = $details['total_billable_guests'] ?? $adults;
 
                             $durUnit = match($booking->package_type) {
                                 'mingguan' => 'Minggu',
@@ -211,62 +206,30 @@
                                     &rarr;
                                     {{ \Carbon\Carbon::parse($booking->tgl_selesai)->format('d M Y') }}
                                 </p>
+                                @if($booking->selected_days && $booking->package_type !== 'harian')
+                                @php
+                                    $dayMap = [1=>'Senin',2=>'Selasa',3=>'Rabu',4=>'Kamis',5=>'Jumat',6=>'Sabtu',7=>'Minggu'];
+                                    $days = array_map(fn($d) => $dayMap[(int)$d] ?? '', explode(',', $booking->selected_days));
+                                @endphp
+                                <p class="text-[10px] text-blue-600 font-semibold mt-1">
+                                    Hari: {{ implode(', ', $days) }}
+                                </p>
+                                @endif
                             </td>
 
-                            {{-- TAMU & KAMAR: step 2 breakdown --}}
+                            {{-- JUMLAH LAPANGAN --}}
                             <td class="p-5">
                                 @if($tipe === 'lapangan')
-                                {{-- Jumlah kamar --}}
-                                <div class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full mb-2">
+                                <div class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                             d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                                     </svg>
-                                    {{ $rooms }} Kamar &middot; maks {{ $rooms * 2 }} slot dewasa
+                                    {{ $rooms }} Lapangan
                                 </div>
+                                @else
+                                <span class="text-[11px] text-slate-400 font-semibold">-</span>
                                 @endif
-
-                                {{-- Dewasa --}}
-                                <div class="flex flex-wrap gap-1.5">
-                                    <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                        </svg>
-                                        {{ $adults }} Dewasa
-                                    </span>
-
-                                    {{-- Anak ≥12 (berbayar tarif dewasa) --}}
-                                    @if($billable > 0)
-                                    <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                          title="Anak ≥12 tahun — ditagih tarif dewasa, menempati slot dewasa">
-                                        {{ $billable }} Anak ≥12 (tarif dewasa)
-                                    </span>
-                                    @endif
-
-                                    {{-- Anak <12 (gratis) --}}
-                                    @if($free > 0)
-                                    <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                          title="Anak <12 tahun — gratis">
-                                        {{ $free }} Anak &lt;12 (gratis)
-                                    </span>
-                                    @endif
-                                </div>
-
-                                {{-- Total tamu berbayar --}}
-                                <p class="text-[10px] text-slate-500 font-semibold mt-2">
-                                    @if($tipe === 'kolam_renang')
-                                        Total peserta: <strong class="text-slate-700">{{ $adults }}</strong>
-                                        @if($booking->fasilitas?->max_dewasa)
-                                        / maks {{ $booking->fasilitas->max_dewasa }}
-                                        @endif
-                                    @else
-                                        Tamu berbayar: <strong class="text-slate-700">{{ $totalBillable }}</strong>
-                                        @if($free > 0)
-                                        &nbsp;+&nbsp;<span class="text-emerald-600 font-bold">{{ $free }} gratis</span>
-                                        @endif
-                                    @endif
-                                </p>
                             </td>
 
                             {{-- TAGIHAN --}}
@@ -279,7 +242,7 @@
                                     @if($tipe === 'lapangan')
                                         {{ $rooms }} lapangan &times; {{ $duration }} {{ $durUnit }}
                                     @else
-                                        {{ $duration }} {{ $durUnit }} &times; tarif kolam renang
+                                        {{ $duration }} {{ $durUnit }} &times; tarif renang
                                     @endif
                                 </p>
                                 <p class="text-[10px] text-slate-400">Sudah termasuk pajak</p>
@@ -377,11 +340,6 @@
                             $details  = $booking->selected_packages ?? [];
                             $duration = $details['duration']            ?? 1;
                             $rooms    = $details['rooms_count']         ?? 1;
-                            $adults   = $details['adults']              ?? 1;
-                            $children = $details['children_count']      ?? 0;
-                            $billable = $details['billable_children']   ?? 0;
-                            $free     = $details['free_children']       ?? 0;
-                            $totalBillable = $details['total_billable_guests'] ?? $adults;
 
                             $durUnit = match($booking->package_type) {
                                 'mingguan' => 'Minggu',
@@ -450,30 +408,19 @@
                                     &rarr;
                                     {{ \Carbon\Carbon::parse($booking->tgl_selesai)->format('d M Y') }}
                                 </p>
+                                @if($booking->selected_days && $booking->package_type !== 'harian')
+                                @php $days = array_map(fn($d) => [1=>'Senin',2=>'Selasa',3=>'Rabu',4=>'Kamis',5=>'Jumat',6=>'Sabtu',7=>'Minggu'][(int)$d] ?? '', explode(',', $booking->selected_days)); @endphp
+                                <p class="text-[10px] text-blue-600 font-semibold mt-1">Hari: {{ implode(', ', $days) }}</p>
+                                @endif
                             </td>
 
-                            {{-- TAMU & TAGIHAN --}}
+                            {{-- LAPANGAN & TAGIHAN --}}
                             <td class="p-5">
                                 @if($tipe === 'lapangan')
                                 <div class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full mb-2">
-                                    {{ $rooms }} Kamar
+                                    {{ $rooms }} Lapangan
                                 </div>
                                 @endif
-                                <div class="flex flex-wrap gap-1.5">
-                                    <span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                        {{ $adults }} Dewasa
-                                    </span>
-                                    @if($billable > 0)
-                                    <span class="bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                        {{ $billable }} Anak ≥12
-                                    </span>
-                                    @endif
-                                    @if($free > 0)
-                                    <span class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                        {{ $free }} Anak &lt;12 gratis
-                                    </span>
-                                    @endif
-                                </div>
                                 <p class="text-sm font-black text-[#1265A8] mt-2">
                                     Rp {{ number_format($booking->total_harga, 0, ',', '.') }}
                                 </p>
@@ -481,7 +428,7 @@
                                     @if($tipe === 'lapangan')
                                         {{ $rooms }} lapangan × {{ $duration }} {{ $durUnit }}
                                     @else
-                                        {{ $duration }} {{ $durUnit }} × tarif kolam renang
+                                        {{ $duration }} {{ $durUnit }} × tarif renang
                                     @endif
                                 </p>
                             </td>
@@ -604,11 +551,6 @@
                             $details  = $booking->selected_packages ?? [];
                             $duration = $details['duration']            ?? 1;
                             $rooms    = $details['rooms_count']         ?? 1;
-                            $adults   = $details['adults']              ?? 1;
-                            $children = $details['children_count']      ?? 0;
-                            $billable = $details['billable_children']   ?? 0;
-                            $free     = $details['free_children']       ?? 0;
-                            $totalBillable = $details['total_billable_guests'] ?? $adults;
 
                             $durUnit = match($booking->package_type) {
                                 'mingguan' => 'Minggu',
@@ -628,7 +570,7 @@
                                 </span>
                             </td>
 
-                            {{-- TAMU & FASILITAS --}}
+                            {{-- PEMESAN & FASILITAS --}}
                             <td class="p-5">
                                 <p class="text-sm font-black text-slate-800">
                                     {{ $booking->penyewa?->nama ?? 'Data Hilang' }}
@@ -646,9 +588,13 @@
                                     &rarr;
                                     {{ \Carbon\Carbon::parse($booking->tgl_selesai)->format('d M Y') }}
                                 </p>
+                                @if($booking->selected_days && $booking->package_type !== 'harian')
+                                @php $days = array_map(fn($d) => [1=>'Senin',2=>'Selasa',3=>'Rabu',4=>'Kamis',5=>'Jumat',6=>'Sabtu',7=>'Minggu'][(int)$d] ?? '', explode(',', $booking->selected_days)); @endphp
+                                <p class="text-[10px] text-blue-600 font-semibold mt-1">Hari: {{ implode(', ', $days) }}</p>
+                                @endif
                             </td>
 
-                            {{-- DETAIL PAKET & TAMU --}}
+                            {{-- DETAIL PAKET --}}
                             <td class="p-5">
                                 <div class="flex items-center gap-2 flex-wrap mb-2">
                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase
@@ -667,32 +613,11 @@
                                     </span>
                                 </div>
                                 @if($tipe === 'lapangan')
-                                <div class="flex flex-wrap gap-1.5 mb-1.5">
-                                    <span class="bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                        {{ $rooms }} Kamar
-                                    </span>
-                                    <span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                        {{ $adults }} Dewasa
-                                    </span>
-                                    @if($billable > 0)
-                                    <span class="bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                        {{ $billable }} Anak ≥12
-                                    </span>
-                                    @endif
-                                    @if($free > 0)
-                                    <span class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                        {{ $free }} Anak &lt;12
-                                    </span>
-                                    @endif
-                                </div>
-                                @else
-                                <div class="mb-1.5">
-                                    <span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                        {{ $adults }} Peserta
-                                    </span>
-                                </div>
+                                <span class="bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                    {{ $rooms }} Lapangan
+                                </span>
                                 @endif
-                                <p class="text-sm font-black text-slate-700">
+                                <p class="text-sm font-black text-slate-700 mt-2">
                                     Rp {{ number_format($booking->total_harga, 0, ',', '.') }}
                                 </p>
                             </td>
@@ -916,48 +841,22 @@
                         </div>
                     </div>
 
-                    {{-- SECTION: Konfigurasi Tamu & Kamar (step 2) --}}
+                    {{-- SECTION: Jumlah Lapangan --}}
                     <h4 class="text-xs font-black uppercase text-slate-400 tracking-wider mb-4 border-b border-slate-100 pb-2">
-                        Konfigurasi Tamu &amp; Kamar
+                        Detail Pesanan
                     </h4>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
                             x-show="detailPayload.fasilitas_tipe === 'lapangan'">
-                            <span class="block text-[10px] uppercase text-purple-500 font-bold mb-1">Kamar</span>
+                            <span class="block text-[10px] uppercase text-purple-500 font-bold mb-1">Lapangan</span>
                             <span class="font-black text-purple-700 text-xl"
                                 x-text="detailPayload.details?.rooms || '1'"></span>
-                            <span class="block text-[9px] text-purple-400 mt-1"
-                                x-text="'maks ' + ((detailPayload.details?.rooms || 1) * 2) + ' slot dewasa'"></span>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
-                            <span class="block text-[10px] uppercase text-blue-500 font-bold mb-1">Dewasa</span>
-                            <span class="font-black text-blue-700 text-xl"
-                                x-text="detailPayload.details?.adults || '1'"></span>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.fasilitas_tipe === 'lapangan'">
-                            <span class="block text-[10px] uppercase text-amber-500 font-bold mb-1">Anak ≥12</span>
-                            <span class="font-black text-amber-600 text-xl"
-                                x-text="detailPayload.details?.billable_children || '0'"></span>
-                            <span class="block text-[9px] text-amber-400 mt-1">Tarif dewasa</span>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center"
-                            x-show="detailPayload.fasilitas_tipe === 'lapangan'">
-                            <span class="block text-[10px] uppercase text-emerald-500 font-bold mb-1">Anak &lt;12</span>
-                            <span class="font-black text-emerald-600 text-xl"
-                                x-text="detailPayload.details?.free_children || '0'"></span>
-                            <span class="block text-[9px] text-emerald-400 mt-1">Gratis</span>
                         </div>
                     </div>
 
-                    {{-- Total berbayar --}}
+                    {{-- Total Tagihan --}}
                     <div class="bg-amber-50 p-5 rounded-2xl border border-amber-200 flex flex-wrap justify-between items-center gap-3 mt-4">
                         <div>
-                            <span class="block text-[10px] uppercase text-amber-600 font-bold mb-1">Total Tamu Berbayar</span>
-                            <span class="text-base font-black text-amber-700"
-                                x-text="(detailPayload.details?.total_billable_guests || detailPayload.details?.adults || 1) + ' orang'"></span>
-                        </div>
-                        <div class="text-right">
                             <span class="block text-[10px] uppercase text-amber-600 font-bold mb-1">Total Tagihan Final</span>
                             <span class="text-2xl font-black text-amber-700" x-text="detailPayload.total"></span>
                         </div>
@@ -993,6 +892,20 @@
                                     <div x-show="!room.fasilitas || Object.keys(room.fasilitas).filter(k => room.fasilitas[k] > 0).length === 0" class="text-xs text-slate-400 italic">
                                         Tidak ada fasilitas khusus untuk kamar ini
                                     </div>
+
+                                    {{-- Room photos — only if more than 1 room type --}}
+                                    <template x-if="detailPayload.rooms_data.length > 1 && room.foto && room.foto.filter(f => f).length">
+                                        <div class="mt-3 pt-3 border-t border-slate-200">
+                                            <span class="block text-[9px] uppercase text-slate-400 font-bold mb-2">Foto Tipe Kamar</span>
+                                            <div class="flex flex-wrap gap-2">
+                                                <template x-for="(f, fi) in room.foto.filter(f => f)" :key="fi">
+                                                    <img :src="'/storage/fasilitas/rooms/' + f"
+                                                         class="w-20 h-16 object-cover rounded-lg border border-slate-200 hover:scale-105 transition-transform cursor-pointer shadow-sm"
+                                                         @click="window.open('/storage/fasilitas/rooms/' + f, '_blank')">
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
                             </template>
                         </div>
