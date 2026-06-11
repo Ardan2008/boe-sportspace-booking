@@ -1753,8 +1753,16 @@
 
             syncAllSame() {
                 if (!this.allSame || this.jumlahLapangan <= 1) return;
+                const src = this.rooms[0];
                 for (let i = 1; i < this.rooms.length; i++) {
-                    this.rooms[i] = { ...this.rooms[0], fotoPreviews: [...this.rooms[0].fotoPreviews] };
+                    this.rooms[i] = {
+                        ...src,
+                        tipe: [...(src.tipe || [])],
+                        foto: [...(src.foto || [])],
+                        nomor_kamar: [...(src.nomor_kamar || [])],
+                        fotoPreviews: [...(src.fotoPreviews || [null, null, null])],
+                        fasilitas: { ...(src.fasilitas || {}) },
+                    };
                 }
             },
 
@@ -1791,13 +1799,18 @@
 
             addTipeTag(room, event) {
                 const val = event.target.value.trim();
-                if (val && !room.tipe.includes(val)) {
+                if (!val) return;
+                if (!Array.isArray(room.tipe)) room.tipe = [];
+                if (!room.tipe.includes(val)) {
                     room.tipe.push(val);
+                    this.syncPaketHarian();
                 }
                 event.target.value = '';
             },
             removeTipeTag(room, idx) {
+                if (!Array.isArray(room.tipe)) return;
                 room.tipe.splice(idx, 1);
+                this.syncPaketHarian();
             },
 
             handleRoomFoto(event, roomIndex, fotoIndex) {
