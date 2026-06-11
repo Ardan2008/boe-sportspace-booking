@@ -114,6 +114,12 @@
                     <p class="text-white font-black text-base truncate" x-text="currentFacility?.nama"></p>
                     <div class="flex items-center gap-2 mt-1">
                         <span class="text-[10px] font-bold text-blue-300 uppercase" x-text="currentFacility?.tipe?.toUpperCase()"></span>
+                        <template x-if="selectedTipeName">
+                            <span class="text-blue-600">·</span>
+                        </template>
+                        <template x-if="selectedTipeName">
+                            <span class="text-[10px] font-bold text-emerald-300 uppercase" x-text="selectedTipeName"></span>
+                        </template>
                     </div>
                 </div>
                 <span class="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-3 py-1.5 rounded-full uppercase border border-emerald-500/30 flex-shrink-0">Tersedia</span>
@@ -853,6 +859,9 @@ document.addEventListener('alpine:init', () => {
         selectedDate: null,
         facilities: config.facilities || [],
         selectedFacilityId: config.selectedFacilityId || '',
+        selectedTipeIdx: new URLSearchParams(window.location.search).has('tipe_id')
+            ? parseInt(new URLSearchParams(window.location.search).get('tipe_id'))
+            : null,
         currentMonth: new Date().getMonth(),
         currentYear:  new Date().getFullYear(),
         daysInMonth:  [],
@@ -941,6 +950,17 @@ document.addEventListener('alpine:init', () => {
         // ── Getters ──────────────────────────────────────────────────
         get currentFacility() {
             return this.facilities.find(f => f.id == this.selectedFacilityId) || null;
+        },
+
+        get selectedTipeName() {
+            if (this.selectedTipeIdx === null) return null;
+            const f = this.currentFacility;
+            if (!f || !Array.isArray(f.paket_harian)) return null;
+            const room = f.paket_harian[this.selectedTipeIdx];
+            if (!room) return null;
+            const t = room.tipe;
+            if (Array.isArray(t)) return t.length ? t.join(', ') : null;
+            return t || null;
         },
 
         get maxRoomsFromFacility() {
