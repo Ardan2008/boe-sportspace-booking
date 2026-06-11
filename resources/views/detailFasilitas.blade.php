@@ -140,12 +140,18 @@
                         @endif
                         {{-- Gallery --}}
                         @if($fasilitas->gallery && count($fasilitas->gallery))
+                        @php
+                            $galleryUrls = collect($fasilitas->gallery)
+                                ->map(fn($g) => asset('storage/fasilitas/gallery/' . $g))
+                                ->values()->toArray();
+                            $galleryJson = json_encode($galleryUrls);
+                        @endphp
                         <p class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-3">Gallery</p>
                         <div class="grid grid-cols-3 gap-2">
-                            @foreach($fasilitas->gallery as $gimg)
+                            @foreach($fasilitas->gallery as $gIdx => $gimg)
                             <img src="{{ asset('storage/fasilitas/gallery/' . $gimg) }}"
                                  alt="Gallery"
-                                 @click="openLightbox(['{{ asset('storage/fasilitas/gallery/' . $gimg) }}'], 0)"
+                                 @click="openLightbox({{ $galleryJson }}, {{ $gIdx }})"
                                  class="w-full h-24 object-cover rounded-xl border border-slate-100 hover:scale-105 transition-transform cursor-pointer shadow-sm">
                             @endforeach
                         </div>
@@ -465,7 +471,7 @@
              class="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
             <div class="relative max-w-3xl w-full">
                 {{-- Track --}}
-                <div class="overflow-hidden rounded-[2rem] bg-gray-900 shadow-2xl relative">
+                <div class="overflow-hidden rounded-4xl bg-gray-900 shadow-2xl relative">
                     <button @click="lbOpen = false"
                         class="absolute top-3 right-3 z-10 p-2 bg-black/50 rounded-full text-white hover:bg-red-600 hover:text-white transition-all shadow-lg">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -473,10 +479,11 @@
                         </svg>
                     </button>
                     <div class="flex transition-all duration-500 ease-in-out"
-                         :style="'transform: translateX(-' + (lbIdx * 100) + '%)'">
+                         :style="'width:' + ((lbPhotos||[]).length * 100) + '%; transform: translateX(-' + (lbIdx * (100 / ((lbPhotos||[]).length || 1))) + '%)'">
                         <template x-for="(src, si) in (lbPhotos || [])" :key="si">
-                            <div style="min-width:100%; flex-shrink:0">
-                                <img :src="src" class="w-full max-h-[75vh] object-contain mx-auto select-none">
+                            <div style="flex: 0 0 auto"
+                                 :style="'width:' + (100 / ((lbPhotos||[]).length || 1)) + '%'">
+                                <img :src="src" class="w-full max-h-[75vh] object-contain block mx-auto select-none">
                             </div>
                         </template>
                     </div>

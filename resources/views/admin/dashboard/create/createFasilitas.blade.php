@@ -1568,19 +1568,30 @@
             if (window.__alpineRoot && window.__alpineRoot.syncPaketHarian) {
                 window.__alpineRoot.syncPaketHarian();
             }
-            const form      = $('mainForm');
-            const formData  = new FormData(form);
-            const overlay   = $('loadingOverlay');
+
+            const form     = $('mainForm');
+            const overlay  = $('loadingOverlay');
             const btnSimpan = $('btnSimpan');
-            const btnText   = $('btnText');
-            const btnIcon   = $('btnIcon');
-            const spinner   = $('spinner');
+            const btnText  = $('btnText');
+            const btnIcon  = $('btnIcon');
+            const spinner  = $('spinner');
 
             overlay.classList.remove('hidden');
             btnSimpan.disabled = true;
             spinner.classList.remove('hidden');
             btnText.textContent = 'Menyimpan...';
             btnIcon.classList.add('hidden');
+
+            const formData = new FormData(form);
+
+            const pending = (window.__alpineRoot && window.__alpineRoot._pendingFotos) ? window.__alpineRoot._pendingFotos : {};
+            Object.keys(pending).forEach(function(rIdx) {
+                Object.keys(pending[rIdx]).forEach(function(fIdx) {
+                    var file = pending[rIdx][fIdx];
+                    var key  = 'room_fotos[' + rIdx + '][' + fIdx + ']';
+                    formData.set(key, file, file.name);
+                });
+            });
 
             fetch('/admin/fasilitas/store', {
                 method: 'POST',
@@ -1831,12 +1842,21 @@
                     return;
                 }
 
+                if (!this._pendingFotos) this._pendingFotos = {};
+                if (!this._pendingFotos[roomIndex]) this._pendingFotos[roomIndex] = {};
+                this._pendingFotos[roomIndex][fotoIndex] = file;
+
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    if (!this.rooms[roomIndex].fotoPreviews) {
-                        this.rooms[roomIndex].fotoPreviews = [null, null, null];
-                    }
-                    this.rooms[roomIndex].fotoPreviews[fotoIndex] = e.target.result;
+                    const room = this.rooms[roomIndex];
+                    if (!room) return;
+                    const previews = Array.isArray(room.fotoPreviews)
+                        ? [...room.fotoPreviews]
+                        : [null, null, null];
+                    while (previews.length < 3) previews.push(null);
+                    previews[fotoIndex] = e.target.result;
+                    this.rooms[roomIndex] = { ...this.rooms[roomIndex], fotoPreviews: previews };
+                    this.syncPaketHarian();
                 };
                 reader.readAsDataURL(file);
             },

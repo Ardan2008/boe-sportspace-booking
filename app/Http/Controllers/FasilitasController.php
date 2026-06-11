@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Fasilitas; 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Models\AuditLog;
 
@@ -152,6 +153,7 @@ class FasilitasController extends Controller
             }
 
             $newFiles = $request->file('room_fotos.' . $roomIdx) ?? [];
+            $newFiles = is_array($newFiles) ? $newFiles : [$newFiles];
 
             for ($fotoIdx = 0; $fotoIdx < 3; $fotoIdx++) {
                 $file = $newFiles[$fotoIdx] ?? null;
@@ -216,12 +218,15 @@ class FasilitasController extends Controller
 
         $fasilitas->update($data);
 
-        // Audit Log
         AuditLog::catat(
             'Update Fasilitas',
             "Mengubah data fasilitas: {$fasilitas->nama}",
             ['target_tipe' => 'fasilitas', 'target_id' => $fasilitas->id, 'fasilitas_nama' => $fasilitas->nama]
         );
+
+        if (request()->expectsJson() || request()->header('Accept') === 'application/json') {
+            return response()->json(['success' => true, 'message' => 'Data berhasil diperbarui!']);
+        }
 
         return redirect()->route('fasilitas.index')->with('success', 'Data berhasil diperbarui!');
     }
@@ -348,11 +353,13 @@ class FasilitasController extends Controller
 
             // Handle Room Photos — merge uploaded files into each room's foto array
             if ($request->hasFile('room_fotos')) {
-                foreach ($request->file('room_fotos') as $roomIdx => $fotoFiles) {
+                $roomFotosRaw = $request->file('room_fotos');
+                foreach ($roomFotosRaw as $roomIdx => $fotoFiles) {
                     if (!isset($paket_harian[$roomIdx])) continue;
                     $fotos = $paket_harian[$roomIdx]['foto'] ?? [];
                     $fotos = is_array($fotos) ? $fotos : [];
-                    foreach ($fotoFiles as $fotoIdx => $file) {
+                    $fotoFilesArr = is_array($fotoFiles) ? $fotoFiles : [$fotoFiles];
+                    foreach ($fotoFilesArr as $fotoIdx => $file) {
                         if ($file && $file->isValid()) {
                             $name = time() . '_room_' . $roomIdx . '_' . $fotoIdx . '.' . $file->getClientOriginalExtension();
                             $file->storeAs('fasilitas/rooms', $name, 'public');
@@ -451,7 +458,7 @@ class FasilitasController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Fasilitas Store Error: ' . $e->getMessage());
+            Log::error('Fasilitas Store Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()

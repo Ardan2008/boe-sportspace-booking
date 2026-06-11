@@ -114,8 +114,6 @@
                     <p class="text-white font-black text-base truncate" x-text="currentFacility?.nama"></p>
                     <div class="flex items-center gap-2 mt-1">
                         <span class="text-[10px] font-bold text-blue-300 uppercase" x-text="currentFacility?.tipe?.toUpperCase()"></span>
-                        <span class="text-blue-600">·</span>
-                        <span class="text-[10px] text-slate-400">Kapasitas: <span class="text-blue-300 font-bold" x-text="currentFacility?.max_dewasa || '–'"></span> orang</span>
                     </div>
                 </div>
                 <span class="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-3 py-1.5 rounded-full uppercase border border-emerald-500/30 flex-shrink-0">Tersedia</span>

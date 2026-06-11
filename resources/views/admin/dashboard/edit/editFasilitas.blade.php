@@ -983,12 +983,21 @@
                         return;
                     }
 
+                    if (!this._pendingFotos) this._pendingFotos = {};
+                    if (!this._pendingFotos[roomIndex]) this._pendingFotos[roomIndex] = {};
+                    this._pendingFotos[roomIndex][fotoIndex] = file;
+
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        if (!this.rooms[roomIndex].fotoPreviews) {
-                            this.rooms[roomIndex].fotoPreviews = [null, null, null];
-                        }
-                        this.rooms[roomIndex].fotoPreviews[fotoIndex] = e.target.result;
+                        const room = this.rooms[roomIndex];
+                        if (!room) return;
+                        const previews = Array.isArray(room.fotoPreviews)
+                            ? [...room.fotoPreviews]
+                            : [null, null, null];
+                        while (previews.length < 3) previews.push(null);
+                        previews[fotoIndex] = e.target.result;
+                        this.rooms[roomIndex] = { ...this.rooms[roomIndex], fotoPreviews: previews };
+                        this.syncPaketHarian();
                     };
                     reader.readAsDataURL(file);
                 },
@@ -1285,8 +1294,43 @@
                         if (window.__alpineRoot && window.__alpineRoot.syncPaketHarian) {
                             window.__alpineRoot.syncPaketHarian();
                         }
-                        document.getElementById('loadingOverlay').classList.remove('hidden');
-                        form.submit();
+
+                        const overlay = document.getElementById('loadingOverlay');
+                        overlay.classList.remove('hidden');
+
+                        const formData = new FormData(form);
+
+                        const pending = window.__alpineRoot?._pendingFotos || {};
+                        Object.entries(pending).forEach(([rIdx, slots]) => {
+                            Object.entries(slots).forEach(([fIdx, file]) => {
+                                formData.set('room_fotos[' + rIdx + '][' + fIdx + ']', file, file.name);
+                            });
+                        });
+
+                        fetch(form.action, {
+                            method: 'POST',
+                            body: formData,
+                        })
+                        .then(async res => {
+                            const ct = res.headers.get('content-type') || '';
+                            if (ct.includes('application/json')) {
+                                const data = await res.json();
+                                overlay.classList.add('hidden');
+                                if (res.ok) {
+                                    Swal.fire({ title: 'Berhasil!', text: 'Data berhasil diperbarui.', icon: 'success', confirmButtonColor: '#1265A8', customClass: { popup: 'rounded-[2.5rem] p-8' } })
+                                        .then(() => { window.location.href = '/admin/dashboard/dataFasilitas'; });
+                                } else {
+                                    Swal.fire({ title: 'Gagal', text: data.message || 'Terjadi kesalahan.', icon: 'error', confirmButtonColor: '#1265A8', customClass: { popup: 'rounded-[2.5rem] p-8' } });
+                                }
+                            } else {
+                                overlay.classList.add('hidden');
+                                window.location.href = '/admin/dashboard/dataFasilitas';
+                            }
+                        })
+                        .catch(err => {
+                            overlay.classList.add('hidden');
+                            Swal.fire({ title: 'Gagal', text: err.message || 'Terjadi kesalahan sistem.', icon: 'error', confirmButtonColor: '#1265A8', customClass: { popup: 'rounded-[2.5rem] p-8' } });
+                        });
                     }
                 });
             });
