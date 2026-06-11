@@ -496,6 +496,7 @@
                   class="p-8 lg:p-12 pt-6 space-y-8" novalidate>
                 @csrf
                 <input type="hidden" name="tipe" :value="tipe">
+                <input type="hidden" name="all_same" id="allSameInput" :value="allSame ? '1' : '0'">
                 <input type="hidden" name="paket_harian" id="paketHarianInput" value="">
                 <input type="hidden" name="rooms_data" id="roomsDataInput" value="">
 
@@ -685,15 +686,15 @@
                             </div>
                         </template>
                         <template x-for="(room, rIdx) in allSame && jumlahLapangan > 1 ? [rooms[0]] : rooms" :key="rIdx">
-                            <div class="room-card space-y-5" @change="syncAllSame()">
+                            <div class="room-card space-y-5" @change="syncPaketHarian()" @input="syncPaketHarian()">
                                 {{-- Room header --}}
                                 <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
                                     <span class="text-[10px] font-black uppercase tracking-widest text-slate-400" x-text="tipe === 'lapangan' ? 'Lapangan' : 'Kolam'"></span>
                                     <span class="text-xs font-black text-[#1d6fa5]">1</span>
                                 </div>
 
-                                {{-- Tipe — hanya muncul jika ada lebih dari 1 --}}
-                                <div x-show="jumlahLapangan > 1">
+                                {{-- Tipe — hanya muncul jika lebih dari 1 dan spesifikasi beda --}}
+                                <div x-show="jumlahLapangan > 1 && !allSame">
                                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2" x-text="tipe === 'lapangan' ? 'Tipe Lapangan' : 'Tipe Kolam'"></label>
                                     <div class="flex flex-col gap-2">
                                         <div class="flex flex-wrap gap-1.5" x-show="rooms[rIdx].tipe.length">
@@ -872,15 +873,15 @@
 
                         {{-- Room cards --}}
                         <template x-for="(room, rIdx) in rooms" :key="rIdx">
-                            <div x-show="currentRoomIndex === rIdx" class="room-card space-y-5">
+                            <div x-show="currentRoomIndex === rIdx" class="room-card space-y-5" @change="syncPaketHarian()" @input="syncPaketHarian()">
                                 {{-- Room header --}}
                                 <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
                                     <span class="text-[10px] font-black uppercase tracking-widest text-slate-400" x-text="tipe === 'lapangan' ? 'Lapangan' : 'Kolam'"></span>
                                     <span class="text-xs font-black text-[#1d6fa5]" x-text="rIdx + 1"></span>
                                 </div>
 
-                                {{-- Tipe --}}
-                                <div x-show="jumlahLapangan > 1">
+                                {{-- Tipe — hanya muncul jika lebih dari 1 dan spesifikasi beda --}}
+                                <div x-show="jumlahLapangan > 1 && !allSame">
                                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2" x-text="tipe === 'lapangan' ? 'Tipe Lapangan' : 'Tipe Kolam'"></label>
                                     <div class="flex flex-col gap-2">
                                         <div class="flex flex-wrap gap-1.5" x-show="rooms[rIdx].tipe.length">
@@ -1523,7 +1524,7 @@
                         !r.harga_tahunan || Number(r.harga_tahunan) <= 0
                     );
                     if (missingPrice) errors.push('Harga Sewa');
-                    if (alpine.jumlahLapangan > 1) {
+                    if (alpine.jumlahLapangan > 1 && !alpine.allSame) {
                         const missingTipe = alpine.rooms.some(r => {
                             if (Array.isArray(r.tipe)) return r.tipe.length === 0 || r.tipe.every(t => !t.trim());
                             return !r.tipe || r.tipe.trim() === '';
@@ -1564,6 +1565,9 @@
         });
 
         function eksekusiSimpanData() {
+            if (window.__alpineRoot && window.__alpineRoot.syncPaketHarian) {
+                window.__alpineRoot.syncPaketHarian();
+            }
             const form      = $('mainForm');
             const formData  = new FormData(form);
             const overlay   = $('loadingOverlay');
@@ -1694,8 +1698,6 @@
                     fasilitas: fas, fasilitasKeys: [...fasKeys],
                 };
             },
-            currentRoomIndex: 0,
-            allSame: true,
 
             init() {
                 window.__alpineRoot = this;
@@ -1719,6 +1721,7 @@
 
                 this.$watch('allSame', (val) => {
                     if (val && this.jumlahLapangan > 1) this.syncAllSame();
+                    this.syncPaketHarian();
                 });
 
                 document.addEventListener('kamar-changed', (e) => {
@@ -1753,7 +1756,6 @@
                 for (let i = 1; i < this.rooms.length; i++) {
                     this.rooms[i] = { ...this.rooms[0], fotoPreviews: [...this.rooms[0].fotoPreviews] };
                 }
-                this.syncPaketHarian();
             },
 
             syncPaketHarian() {
@@ -1762,14 +1764,17 @@
                 }
                 const payload = this.rooms.map(r => {
                     const { fotoPreviews, fasilitasKeys, newFasilitasLabel, ...rest } = r;
+                    rest.harga_harian   = rest.harga_harian   !== '' && rest.harga_harian   != null ? Number(rest.harga_harian)   : 0;
+                    rest.harga_mingguan = rest.harga_mingguan !== '' && rest.harga_mingguan != null ? Number(rest.harga_mingguan) : 0;
+                    rest.harga_bulanan  = rest.harga_bulanan  !== '' && rest.harga_bulanan  != null ? Number(rest.harga_bulanan)  : 0;
+                    rest.harga_tahunan  = rest.harga_tahunan  !== '' && rest.harga_tahunan  != null ? Number(rest.harga_tahunan)  : 0;
+                    if (!Array.isArray(rest.tipe)) rest.tipe = rest.tipe ? [rest.tipe] : [];
                     return rest;
                 });
                 const el = document.getElementById('paketHarianInput');
                 if (el) el.value = JSON.stringify(payload);
                 const rd = document.getElementById('roomsDataInput');
                 if (rd) rd.value = JSON.stringify(payload);
-
-
             },
 
             prevRoom() {

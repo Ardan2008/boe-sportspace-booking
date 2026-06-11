@@ -287,6 +287,7 @@
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="tipe" :value="tipe">
+                <input type="hidden" name="all_same" id="allSameInput" :value="allSame ? '1' : '0'">
                 <input type="hidden" name="paket_harian" id="paketHarianInput" value="">
                 <input type="hidden" name="rooms_data" id="roomsDataInput" value="">
 
@@ -517,9 +518,9 @@
                                         x-transition:enter-start="opacity-0 translate-x-8"
                                         x-transition:enter-end="opacity-100 translate-x-0"
                                         :data-room-index="ri"
-                                         class="bg-white rounded-2xl border border-slate-200/80 p-5" @change="syncAllSame()">
+                                         class="bg-white rounded-2xl border border-slate-200/80 p-5" @change="syncPaketHarian()" @input="syncPaketHarian()">
 
-                                        <div x-show="jumlahLapangan > 1">
+                                        <div x-show="jumlahLapangan > 1 && !allSame">
                                             <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5" x-text="tipe === 'lapangan' ? 'Tipe Lapangan' : 'Tipe Kolam'"></label>
                                             <div class="flex flex-col gap-2">
                                                 <div class="flex flex-wrap gap-1.5" x-show="rooms[ri].tipe.length">
@@ -692,7 +693,7 @@
                 jumlahLapangan: {{ $fasilitas->jumlah_kamar ?? 1 }},
                 rooms: @json($rooms),
                 currentRoomIndex: 0,
-                allSame: false,
+                allSame: {{ $fasilitas->jumlah_kamar <= 1 ? 'true' : ($fasilitas->all_same ? 'true' : 'false') }},
                 customRoomType: '',
                 showCustomRoomInput: false,
 
@@ -777,6 +778,7 @@
 
                     this.$watch('allSame', (val) => {
                         if (val && this.jumlahLapangan > 1) this.syncAllSame();
+                        this.syncPaketHarian();
                     });
 
                     if (this.rooms.length > 0) {
@@ -808,11 +810,10 @@
                     const fas = {};
                     fasKeys.forEach(f => { fas[f.key] = 0; });
                     return {
-                        tipe: '',
+                        tipe: [],
                         jumlah: 1,
                         nomor_kamar: [],
                         kode_blok: '',
-
                         foto: [],
                         fotoPreviews: [null, null, null],
                         harga_harian: index === 0 ? '{{ $fasilitas->harga }}' : '',
@@ -833,7 +834,6 @@
                     for (let i = 1; i < this.rooms.length; i++) {
                         this.rooms[i] = { ...this.rooms[0], fotoPreviews: [...this.rooms[0].fotoPreviews] };
                     }
-                    this.syncPaketHarian();
                 },
 
                 generateDefaultRooms() {
@@ -1233,7 +1233,7 @@
                     );
                 }
                 let tipeOk = true;
-                if (alpine && alpine.rooms && alpine.jumlahLapangan > 1) {
+                if (alpine && alpine.rooms && alpine.jumlahLapangan > 1 && !alpine.allSame) {
                     tipeOk = !alpine.rooms.some(r => {
                         if (Array.isArray(r.tipe)) return r.tipe.length === 0 || r.tipe.every(t => !t.trim());
                         return !r.tipe || r.tipe.trim() === '';
@@ -1269,6 +1269,9 @@
                     customClass: { popup: 'rounded-[2.5rem] p-8' }
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        if (window.__alpineRoot && window.__alpineRoot.syncPaketHarian) {
+                            window.__alpineRoot.syncPaketHarian();
+                        }
                         document.getElementById('loadingOverlay').classList.remove('hidden');
                         form.submit();
                     }

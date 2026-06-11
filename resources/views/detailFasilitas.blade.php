@@ -167,49 +167,158 @@
             </div>
 
             @php
+                $allSame   = (bool) ($fasilitas->all_same ?? false);
                 $roomCount = count($fasilitas->paket_harian);
-                $allSame = true;
-                if ($roomCount > 1) {
-                    $firstRoom = $fasilitas->paket_harian[0] ?? null;
-                    if ($firstRoom) {
-                        $firstSpecs = [
-                            'tipe' => $firstRoom['tipe'] ?? [],
-                            'panjang' => $firstRoom['panjang'] ?? '',
-                            'lebar' => $firstRoom['lebar'] ?? '',
-                        ];
-                        foreach ($fasilitas->paket_harian as $r) {
-                            $rSpecs = [
-                                'tipe' => $r['tipe'] ?? [],
-                                'panjang' => $r['panjang'] ?? '',
-                                'lebar' => $r['lebar'] ?? '',
-                            ];
-                            if ($firstSpecs !== $rSpecs) {
-                                $allSame = false;
-                                break;
-                            }
+                $rt0       = $fasilitas->paket_harian[0] ?? [];
+
+                // 1 lapangan → selalu satu kartu
+                if ($roomCount <= 1) {
+                    $allSame = true;
+                }
+                // DB masih 0 (data lama) tapi semua rooms kontennya identik → perlakukan sama
+                elseif (!$allSame && $roomCount > 1) {
+                    $first    = $fasilitas->paket_harian[0];
+                    $detected = true;
+                    foreach (array_slice($fasilitas->paket_harian, 1) as $r) {
+                        $tiFirst = is_array($first['tipe'] ?? null) ? $first['tipe'] : (array) ($first['tipe'] ?? '');
+                        $tiR     = is_array($r['tipe'] ?? null)     ? $r['tipe']     : (array) ($r['tipe']     ?? '');
+                        sort($tiFirst); sort($tiR);
+                        if ($tiFirst !== $tiR
+                            || (string)($r['panjang']        ?? '') !== (string)($first['panjang']        ?? '')
+                            || (string)($r['lebar']          ?? '') !== (string)($first['lebar']          ?? '')
+                            || (float) ($r['harga_harian']   ?? 0)  !== (float) ($first['harga_harian']   ?? 0)
+                            || (float) ($r['harga_mingguan'] ?? 0)  !== (float) ($first['harga_mingguan'] ?? 0)
+                            || (float) ($r['harga_bulanan']  ?? 0)  !== (float) ($first['harga_bulanan']  ?? 0)
+                            || (float) ($r['harga_tahunan']  ?? 0)  !== (float) ($first['harga_tahunan']  ?? 0)) {
+                            $detected = false;
+                            break;
                         }
                     }
+                    if ($detected) $allSame = true;
                 }
             @endphp
 
+            {{-- ═══════════════════════════════════════════════════
+                 CASE A — allSame = true
+                 Satu lapangan ATAU semua lapangan identik →
+                 tampilkan SATU kartu. Badge jumlah hanya muncul
+                 kalau lapangan > 1.
+            ═══════════════════════════════════════════════════ --}}
+            @if($allSame)
+            @php
+                $fas     = $rt0['fasilitas'] ?? [];
+                $fasKeys = array_keys($fas);
+                $fasMap  = array_map(fn($k) => [$k, str_replace('_', ' ', ucwords($k, '_'))], $fasKeys);
+                $bookUrl = route('formBooking', ['id' => $fasilitas->id]);
+                $tiers   = [
+                    'harian'   => ['label' => 'Hari',   'val' => $rt0['harga_harian']   ?? null],
+                    'mingguan' => ['label' => 'Minggu', 'val' => $rt0['harga_mingguan'] ?? null],
+                    'bulanan'  => ['label' => 'Bulan',  'val' => $rt0['harga_bulanan']  ?? null],
+                    'tahunan'  => ['label' => 'Tahun',  'val' => $rt0['harga_tahunan']  ?? null],
+                ];
+                $tipeName = is_array($rt0['tipe'] ?? null) && count($rt0['tipe'])
+                    ? implode(', ', $rt0['tipe'])
+                    : (is_string($rt0['tipe'] ?? null) && ($rt0['tipe'] ?? '') !== '' ? $rt0['tipe'] : $fasilitas->nama);
+            @endphp
+            <div class="border-2 border-slate-100 hover:border-blue-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all">
+                <div class="p-5 flex flex-col gap-4">
+
+                    {{-- Header: nama tipe + badge ketersediaan (hanya jika > 1 lapangan) --}}
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <p class="font-black text-slate-900 text-sm">{{ $tipeName }}</p>
+                        @if($roomCount > 1)
+                        <span class="inline-flex items-center gap-1 text-[9px] font-black text-[#1d6fa5] bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-full uppercase tracking-widest">
+                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                            {{ $roomCount }} lapangan tersedia
+                        </span>
+                        @endif
+                        @if(!empty($rt0['kode_blok']))
+                        <span class="text-[9px] font-bold text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded-full">Blok {{ $rt0['kode_blok'] }}</span>
+                        @endif
+                    </div>
+
+                    {{-- Pricing --}}
+                    <div class="flex flex-wrap items-center gap-3">
+                        @foreach($tiers as $tier)
+                            @if(!empty($tier['val']) && $tier['val'] > 0)
+                            <span class="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                                <span class="text-sm font-black text-slate-800">Rp {{ number_format($tier['val'],0,',','.') }}</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase">/{{ $tier['label'] }}</span>
+                            </span>
+                            @endif
+                        @endforeach
+                    </div>
+
+                    {{-- Ukuran --}}
+                    @if(!empty($rt0['panjang']) && !empty($rt0['lebar']))
+                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 w-fit">
+                        <span class="text-[9px] font-black text-slate-400 uppercase">Ukuran</span>
+                        <span class="text-xs font-black text-slate-700">{{ $rt0['panjang'] }}×{{ $rt0['lebar'] }} m²</span>
+                    </div>
+                    @endif
+
+                    {{-- Fasilitas chips --}}
+                    @php
+                        $hasAnyFas = false;
+                        foreach ($fasMap as [$fk, $fl]) { if (!empty($fas[$fk]) && $fas[$fk] > 0) { $hasAnyFas = true; break; } }
+                    @endphp
+                    @if($hasAnyFas)
+                    <div class="flex flex-wrap gap-1">
+                        @foreach($fasMap as [$fk, $fl])
+                            @if(!empty($fas[$fk]) && $fas[$fk] > 0)
+                            <span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                                {{ $fl }} × {{ $fas[$fk] }}
+                            </span>
+                            @endif
+                        @endforeach
+                    </div>
+                    @endif
+
+                    {{-- Booking CTA --}}
+                    <div class="mt-auto pt-3 border-t border-slate-100">
+                        <a href="{{ $bookUrl }}"
+                           class="inline-flex items-center gap-2 bg-[#1d6fa5] hover:bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-xl transition-all shadow-sm hover:shadow-md">
+                            Booking Sekarang
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            @else
+            {{-- ═══════════════════════════════════════════════════
+                 CASE B — allSame = false
+                 Setiap lapangan punya spesifikasi berbeda →
+                 tampilkan satu kartu per lapangan dengan foto,
+                 tipe, dan harga masing-masing.
+            ═══════════════════════════════════════════════════ --}}
             <div class="space-y-4">
             @foreach($fasilitas->paket_harian as $rtIdx => $rt)
             @php
                 $photos = [];
-                $raw = $rt['foto'] ?? [];
-                $first = collect($raw)->first(fn($p) => $p);
+                $raw    = $rt['foto'] ?? [];
+                $first  = collect($raw)->first(fn($p) => $p);
                 for ($i = 0; $i < 3; $i++) {
                     $src = (!empty($raw[$i]) && trim($raw[$i])) ? $raw[$i] : $first;
                     if ($src) $photos[] = asset('storage/fasilitas/rooms/' . $src);
                 }
                 $photosJson = json_encode($photos);
-                $fas = $rt['fasilitas'] ?? [];
-                $fasKeys = array_keys($fas);
-                $fasMap = array_map(fn($k) => [$k, str_replace('_', ' ', ucwords($k, '_'))], $fasKeys);
-                $bookUrl = route('formBooking', ['id' => $fasilitas->id, 'tipe_id' => $rtIdx]);
+                $fas        = $rt['fasilitas'] ?? [];
+                $fasKeys    = array_keys($fas);
+                $fasMap     = array_map(fn($k) => [$k, str_replace('_', ' ', ucwords($k, '_'))], $fasKeys);
+                $bookUrl    = route('formBooking', ['id' => $fasilitas->id, 'tipe_id' => $rtIdx]);
+                $tiers = [
+                    'harian'   => ['label' => 'Hari',   'val' => $rt['harga_harian']   ?? null],
+                    'mingguan' => ['label' => 'Minggu', 'val' => $rt['harga_mingguan'] ?? null],
+                    'bulanan'  => ['label' => 'Bulan',  'val' => $rt['harga_bulanan']  ?? null],
+                    'tahunan'  => ['label' => 'Tahun',  'val' => $rt['harga_tahunan']  ?? null],
+                ];
             @endphp
 
-            {{-- ── Single room-type card (Alpine x-data for static photo + hover lightbox) ── --}}
             <div class="border-2 border-slate-100 hover:border-blue-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all"
                  x-data="{
                      hovered: false,
@@ -222,29 +331,23 @@
                  @open-detail-lb.window="openLightbox($event.detail.photos, $event.detail.idx)">
                 <div class="flex flex-col sm:flex-row">
 
-                    @if($roomCount > 1 && !$allSame)
-                    {{-- ── Static photo thumbnail with hover blur + eye icon ── --}}
-                    <div class="relative w-full sm:w-48 aspect-[4/3] flex-shrink-0 overflow-hidden bg-gray-100 rounded-t-2xl sm:rounded-none sm:rounded-l-2xl cursor-pointer"
+                    {{-- Foto thumbnail — hanya jika ada foto --}}
+                    @if(count($photos) > 0)
+                    <div class="relative w-full sm:w-48 aspect-[4/3] shrink-0 overflow-hidden bg-gray-100 rounded-t-2xl sm:rounded-none sm:rounded-l-2xl cursor-pointer"
                          @mouseenter="hovered = true"
                          @mouseleave="hovered = false"
                          @click.stop="triggerLightbox($event)">
-
-                        @if(count($photos) > 0)
-                        {{-- Static first-photo thumbnail --}}
                         <img src="{{ $photos[0] }}"
                              alt="Foto Lapangan"
                              :class="hovered ? 'blur-sm brightness-75 scale-105' : ''"
                              class="w-full h-full object-cover transition-all duration-300">
-
-                        {{-- Photo count badge (shows how many photos available) --}}
                         @if(count($photos) > 1)
                         <div class="absolute top-2 right-2 bg-black/50 text-white text-[9px] font-black px-2 py-0.5 rounded-full z-10 pointer-events-none">
                             {{ count($photos) }} foto
                         </div>
                         @endif
-
-                        {{-- Hover eye icon --}}
-                        <div x-show="hovered" x-transition:enter="transition ease-out duration-150"
+                        <div x-show="hovered"
+                             x-transition:enter="transition ease-out duration-150"
                              x-transition:enter-start="opacity-0 scale-75"
                              x-transition:enter-end="opacity-100 scale-100"
                              class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
@@ -255,21 +358,16 @@
                                 </svg>
                             </div>
                         </div>
-                        @else
-                        <div class="w-full h-full flex items-center justify-center">
-                            <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
-                        @endif
-                    </div>{{-- /static photo thumbnail --}}
+                    </div>
                     @endif
 
-                    {{-- ── Info panel ── --}}
+                    {{-- Info panel --}}
                     <div class="flex-1 p-5 flex flex-col gap-4">
-                        {{-- Name + blok --}}
+                        {{-- Nama tipe + blok --}}
                         <div class="flex items-center gap-2 flex-wrap">
-                            <p class="font-black text-slate-900 text-sm">{{ is_array($rt['tipe'] ?? null) ? implode(', ', $rt['tipe']) : ($rt['tipe'] ?? ('Tipe ' . ($rtIdx + 1))) }}</p>
+                            <p class="font-black text-slate-900 text-sm">
+                                {{ is_array($rt['tipe'] ?? null) ? implode(', ', $rt['tipe']) : ($rt['tipe'] ?? ('Lapangan ' . ($rtIdx + 1))) }}
+                            </p>
                             @if(!empty($rt['kode_blok']))
                             <span class="text-[9px] font-bold text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded-full">Blok {{ $rt['kode_blok'] }}</span>
                             @endif
@@ -277,15 +375,7 @@
 
                         {{-- Pricing --}}
                         <div class="flex flex-wrap items-center gap-3">
-                            @php
-                                $tiers = [
-                                    'harian'   => ['label' => 'Hari',   'val' => $rt['harga_harian'] ?? null],
-                                    'mingguan' => ['label' => 'Minggu', 'val' => $rt['harga_mingguan'] ?? null],
-                                    'bulanan'  => ['label' => 'Bulan',  'val' => $rt['harga_bulanan'] ?? null],
-                                    'tahunan'  => ['label' => 'Tahun',  'val' => $rt['harga_tahunan'] ?? null],
-                                ];
-                            @endphp
-                            @foreach($tiers as $key => $tier)
+                            @foreach($tiers as $tier)
                                 @if(!empty($tier['val']) && $tier['val'] > 0)
                                 <span class="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
                                     <span class="text-sm font-black text-slate-800">Rp {{ number_format($tier['val'],0,',','.') }}</span>
@@ -306,14 +396,14 @@
                         {{-- Fasilitas chips --}}
                         @php
                             $hasAnyFas = false;
-                            foreach ($fasMap as [$key, $label]) { if (!empty($fas[$key]) && $fas[$key] > 0) { $hasAnyFas = true; break; } }
+                            foreach ($fasMap as [$fk, $fl]) { if (!empty($fas[$fk]) && $fas[$fk] > 0) { $hasAnyFas = true; break; } }
                         @endphp
                         @if($hasAnyFas)
                         <div class="flex flex-wrap gap-1">
-                            @foreach($fasMap as [$key, $label])
-                                @if(!empty($fas[$key]) && $fas[$key] > 0)
+                            @foreach($fasMap as [$fk, $fl])
+                                @if(!empty($fas[$fk]) && $fas[$fk] > 0)
                                 <span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
-                                    {{ $label }} × {{ $fas[$key] }}
+                                    {{ $fl }} × {{ $fas[$fk] }}
                                 </span>
                                 @endif
                             @endforeach
@@ -330,11 +420,13 @@
                                 </svg>
                             </a>
                         </div>
-                    </div>{{-- /info panel --}}
+                    </div>
                 </div>
-            </div>{{-- /room card --}}
+            </div>
             @endforeach
             </div>
+            @endif
+
         </div>
         @endif
 

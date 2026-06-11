@@ -25,6 +25,7 @@ class Fasilitas extends Model
         'max_durasi_bulan',
         'max_durasi_tahun',
         'jumlah_kamar',
+        'all_same',
         'jam_operasional',
         'image',
         'gallery',
@@ -34,8 +35,9 @@ class Fasilitas extends Model
 
     protected $casts = [
         'paket_harian' => 'array',
-        'gallery' => 'array',
-        'labels' => 'array',
+        'gallery'      => 'array',
+        'labels'       => 'array',
+        'all_same'     => 'boolean',
     ];
 
     public function bookings()
