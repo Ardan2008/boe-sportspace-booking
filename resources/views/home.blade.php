@@ -511,14 +511,14 @@
             document.getElementById('modalMaxAnak').innerText   = max_anak   || '-';
 }
 
-        // kamar logic
-        const kamarEl = document.getElementById('modal-jumlah-kamar');
-        if (kamarEl) {
+        // lapangan logic
+        const lapanganEl = document.getElementById('modal-jumlah-lapangan');
+        if (lapanganEl) {
             if (tipe === 'lapangan' && jumlahLapangan > 0) {
-                kamarEl.textContent = jumlahLapangan + ' Lapangan Tersedia';
-                kamarEl.closest('[data-kamar-wrap]').classList.remove('hidden');
+                lapanganEl.textContent = jumlahLapangan + ' Lapangan Tersedia';
+                lapanganEl.closest('[data-lapangan-wrap]').classList.remove('hidden');
             } else {
-                kamarEl.closest('[data-kamar-wrap]').classList.add('hidden');
+                lapanganEl.closest('[data-lapangan-wrap]').classList.add('hidden');
             }
         }
         
@@ -931,18 +931,9 @@
                         <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
 
                             {{-- Jumlah Lapangan — hanya muncul jika lapangan --}}
-                            <div data-kamar-wrap class="hidden flex items-center justify-between">
+                            <div data-lapangan-wrap class="hidden flex items-center justify-between">
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Jumlah Lapangan</span>
-                                <span id="modal-jumlah-kamar" class="text-xs font-black text-[#1d6fa5]"></span>
-                            </div>
-
-                            <div class="flex items-center justify-between">
-                                <span id="labelCapDewasa" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Cap. Dewasa</span>
-                                <span id="modalMaxDewasa" class="text-xs font-black text-slate-800"></span>
-                            </div>
-                            <div id="rowCapAnak" class="flex items-center justify-between">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Cap. Anak</span>
-                                <span id="modalMaxAnak" class="text-xs font-black text-slate-800"></span>
+                                <span id="modal-jumlah-lapangan" class="text-xs font-black text-[#1d6fa5]"></span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Jam Ops.</span>

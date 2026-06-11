@@ -166,6 +166,32 @@
                 <div class="h-px flex-1 bg-slate-200"></div>
             </div>
 
+            @php
+                $roomCount = count($fasilitas->paket_harian);
+                $allSame = true;
+                if ($roomCount > 1) {
+                    $firstRoom = $fasilitas->paket_harian[0] ?? null;
+                    if ($firstRoom) {
+                        $firstSpecs = [
+                            'tipe' => $firstRoom['tipe'] ?? [],
+                            'panjang' => $firstRoom['panjang'] ?? '',
+                            'lebar' => $firstRoom['lebar'] ?? '',
+                        ];
+                        foreach ($fasilitas->paket_harian as $r) {
+                            $rSpecs = [
+                                'tipe' => $r['tipe'] ?? [],
+                                'panjang' => $r['panjang'] ?? '',
+                                'lebar' => $r['lebar'] ?? '',
+                            ];
+                            if ($firstSpecs !== $rSpecs) {
+                                $allSame = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+            @endphp
+
             <div class="space-y-4">
             @foreach($fasilitas->paket_harian as $rtIdx => $rt)
             @php
@@ -196,7 +222,7 @@
                  @open-detail-lb.window="openLightbox($event.detail.photos, $event.detail.idx)">
                 <div class="flex flex-col sm:flex-row">
 
-                    @if(count($fasilitas->paket_harian) > 1)
+                    @if($roomCount > 1 && !$allSame)
                     {{-- ── Static photo thumbnail with hover blur + eye icon ── --}}
                     <div class="relative w-full sm:w-48 aspect-[4/3] flex-shrink-0 overflow-hidden bg-gray-100 rounded-t-2xl sm:rounded-none sm:rounded-l-2xl cursor-pointer"
                          @mouseenter="hovered = true"

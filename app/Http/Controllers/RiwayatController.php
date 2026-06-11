@@ -16,7 +16,7 @@ class RiwayatController extends Controller
     {
         $query = Booking::with(['penyewa', 'fasilitas'])
             ->where(function ($q) {
-                $q->whereIn('status', ['rejected', 'cancelled', 'completed', 'booked'])
+                $q->whereIn('status', ['rejected', 'cancelled', 'completed'])
                   ->orWhere(function ($q2) {
                       $q2->where('status', 'confirmed')
                          ->where('tgl_selesai', '<', now()->toDateString());
@@ -80,13 +80,13 @@ class RiwayatController extends Controller
     {
         if ($request->all_select === 'true') {
             // Delete all finalized records
-            $count = Booking::whereIn('status', ['rejected', 'cancelled', 'completed', 'booked'])
+            $count = Booking::whereIn('status', ['rejected', 'cancelled', 'completed'])
                 ->orWhere(function ($q2) {
                     $q2->where('status', 'confirmed')
                        ->where('tgl_selesai', '<', now()->toDateString());
                 })->count();
 
-            Booking::whereIn('status', ['rejected', 'cancelled', 'completed', 'booked'])
+            Booking::whereIn('status', ['rejected', 'cancelled', 'completed'])
                 ->orWhere(function ($q2) {
                     $q2->where('status', 'confirmed')
                        ->where('tgl_selesai', '<', now()->toDateString());

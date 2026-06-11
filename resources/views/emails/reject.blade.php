@@ -55,7 +55,7 @@
                                 </tr>
                                 @if($booking->nomor_kamar)
                                 <tr>
-                                    <td style="font-size:14px;color:#555;padding:5px 0;">Nomor Kamar</td>
+                                    <td style="font-size:14px;color:#555;padding:5px 0;">Nomor Lapangan</td>
                                     <td style="font-size:14px;color:#333;font-weight:700;padding:5px 0;">
                                         {{ is_array($booking->nomor_kamar) ? implode(', ', $booking->nomor_kamar) : $booking->nomor_kamar }}
                                     </td>

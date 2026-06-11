@@ -17,7 +17,7 @@ class BookingController extends Controller
 {
     public function store(Request $request)
     {
-        // Verifikasi Turnstile (hanya di production)
+        // Verifikasi reCAPTCHA (hanya di production)
         if (app()->environment('production')) {
             $response = Http::asForm()->post(
                 'https://www.google.com/recaptcha/api/siteverify',
@@ -447,8 +447,8 @@ class BookingController extends Controller
                     ? implode(', ', $booking->nomor_kamar)
                     : ($booking->nomor_kamar ?? '-'),
                 'allocated_rooms' => $booking->allocated_rooms ?? [],
-                'created_at' => $booking->created_at?->format('d F Y, H:i') . ' WIB' ?? '-',
-                'checkin_at' => $booking->checkin_at?->format('d F Y, H:i') . ' WIB' ?? null,
+                'created_at' => $booking->created_at ? $booking->created_at->format('d F Y, H:i') . ' WIB' : '-',
+                'checkin_at' => $booking->checkin_at ? $booking->checkin_at->format('d F Y, H:i') . ' WIB' : null,
                 'foto_identitas' => $foto_identitas_url
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {

@@ -290,7 +290,7 @@
             },
             validateRooms() {
                 if (this.facilityRoomList.length > 0 && !this.selectAllRooms && this.selectedRooms.length === 0) {
-                    this.roomErr = 'Pilih minimal satu kamar atau gunakan &quot;Semua Kamar&quot;.';
+                    this.roomErr = 'Pilih minimal satu lapangan atau gunakan &quot;Semua Lapangan&quot;.';
                     return false;
                 }
                 this.roomErr = '';
@@ -619,15 +619,15 @@
                                 </p>
                             </div>
 
-                            {{-- Pilih Kamar — muncul jika fasilitas memiliki data kamar --}}
+                            {{-- Pilih Lapangan — muncul jika fasilitas memiliki data lapangan --}}
                             <div x-show="facilityRoomList.length > 0"
                                 class="space-y-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
                                 <div class="flex items-center justify-between">
-                                    <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest">Pilih Kamar</label>
+                                    <label class="text-[10px] uppercase font-black text-slate-400 tracking-widest">Pilih Lapangan</label>
                                     <button type="button" @click="toggleAllRooms()"
                                         class="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full transition-all"
                                         :class="selectAllRooms ? 'bg-blue-100 text-blue-600 border border-blue-200' : 'bg-slate-200 text-slate-500 border border-slate-300'"
-                                        x-text="selectAllRooms ? 'Semua Kamar' : 'Pilih Individual'"></button>
+                                        x-text="selectAllRooms ? 'Semua Lapangan' : 'Pilih Individual'"></button>
                                 </div>
                                 <div x-show="!selectAllRooms" x-transition
                                     class="max-h-40 overflow-y-auto space-y-1.5 pr-1">
@@ -642,12 +642,12 @@
                                             <span class="text-[11px] font-bold text-slate-700">
                                                 <span x-text="r.type"></span>
                                                 <span x-show="r.blok" x-text="' (Blok ' + r.blok + ')'"></span>
-                                                — Kamar <span x-text="r.room"></span>
+                                                    — Lapangan <span x-text="r.room"></span>
                                             </span>
                                         </label>
                                     </template>
                                 </div>
-                                <p x-show="selectAllRooms" class="text-[10px] font-medium text-slate-400">Semua kamar akan diblokir untuk perbaikan.</p>
+                                <p x-show="selectAllRooms" class="text-[10px] font-medium text-slate-400">Semua lapangan akan diblokir untuk perbaikan.</p>
                                 <p class="text-[10px] font-bold text-red-500 px-1 min-h-[14px]" x-text="roomErr"></p>
                             </div>
 

@@ -119,8 +119,7 @@ class AdminsController extends Controller
             }
 
             $admin->update([
-                // isi field kamu
-                'name' => $request->name,
+                'nama' => $request->nama,
             ]);
 
             return response()->json([
@@ -158,7 +157,7 @@ class AdminsController extends Controller
         $fasilitas = Fasilitas::withCount('booking')->get();
 
         // Label: Nama Fasilitas
-        $labelsFasilitas = $fasilitas->pluck('nama_fasilitas')->toArray();
+        $labelsFasilitas = $fasilitas->pluck('nama')->toArray();
 
         // Data: Jumlah booking per fasilitas
         $dataBookingPerFasilitas = $fasilitas->pluck('booking_count')->toArray();

@@ -726,7 +726,7 @@
                                 </div>
 
                                 {{-- Foto --}}
-                                <div class="grid grid-cols-3 gap-2" x-show="jumlahLapangan > 1">
+                                <div class="grid grid-cols-3 gap-2" x-show="jumlahLapangan > 1 && !allSame">
                                     <template x-for="fIdx in [0, 1, 2]" :key="fIdx">
                                         <div class="room-foto-slot">
                                             <img :src="room.fotoPreviews[fIdx]" class="absolute inset-0 w-full h-full object-cover z-10 rounded-[inherit]" x-show="room.fotoPreviews[fIdx]" alt="">
@@ -736,18 +736,9 @@
                                                 </svg>
                                             </div>
                                             <input type="file" accept="image/*"
-                                                :name="'rooms[' + rIdx + '][foto_' + fIdx + ']'"
+                                                :name="'room_fotos[' + rIdx + '][' + fIdx + ']'"
                                                 class="room-foto-input absolute inset-0 opacity-0 cursor-pointer z-30"
-                                                @change="
-                                                    if (window.validateRoomFoto($event.target, fIdx)) {
-                                                        const file = $event.target.files[0];
-                                                        if (file) {
-                                                            const reader = new FileReader();
-                                                            reader.onload = (e) => { rooms[rIdx].fotoPreviews[fIdx] = e.target.result; };
-                                                            reader.readAsDataURL(file);
-                                                        }
-                                                    }
-                                                ">
+                                                @change="handleRoomFoto($event, rIdx, fIdx)">
                                         </div>
                                     </template>
                                 </div>
@@ -922,7 +913,7 @@
                                 </div>
 
                                 {{-- Foto --}}
-                                <div class="grid grid-cols-3 gap-2" x-show="jumlahLapangan > 1">
+                                <div class="grid grid-cols-3 gap-2" x-show="jumlahLapangan > 1 && !allSame">
                                     <template x-for="fIdx in [0, 1, 2]" :key="fIdx">
                                         <div class="room-foto-slot">
                                             <img :src="room.fotoPreviews[fIdx]" class="absolute inset-0 w-full h-full object-cover z-10 rounded-[inherit]" x-show="room.fotoPreviews[fIdx]" alt="">
@@ -932,18 +923,9 @@
                                                 </svg>
                                             </div>
                                             <input type="file" accept="image/*"
-                                                :name="'rooms[' + rIdx + '][foto_' + fIdx + ']'"
+                                                :name="'room_fotos[' + rIdx + '][' + fIdx + ']'"
                                                 class="room-foto-input absolute inset-0 opacity-0 cursor-pointer z-30"
-                                                @change="
-                                                    if (window.validateRoomFoto($event.target, fIdx)) {
-                                                        const file = $event.target.files[0];
-                                                        if (file) {
-                                                            const reader = new FileReader();
-                                                            reader.onload = (e) => { rooms[rIdx].fotoPreviews[fIdx] = e.target.result; };
-                                                            reader.readAsDataURL(file);
-                                                        }
-                                                    }
-                                                ">
+                                                @change="handleRoomFoto($event, rIdx, fIdx)">
                                         </div>
                                     </template>
                                 </div>
@@ -1706,7 +1688,7 @@
                 const fas = {};
                 fasKeys.forEach(f => { fas[f.key] = 0; });
                 return {
-                    tipe: [], jumlah: 1, kode_blok: '', fotoPreviews: [null, null, null],
+                    tipe: [], jumlah: 1, kode_blok: '', foto: [], fotoPreviews: [null, null, null],
                     harga_harian: '', harga_mingguan: '', harga_bulanan: '', harga_tahunan: '',
                     keunggulan: '', panjang: '', lebar: '', newFasilitasLabel: '',
                     fasilitas: fas, fasilitasKeys: [...fasKeys],
@@ -1811,6 +1793,34 @@
             },
             removeTipeTag(room, idx) {
                 room.tipe.splice(idx, 1);
+            },
+
+            handleRoomFoto(event, roomIndex, fotoIndex) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const MAX = 2 * 1024 * 1024;
+                if (file.size > MAX) {
+                    Swal.fire({
+                        title: 'File Terlalu Besar',
+                        text: 'Foto lapangan maksimal 2 MB.',
+                        icon: 'warning',
+                        confirmButtonColor: '#1265A8',
+                        confirmButtonText: 'OK',
+                        customClass: { popup: 'rounded-[2.5rem] p-8' }
+                    });
+                    event.target.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (!this.rooms[roomIndex].fotoPreviews) {
+                        this.rooms[roomIndex].fotoPreviews = [null, null, null];
+                    }
+                    this.rooms[roomIndex].fotoPreviews[fotoIndex] = e.target.result;
+                };
+                reader.readAsDataURL(file);
             },
 
             addCustomLabel() {

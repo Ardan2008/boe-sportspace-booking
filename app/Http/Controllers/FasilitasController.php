@@ -166,6 +166,23 @@ class FasilitasController extends Controller
             $room['foto'] = array_values(array_filter($existingFoto, fn($v) => $v !== null && $v !== ''));
         }
         unset($room);
+
+        if (!empty($paket_harian[0]['foto']) && count($paket_harian) > 1) {
+            $anyOtherHasFotos = false;
+            for ($i = 1; $i < count($paket_harian); $i++) {
+                if (!empty($paket_harian[$i]['foto'])) {
+                    $anyOtherHasFotos = true;
+                    break;
+                }
+            }
+            if (!$anyOtherHasFotos) {
+                $foto0 = $paket_harian[0]['foto'];
+                for ($i = 1; $i < count($paket_harian); $i++) {
+                    $paket_harian[$i]['foto'] = $foto0;
+                }
+            }
+        }
+
         $data['paket_harian'] = $paket_harian;
 
         if ($request->hasFile('image')) {
@@ -342,6 +359,22 @@ class FasilitasController extends Controller
                         }
                     }
                     $paket_harian[$roomIdx]['foto'] = array_values(array_filter($fotos));
+                }
+            }
+
+            if (!empty($paket_harian[0]['foto']) && count($paket_harian) > 1) {
+                $anyOtherHasFotos = false;
+                for ($i = 1; $i < count($paket_harian); $i++) {
+                    if (!empty($paket_harian[$i]['foto'])) {
+                        $anyOtherHasFotos = true;
+                        break;
+                    }
+                }
+                if (!$anyOtherHasFotos) {
+                    $foto0 = $paket_harian[0]['foto'];
+                    for ($i = 1; $i < count($paket_harian); $i++) {
+                        $paket_harian[$i]['foto'] = $foto0;
+                    }
                 }
             }
 

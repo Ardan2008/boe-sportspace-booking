@@ -921,7 +921,7 @@ document.addEventListener('alpine:init', () => {
                 }
                 if (val === 2) { this.fetchCalendarData(); }
             });
-            // ── Auto-refresh stok kamar setiap 15 detik ──
+            // ── Auto-refresh stok lapangan setiap 15 detik ──
             setInterval(() => { this.pollRoomStock(); }, 15000);
         },
 
@@ -1201,7 +1201,7 @@ document.addEventListener('alpine:init', () => {
                     this.availabilityFetched = true;
                 }
             } catch (e) {
-                console.error('Gagal fetch ketersediaan kamar:', e);
+                console.error('Gagal fetch ketersediaan lapangan:', e);
                 this.availableRooms = [];
                 this.maxStock = 0;
                 this.availabilityFetched = false;

@@ -163,7 +163,7 @@ document.addEventListener('alpine:init', () => {
              *  - Closes add mode
              *
              * On failure (HTTP 422 unique):
-             *  - Shows "Tipe kamar ini sudah ada."
+              *  - Shows "Tipe lapangan ini sudah ada."
              *
              * On other failures:
              *  - Shows server message or generic error
@@ -207,10 +207,10 @@ document.addEventListener('alpine:init', () => {
                             )
                         );
                         this.errorMessage = isUnique
-                            ? 'Tipe kamar ini sudah ada.'
+                            ? 'Tipe lapangan ini sudah ada.'
                             : (data.message || 'Validasi gagal.');
                     } else {
-                        this.errorMessage = data.message || 'Gagal menyimpan tipe kamar.';
+                        this.errorMessage = data.message || 'Gagal menyimpan tipe lapangan.';
                     }
                 } catch {
                     this.errorMessage = 'Terjadi kesalahan jaringan.';
@@ -317,7 +317,7 @@ document.addEventListener('alpine:init', () => {
                             ? 'Nama sudah digunakan.'
                             : (data.message || 'Validasi gagal.');
                     } else {
-                        this.errorMessage = data.message || 'Gagal mengubah tipe kamar.';
+                        this.errorMessage = data.message || 'Gagal mengubah tipe lapangan.';
                     }
                 } catch {
                     this.errorMessage = 'Terjadi kesalahan jaringan.';
@@ -341,7 +341,7 @@ document.addEventListener('alpine:init', () => {
             async deleteType(id, name) {
                 const confirmed = await Swal.fire({
                     title:              `Hapus "${name}"?`,
-                    text:               `Tipe kamar "${name}" akan dihapus permanen.`,
+                    text:               `Tipe lapangan "${name}" akan dihapus permanen.`,
                     icon:               'warning',
                     showCancelButton:   true,
                     confirmButtonColor: '#E24B4A',
@@ -372,7 +372,7 @@ document.addEventListener('alpine:init', () => {
                             this.setTipe('');
                         }
                     } else {
-                        this.errorMessage = 'Gagal menghapus tipe kamar.';
+                        this.errorMessage = 'Gagal menghapus tipe lapangan.';
                     }
                 } catch {
                     this.errorMessage = 'Terjadi kesalahan jaringan.';

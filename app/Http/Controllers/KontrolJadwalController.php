@@ -235,7 +235,7 @@ class KontrolJadwalController extends Controller
         // ── OVERLAP CHECK ──
         // 1. Check existing bookings
         $bookingConflict = Booking::where('fasilitas_id', $request->fasilitas_id)
-            ->whereIn('status', ['pending', 'confirmed'])
+            ->whereIn('status', ['pending', 'confirmed', 'booked'])
             ->where(function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('tgl_mulai', [$startStr, $endStr])
                   ->orWhereBetween('tgl_selesai', [$startStr, $endStr])

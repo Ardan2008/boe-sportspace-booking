@@ -554,7 +554,7 @@
                                             </div>
                                         </div>
 
-                                        <div x-show="jumlahLapangan > 1">
+                                        <div x-show="jumlahLapangan > 1 && !allSame">
                                             <div class="grid grid-cols-3 gap-3">
                                                 <template x-for="fi in [0, 1, 2]" :key="fi">
                                                     <div class="relative overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#1265A8] transition-all duration-300 h-20 flex items-center justify-center group/foto cursor-pointer">

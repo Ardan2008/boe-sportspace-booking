@@ -129,7 +129,7 @@
                             <th class="p-4 text-center w-12"></th>
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-48">Guest Info</th>
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-56">Fasilitas & Paket</th>
-                            <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-52">Tamu & Kamar</th>
+                            <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-52">Tamu & Lapangan</th>
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-36">Tagihan</th>
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-28">Status</th>
                             <th class="p-5 text-center text-[10px] uppercase tracking-wider text-slate-400 font-black w-20">Aksi</th>
@@ -375,15 +375,15 @@
                         </div>
                     </div>
 
-                    {{-- Fasilitas Kamar (rooms_data) --}}
+                    {{-- Fasilitas Lapangan (rooms_data) --}}
                     <template x-if="detailPayload.rooms_data && detailPayload.rooms_data.length">
                         <div class="mt-8">
                             <h4 class="text-xs font-black uppercase text-slate-400 tracking-wider mb-4 border-b border-slate-100 pb-2">
-                                Fasilitas Kamar
+                                Fasilitas Lapangan
                             </h4>
                             <template x-for="(room, rIndex) in detailPayload.rooms_data" :key="rIndex">
                                 <div class="mb-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                    <span class="block text-xs font-bold text-slate-600 mb-2" x-text="room.nama || ('Kamar ' + (rIndex + 1))"></span>
+                                    <span class="block text-xs font-bold text-slate-600 mb-2" x-text="room.nama || ('Lapangan ' + (rIndex + 1))"></span>
                                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2" x-show="room.fasilitas">
                                         <template x-for="(val, key) in room.fasilitas">
                                             <div class="flex items-center gap-1.5 text-xs text-slate-600" x-show="val > 0">
@@ -395,13 +395,13 @@
                                         </template>
                                     </div>
                                     <div x-show="!room.fasilitas || Object.keys(room.fasilitas).filter(k => room.fasilitas[k] > 0).length === 0" class="text-xs text-slate-400 italic">
-                                        Tidak ada fasilitas khusus untuk kamar ini
+                                        Tidak ada fasilitas khusus untuk lapangan ini
                                     </div>
 
                                     {{-- Room photos — only if more than 1 room type --}}
                                     <template x-if="detailPayload.rooms_data.length > 1 && room.foto && room.foto.filter(f => f).length">
                                         <div class="mt-3 pt-3 border-t border-slate-200">
-                                            <span class="block text-[9px] uppercase text-slate-400 font-bold mb-2">Foto Tipe Kamar</span>
+                                            <span class="block text-[9px] uppercase text-slate-400 font-bold mb-2">Foto Tipe Lapangan</span>
                                             <div class="flex flex-wrap gap-2">
                                                 <template x-for="(f, fi) in room.foto.filter(f => f)" :key="fi">
                                                     <img :src="'/storage/fasilitas/rooms/' + f"
