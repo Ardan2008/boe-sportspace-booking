@@ -246,6 +246,7 @@ class BookingController extends Controller
                 'rooms'       => $request->rooms_count,
                 'start_hour'  => $request->start_hour,
                 'kode_blok'   => $request->selected_kode_blok ?? null,
+                'tipe_id'     => $request->tipe_id !== null ? (int)$request->tipe_id : null,
             ],
             'total_harga' => $totalPrice,
             'status'      => 'pending',
@@ -422,7 +423,25 @@ class BookingController extends Controller
 
             $rooms_data = null;
             if ($booking->fasilitas && $booking->fasilitas->paket_harian) {
-                $rooms_data = $booking->fasilitas->paket_harian;
+                $allRooms       = $booking->fasilitas->paket_harian;
+                $allocatedRooms = $booking->allocated_rooms ?? [];
+                $allSame        = (bool) ($booking->fasilitas->all_same ?? false);
+
+                if (!empty($allocatedRooms) && !$allSame) {
+                    // Filter hanya rooms yang nomor_kamarnya bersinggungan dengan allocated_rooms
+                    $rooms_data = array_values(array_filter($allRooms, function ($room) use ($allocatedRooms) {
+                        $nomorKamar = $room['nomor_kamar'] ?? [];
+                        if (empty($nomorKamar)) return false;
+                        return count(array_intersect((array)$nomorKamar, (array)$allocatedRooms)) > 0;
+                    }));
+                    // Kalau tidak ada yang match (nomor_kamar belum diisi), fallback semua
+                    if (empty($rooms_data)) {
+                        $rooms_data = $allRooms;
+                    }
+                } else {
+                    // allSame atau tidak ada allocated_rooms → tampilkan room[0] saja sebagai representasi
+                    $rooms_data = $allSame ? [$allRooms[0]] : $allRooms;
+                }
             }
 
             return response()->json([

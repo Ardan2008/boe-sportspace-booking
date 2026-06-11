@@ -142,6 +142,33 @@
                                 default    => $duration . ' hari',
                             };
                             $tipe = $booking->fasilitas?->tipe ?? 'kolam_renang';
+                            $fasAllSame  = (bool) ($booking->fasilitas?->all_same ?? true);
+                            $fasJumlah   = (int)  ($booking->fasilitas?->jumlah_kamar ?? 1);
+                            $showTipeCol = $tipe === 'lapangan' && $fasJumlah > 1 && !$fasAllSame;
+                            $allocatedNamas = [];
+                            if ($showTipeCol) {
+                                $paketHarian = $booking->fasilitas?->paket_harian ?? [];
+                                $allocRooms  = $booking->allocated_rooms ?? [];
+                                $tipeId      = $details['tipe_id'] ?? null;
+                                if (!empty($allocRooms)) {
+                                    foreach ($paketHarian as $room) {
+                                        $nk = $room['nomor_kamar'] ?? [];
+                                        if (!empty($nk) && count(array_intersect((array)$nk, (array)$allocRooms)) > 0) {
+                                            $t = $room['tipe'] ?? []; $lbl = is_array($t) ? implode(', ', $t) : (string)$t;
+                                            if ($lbl) $allocatedNamas[] = $lbl;
+                                        }
+                                    }
+                                }
+                                if (empty($allocatedNamas) && $tipeId !== null && isset($paketHarian[$tipeId])) {
+                                    $t = $paketHarian[$tipeId]['tipe'] ?? []; $lbl = is_array($t) ? implode(', ', $t) : (string)$t;
+                                    if ($lbl) $allocatedNamas[] = $lbl;
+                                }
+                                if (empty($allocatedNamas) && !empty($paketHarian)) {
+                                    $t = $paketHarian[0]['tipe'] ?? []; $lbl = is_array($t) ? implode(', ', $t) : (string)$t;
+                                    if ($lbl) $allocatedNamas[] = $lbl;
+                                }
+                            }
+                            $tipeLabelStr = implode(', ', $allocatedNamas);
                         @endphp
                         <tr class="hover:bg-slate-50/80 transition-all duration-200">
 
@@ -217,18 +244,23 @@
                                 @endif
                             </td>
 
-                            {{-- JUMLAH LAPANGAN --}}
+                            {{-- TIPE LAPANGAN — hanya untuk >1 lapangan beda spesifikasi --}}
                             <td class="p-5">
-                                @if($tipe === 'lapangan')
-                                <div class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                                    </svg>
-                                    {{ $rooms }} Lapangan
-                                </div>
+                                @if($showTipeCol)
+                                    @if(!empty($allocatedNamas))
+                                        @foreach($allocatedNamas as $nama)
+                                        <div class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                            </svg>
+                                            {{ $nama }}
+                                        </div><br>
+                                        @endforeach
+                                    @else
+                                        <span class="text-[11px] text-slate-400 font-semibold">-</span>
+                                    @endif
                                 @else
-                                <span class="text-[11px] text-slate-400 font-semibold">-</span>
+                                    <span class="text-[11px] text-slate-400 font-semibold">-</span>
                                 @endif
                             </td>
 
@@ -240,7 +272,11 @@
                                 {{-- Rumus tagihan agar admin bisa verifikasi --}}
                                 <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">
                                     @if($tipe === 'lapangan')
-                                        {{ $rooms }} lapangan &times; {{ $duration }} {{ $durUnit }}
+                                        @if($showTipeCol && $tipeLabelStr)
+                                            {{ $tipeLabelStr }} &times; {{ $duration }} {{ $durUnit }}
+                                        @else
+                                            {{ $rooms }} lapangan &times; {{ $duration }} {{ $durUnit }}
+                                        @endif
                                     @else
                                         {{ $duration }} {{ $durUnit }} &times; tarif renang
                                     @endif
@@ -354,6 +390,33 @@
                             $expiredAt = $booking->expired_at
                                 ? $booking->expired_at->toIso8601String()
                                 : $booking->updated_at->addHours($isJatim ? 24 : 72)->toIso8601String();
+                            $fasAllSame2  = (bool) ($booking->fasilitas?->all_same ?? true);
+                            $fasJumlah2   = (int)  ($booking->fasilitas?->jumlah_kamar ?? 1);
+                            $showTipeCol2 = $tipe === 'lapangan' && $fasJumlah2 > 1 && !$fasAllSame2;
+                            $allocatedNamas2 = [];
+                            if ($showTipeCol2) {
+                                $paketHarian2 = $booking->fasilitas?->paket_harian ?? [];
+                                $allocRooms2  = $booking->allocated_rooms ?? [];
+                                $tipeId2      = $details['tipe_id'] ?? null;
+                                if (!empty($allocRooms2)) {
+                                    foreach ($paketHarian2 as $room) {
+                                        $nk = $room['nomor_kamar'] ?? [];
+                                        if (!empty($nk) && count(array_intersect((array)$nk, (array)$allocRooms2)) > 0) {
+                                            $t = $room['tipe'] ?? []; $lbl = is_array($t) ? implode(', ', $t) : (string)$t;
+                                            if ($lbl) $allocatedNamas2[] = $lbl;
+                                        }
+                                    }
+                                }
+                                if (empty($allocatedNamas2) && $tipeId2 !== null && isset($paketHarian2[$tipeId2])) {
+                                    $t = $paketHarian2[$tipeId2]['tipe'] ?? []; $lbl = is_array($t) ? implode(', ', $t) : (string)$t;
+                                    if ($lbl) $allocatedNamas2[] = $lbl;
+                                }
+                                if (empty($allocatedNamas2) && !empty($paketHarian2)) {
+                                    $t = $paketHarian2[0]['tipe'] ?? []; $lbl = is_array($t) ? implode(', ', $t) : (string)$t;
+                                    if ($lbl) $allocatedNamas2[] = $lbl;
+                                }
+                            }
+                            $tipeLabelStr2 = implode(', ', $allocatedNamas2);
                         @endphp
                         <tr class="hover:bg-slate-50/80 transition-all duration-200">
 
@@ -416,10 +479,19 @@
 
                             {{-- LAPANGAN & TAGIHAN --}}
                             <td class="p-5">
-                                @if($tipe === 'lapangan')
-                                <div class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full mb-2">
-                                    {{ $rooms }} Lapangan
-                                </div>
+                                @if($showTipeCol2)
+                                    @if(!empty($allocatedNamas2))
+                                        @foreach($allocatedNamas2 as $nama)
+                                        <div class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                            </svg>
+                                            {{ $nama }}
+                                        </div><br>
+                                        @endforeach
+                                    @else
+                                        <span class="text-[10px] text-slate-400 font-semibold block mb-1">Belum dialokasikan</span>
+                                    @endif
                                 @endif
                                 <p class="text-sm font-black text-[#1265A8] mt-2">
                                     Rp {{ number_format($booking->total_harga, 0, ',', '.') }}
@@ -878,7 +950,8 @@
                             </h4>
                             <template x-for="(room, rIndex) in detailPayload.rooms_data" :key="rIndex">
                                 <div class="mb-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                    <span class="block text-xs font-bold text-slate-600 mb-2" x-text="room.nama || ('Lapangan ' + (rIndex + 1))"></span>
+                                    <span class="block text-xs font-bold text-slate-600 mb-2"
+                                        x-text="(Array.isArray(room.tipe) ? room.tipe.join(', ') : room.tipe) || room.nama || ('Lapangan ' + (rIndex + 1))"></span>
                                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2" x-show="room.fasilitas">
                                         <template x-for="(val, key) in room.fasilitas">
                                             <div class="flex items-center gap-1.5 text-xs text-slate-600" x-show="val > 0">
@@ -893,8 +966,8 @@
                                         Tidak ada fasilitas khusus untuk lapangan ini
                                     </div>
 
-                                    {{-- Room photos — only if more than 1 room type --}}
-                                    <template x-if="detailPayload.rooms_data.length > 1 && room.foto && room.foto.filter(f => f).length">
+                                    {{-- Room photos --}}
+                                    <template x-if="room.foto && room.foto.filter(f => f).length">
                                         <div class="mt-3 pt-3 border-t border-slate-200">
                                             <span class="block text-[9px] uppercase text-slate-400 font-bold mb-2">Foto Tipe Lapangan</span>
                                             <div class="flex flex-wrap gap-2">
