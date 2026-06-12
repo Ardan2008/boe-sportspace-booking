@@ -21,6 +21,15 @@ function calculateRoomStock($fasilitas) {
         return $fasilitas;
     }
 
+    // Deteksi multi-room same-spec
+    $allRoomNumbers = [];
+    foreach (($fasilitas->paket_harian ?: []) as $item) {
+        foreach (($item['nomor_lapangan'] ?? []) as $r) { $allRoomNumbers[] = $r; }
+    }
+    $allRoomNumbers = array_unique($allRoomNumbers);
+    $totalKamar = count($allRoomNumbers) > 0 ? count($allRoomNumbers) : ($fasilitas->jumlah_lapangan ?: 1);
+    $isMultipleSameSpec = ($fasilitas->tipe === 'lapangan' && $fasilitas->all_same && $totalKamar > 1);
+
     $activeBookings = \App\Models\Booking::where('fasilitas_id', $fasilitas->id)
         ->whereIn('status', ['pending', 'confirmed', 'booked'])
         ->where('tgl_selesai', '>=', now()->subDay())
@@ -29,6 +38,10 @@ function calculateRoomStock($fasilitas) {
     $bookedRooms = [];
     $placeholderCount = 0;
     foreach ($activeBookings as $b) {
+        // Multi-room same-spec: harian bersifat per-jam, tidak mengurangi stok
+        if ($isMultipleSameSpec && $b->package_type === 'harian') {
+            continue;
+        }
         if (!empty($b->allocated_rooms) && is_array($b->allocated_rooms)) {
             foreach ($b->allocated_rooms as $room) {
                 $bookedRooms[strval($room)] = true;
@@ -45,14 +58,14 @@ function calculateRoomStock($fasilitas) {
         ->where('tipe', 'maintenance')
         ->get();
     foreach ($activeMaintenance as $m) {
-        $rooms = $m->nomor_kamar;
+        $rooms = $m->nomor_lapangan;
         if (empty($rooms)) { $fullMaintenance = true; break; }
         foreach ((array) $rooms as $nr) { $maintenanceRooms[$nr] = true; }
     }
 
     $paket = $fasilitas->paket_harian;
     foreach ($paket as &$rt) {
-        $allRooms = $rt['nomor_kamar'] ?? [];
+        $allRooms = $rt['nomor_lapangan'] ?? [];
         $total = count($allRooms) > 0 ? count($allRooms) : (int) ($rt['jumlah'] ?? 0);
 
         if (!empty($allRooms)) {

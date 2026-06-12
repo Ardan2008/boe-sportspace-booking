@@ -623,7 +623,7 @@
 
                         <input
                             type="number"
-                            name="jumlah_kamar"
+                            name="jumlah_lapangan"
                             id="jumlahLapangan"
                             min="1"
                             max="999"
@@ -1770,7 +1770,7 @@
                         ...src,
                         tipe: [...(src.tipe || [])],
                         foto: [...(src.foto || [])],
-                        nomor_kamar: [...(src.nomor_kamar || [])],
+                        nomor_lapangan: [...(src.nomor_lapangan || [])],
                         fotoPreviews: [...(src.fotoPreviews || [null, null, null])],
                         fasilitas: { ...(src.fasilitas || {}) },
                     };

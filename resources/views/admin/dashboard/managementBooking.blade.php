@@ -113,7 +113,7 @@
                 $showLapanganCol = $pendingBookings->contains(function ($b) {
                     $tipe = $b->fasilitas?->tipe ?? 'kolam_renang';
                     $fasAllSame = (bool) ($b->fasilitas?->all_same ?? true);
-                    $fasJumlah = (int) ($b->fasilitas?->jumlah_kamar ?? 1);
+                    $fasJumlah = (int) ($b->fasilitas?->jumlah_lapangan ?? 1);
                     return $tipe === 'lapangan' && $fasJumlah > 1 && !$fasAllSame;
                 });
             @endphp
@@ -153,7 +153,7 @@
                             };
                             $tipe = $booking->fasilitas?->tipe ?? 'kolam_renang';
                             $fasAllSame  = (bool) ($booking->fasilitas?->all_same ?? true);
-                            $fasJumlah   = (int)  ($booking->fasilitas?->jumlah_kamar ?? 1);
+                            $fasJumlah   = (int)  ($booking->fasilitas?->jumlah_lapangan ?? 1);
                             $showTipeCol = $tipe === 'lapangan' && $fasJumlah > 1 && !$fasAllSame;
                             $allocatedNamas = [];
                             if ($showTipeCol) {
@@ -162,7 +162,7 @@
                                 $tipeId      = $details['tipe_id'] ?? null;
                                 if (!empty($allocRooms)) {
                                     foreach ($paketHarian as $room) {
-                                        $nk = $room['nomor_kamar'] ?? [];
+                                        $nk = $room['nomor_lapangan'] ?? [];
                                         if (!empty($nk) && count(array_intersect((array)$nk, (array)$allocRooms)) > 0) {
                                             $t = $room['tipe'] ?? []; $lbl = is_array($t) ? implode(', ', $t) : (string)$t;
                                             if ($lbl) $allocatedNamas[] = $lbl;
@@ -403,7 +403,7 @@
                                 ? $booking->expired_at->toIso8601String()
                                 : $booking->updated_at->addHours($isJatim ? 24 : 72)->toIso8601String();
                             $fasAllSame2  = (bool) ($booking->fasilitas?->all_same ?? true);
-                            $fasJumlah2   = (int)  ($booking->fasilitas?->jumlah_kamar ?? 1);
+                            $fasJumlah2   = (int)  ($booking->fasilitas?->jumlah_lapangan ?? 1);
                             $showTipeCol2 = $tipe === 'lapangan' && $fasJumlah2 > 1 && !$fasAllSame2;
                             $allocatedNamas2 = [];
                             if ($showTipeCol2) {
@@ -412,7 +412,7 @@
                                 $tipeId2      = $details['tipe_id'] ?? null;
                                 if (!empty($allocRooms2)) {
                                     foreach ($paketHarian2 as $room) {
-                                        $nk = $room['nomor_kamar'] ?? [];
+                                        $nk = $room['nomor_lapangan'] ?? [];
                                         if (!empty($nk) && count(array_intersect((array)$nk, (array)$allocRooms2)) > 0) {
                                             $t = $room['tipe'] ?? []; $lbl = is_array($t) ? implode(', ', $t) : (string)$t;
                                             if ($lbl) $allocatedNamas2[] = $lbl;
@@ -947,10 +947,10 @@
                     </div>
 
                     {{-- SECTION: Nomor Lapangan yang Dialokasikan --}}
-                    <template x-if="detailPayload.nomor_kamar && detailPayload.nomor_kamar !== '-'">
+                    <template x-if="detailPayload.nomor_lapangan && detailPayload.nomor_lapangan !== '-'">
                         <div class="mt-4 bg-blue-50 p-4 rounded-2xl border border-blue-100">
                             <span class="block text-[10px] uppercase text-blue-500 font-bold mb-1">Nomor Lapangan Dialokasikan</span>
-                            <span class="font-black text-blue-700 text-sm" x-text="detailPayload.nomor_kamar"></span>
+                            <span class="font-black text-blue-700 text-sm" x-text="detailPayload.nomor_lapangan"></span>
                         </div>
                     </template>
 

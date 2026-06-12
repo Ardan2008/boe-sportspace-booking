@@ -52,7 +52,7 @@ class FasilitasController extends Controller
             'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'paket_harian' => 'nullable|string',
             'rooms_data'   => 'nullable|string',
-            'jumlah_kamar' => 'nullable|integer|min:1',
+            'jumlah_lapangan' => 'nullable|integer|min:1',
             'labels' => 'nullable|array',
             'room_fotos' => 'nullable|array',
             'room_fotos.*.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
@@ -131,7 +131,7 @@ class FasilitasController extends Controller
             'max_durasi_bulan' => $request->max_durasi_bulan ? (int) $request->max_durasi_bulan : null,
             'max_durasi_tahun' => $request->max_durasi_tahun ? (int) $request->max_durasi_tahun : null,
             'jam_operasional' => $request->jam_operasional,
-            'jumlah_kamar' => $request->jumlah_kamar ? (int) $request->jumlah_kamar : $fasilitas->jumlah_kamar,
+            'jumlah_lapangan' => $request->jumlah_lapangan ? (int) $request->jumlah_lapangan : $fasilitas->jumlah_lapangan,
             'all_same' => filter_var($request->input('all_same', true), FILTER_VALIDATE_BOOLEAN),
             'paket_harian' => $paket_harian,
             'labels' => $request->labels ?? [],
@@ -238,20 +238,20 @@ class FasilitasController extends Controller
         $paketHarian = $fasilitas->paket_harian;
         if (is_array($paketHarian) && !empty($paketHarian)) {
             $rooms = $paketHarian;
-            // Ensure nomor_kamar and temp_input exist on each room
+            // Ensure nomor_lapangan and temp_input exist on each room
             foreach ($rooms as &$room) {
-                if (!isset($room['nomor_kamar'])) $room['nomor_kamar'] = [];
+                if (!isset($room['nomor_lapangan'])) $room['nomor_lapangan'] = [];
                 if (!isset($room['temp_input']))   $room['temp_input']  = '';
             }
             unset($room);
         } else {
-            $count = $fasilitas->jumlah_kamar ?? 1;
+            $count = $fasilitas->jumlah_lapangan ?? 1;
             for ($i = 0; $i < $count; $i++) {
                 $rooms[] = [
                     'tipe' => '',
                     'jumlah' => 1,
                     'kode_blok' => '',
-                    'nomor_kamar' => [],
+                    'nomor_lapangan' => [],
                     'temp_input' => '',
                     'max_dewasa' => $fasilitas->max_dewasa ?? 1,
                     'max_anak' => $fasilitas->max_anak ?? 0,
@@ -319,7 +319,7 @@ class FasilitasController extends Controller
                 'max_durasi_minggu' => 'nullable|integer|min:0',
                 'max_durasi_bulan' => 'nullable|integer|min:0',
                 'max_durasi_tahun' => 'nullable|integer|min:0',
-                'jumlah_kamar'     => 'required|integer|min:1',
+                'jumlah_lapangan'     => 'required|integer|min:1',
                 'jam_operasional' => 'nullable|string',
                 'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
                 'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
@@ -433,7 +433,7 @@ class FasilitasController extends Controller
                 'max_durasi_minggu' => $request->max_durasi_minggu ? (int) $request->max_durasi_minggu : null,
                 'max_durasi_bulan' => $request->max_durasi_bulan ? (int) $request->max_durasi_bulan : null,
                 'max_durasi_tahun' => $request->max_durasi_tahun ? (int) $request->max_durasi_tahun : null,
-                'jumlah_kamar'     => (int) $request->jumlah_kamar,
+                'jumlah_lapangan'     => (int) $request->jumlah_lapangan,
                 'all_same'         => filter_var($request->input('all_same', true), FILTER_VALIDATE_BOOLEAN),
                 'jam_operasional' => $request->jam_operasional,
                 'image' => $imageName, 
@@ -487,15 +487,15 @@ class FasilitasController extends Controller
                 "tgl_mulai" => "required|date|after_or_equal:today",
                 "tgl_selesai" => "required|date|after_or_equal:tgl_mulai",
                 "tujuan" => "required|string|max:255",
-                "nomor_kamar" => "nullable|array",
-                "nomor_kamar.*" => "string|max:50",
+                "nomor_lapangan" => "nullable|array",
+                "nomor_lapangan.*" => "string|max:50",
             ]);
 
             $fasilitas = Fasilitas::findOrFail($id);
             $start = \Carbon\Carbon::parse($request->tgl_mulai)->startOfDay();
             $end = \Carbon\Carbon::parse($request->tgl_selesai)->endOfDay();
 
-            $nomorKamar = $request->nomor_kamar;
+            $nomorKamar = $request->nomor_lapangan;
             $blockingAll = empty($nomorKamar);
 
             $overlaps = \App\Models\Booking::where("fasilitas_id", $id)
@@ -535,7 +535,7 @@ class FasilitasController extends Controller
                 "tgl_selesai" => $end,
                 "tipe" => "maintenance",
                 "tujuan" => $request->tujuan,
-                "nomor_kamar" => $blockingAll ? null : $nomorKamar,
+                "nomor_lapangan" => $blockingAll ? null : $nomorKamar,
                 "created_by" => session("nama") ?? "System Admin",
             ]);
 
@@ -543,7 +543,7 @@ class FasilitasController extends Controller
             \App\Models\AuditLog::catat(
                 "Maintenance Facility",
                 "Mengaktifkan mode perbaikan untuk: {$fasilitas->nama} - {$roomInfo} ({$request->tgl_mulai} s/d {$request->tgl_selesai})",
-                ["target_tipe" => "fasilitas", "target_id" => $id, "reason" => $request->tujuan, "nomor_kamar" => $nomorKamar]
+                ["target_tipe" => "fasilitas", "target_id" => $id, "reason" => $request->tujuan, "nomor_lapangan" => $nomorKamar]
             );
 
             return response()->json(["success" => true, "message" => "Mode perbaikan berhasil diaktifkan!"]);

@@ -65,10 +65,10 @@
                 <th>Tipe Paket</th>
                 <td>{{ ucfirst($booking->package_type) }}</td>
             </tr>
-            @if($booking->nomor_kamar)
+            @if($booking->nomor_lapangan)
             <tr>
                 <th>Nomor Lapangan</th>
-                <td>{{ is_array($booking->nomor_kamar) ? implode(', ', $booking->nomor_kamar) : $booking->nomor_kamar }}</td>
+                <td>{{ is_array($booking->nomor_lapangan) ? implode(', ', $booking->nomor_lapangan) : $booking->nomor_lapangan }}</td>
             </tr>
             @endif
             <tr class="total-row">

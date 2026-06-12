@@ -24,7 +24,7 @@ class Fasilitas extends Model
         'max_durasi_minggu',
         'max_durasi_bulan',
         'max_durasi_tahun',
-        'jumlah_kamar',
+        'jumlah_lapangan',
         'all_same',
         'jam_operasional',
         'image',

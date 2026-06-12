@@ -15,9 +15,13 @@ class RoomAvailabilityController extends Controller
             'fasilitas_id'   => 'required|exists:fasilitas,id',
             'check_in_date'  => 'required|date',
             'check_out_date' => 'required|date|after_or_equal:check_in_date',
+            'start_hour'     => 'nullable|integer|min:0|max:23',
+            'duration'       => 'nullable|integer|min:1',
         ]);
 
         $fasilitas = Fasilitas::findOrFail($request->fasilitas_id);
+        $reqStartHour = $request->filled('start_hour') ? (int) $request->start_hour : null;
+        $reqDuration = (int) ($request->input('duration', 1));
 
         $checkIn  = $request->check_in_date;
         $checkOut = $request->check_out_date;
@@ -25,39 +29,59 @@ class RoomAvailabilityController extends Controller
         $allRoomNumbers = [];
         $paket = $fasilitas->paket_harian ?: [];
         foreach ($paket as $item) {
-            $rooms = $item['nomor_kamar'] ?? [];
+            $rooms = $item['nomor_lapangan'] ?? [];
             foreach ($rooms as $r) {
                 $allRoomNumbers[] = $r;
             }
         }
         $allRoomNumbers = array_unique($allRoomNumbers);
 
-        $bookedRoomNumbers = Booking::where('fasilitas_id', $request->fasilitas_id)
+        // Fallback ketika nomor_lapangan tidak didefinisikan di paket_harian
+        if (empty($allRoomNumbers)) {
+            $total = $fasilitas->jumlah_lapangan ?: 1;
+            $allRoomNumbers = range(1, $total);
+        }
+
+        $overlappingBookings = Booking::where('fasilitas_id', $request->fasilitas_id)
             ->whereIn('status', ['pending', 'confirmed', 'booked'])
             ->where('tgl_mulai', '<=', $checkOut)
             ->where('tgl_selesai', '>=', $checkIn)
-            ->whereNotNull('allocated_rooms')
             ->get()
-            ->filter(function ($b) use ($fasilitas, $allRoomNumbers) {
-                $totalKamar = count($allRoomNumbers) > 0 ? count($allRoomNumbers) : ($fasilitas->jumlah_kamar ?: 1);
+            ->filter(function ($b) use ($fasilitas, $allRoomNumbers, $reqStartHour, $reqDuration) {
+                $totalKamar = count($allRoomNumbers) > 0 ? count($allRoomNumbers) : ($fasilitas->jumlah_lapangan ?: 1);
                 $isMultipleSameSpec = ($fasilitas->tipe === 'lapangan' && $fasilitas->all_same && $totalKamar > 1);
                 
                 if ($isMultipleSameSpec && $b->package_type === 'harian') {
-                    return false;
+                    if ($reqStartHour === null) return false;
+                    $reqEndH = (int) $reqStartHour + (int) $reqDuration;
+                    $ebStartH = (int) ($b->selected_packages['start_hour'] ?? 0);
+                    $ebEndH = $ebStartH + (int) ($b->selected_packages['duration'] ?? 1);
+                    if ($reqEndH <= $ebStartH || $reqStartHour >= $ebEndH) return false;
                 }
                 return true;
-            })
-            ->flatMap(fn ($b) => $b->allocated_rooms ?? [])
+            });
+
+        // Booking dengan allocated_rooms → room-nya sudah pasti terpakai
+        $bookedRoomNumbers = $overlappingBookings
+            ->filter(fn ($b) => !empty($b->allocated_rooms))
+            ->flatMap(fn ($b) => $b->allocated_rooms)
             ->unique()
             ->values()
             ->toArray();
+
+        // Booking tanpa allocated_rooms → kurangi kapasitas (placeholder)
+        $placeholderCount = $overlappingBookings
+            ->filter(fn ($b) => empty($b->allocated_rooms))
+            ->sum(function ($b) {
+                return (int) ($b->selected_packages['rooms'] ?? 1);
+            });
 
         $maintenanceRooms = JadwalBlokir::where('fasilitas_id', $request->fasilitas_id)
             ->where('tipe', 'maintenance')
             ->where('tgl_mulai', '<=', $checkOut)
             ->where('tgl_selesai', '>=', $checkIn)
             ->get()
-            ->flatMap(fn ($m) => $m->nomor_kamar ?? [])
+            ->flatMap(fn ($m) => $m->nomor_lapangan ?? [])
             ->unique()
             ->values()
             ->toArray();
@@ -66,7 +90,7 @@ class RoomAvailabilityController extends Controller
             ->where('tipe', 'maintenance')
             ->where('tgl_mulai', '<=', $checkOut)
             ->where('tgl_selesai', '>=', $checkIn)
-            ->whereNull('nomor_kamar')
+            ->whereNull('nomor_lapangan')
             ->exists();
 
         $excludedRooms = array_unique(array_merge($bookedRoomNumbers, $maintenanceRooms));
@@ -74,13 +98,14 @@ class RoomAvailabilityController extends Controller
         if ($hasFullMaintenance) {
             $availableRooms = [];
         } else {
-            $availableRooms = array_values(array_diff($allRoomNumbers, $excludedRooms));
+            $available = array_values(array_diff($allRoomNumbers, $excludedRooms));
+            $availableRooms = array_slice($available, $placeholderCount);
         }
 
         return response()->json([
-            'success'               => true,
-            'total_kamar_tersedia'  => count($availableRooms),
-            'nomor_kamar_tersedia'  => $availableRooms,
+            'success'                => true,
+            'total_lapangan_tersedia' => count($availableRooms),
+            'nomor_lapangan_tersedia' => $availableRooms,
         ]);
     }
 }

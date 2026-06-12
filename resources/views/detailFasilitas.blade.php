@@ -117,10 +117,10 @@
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-3">Informasi Operasional</p>
                         <div class="space-y-3 bg-slate-50 p-5 rounded-2xl border border-slate-100 mb-6">
-                            @if($fasilitas->tipe === 'lapangan' && $fasilitas->jumlah_kamar)
+                            @if($fasilitas->tipe === 'lapangan' && $fasilitas->jumlah_lapangan)
                             <div class="flex items-center justify-between">
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Jumlah Lapangan</span>
-                                <span class="text-xs font-black text-[#1d6fa5]">{{ $fasilitas->jumlah_kamar }} Lapangan</span>
+                                <span class="text-xs font-black text-[#1d6fa5]">{{ $fasilitas->jumlah_lapangan }} Lapangan</span>
                             </div>
                             @endif
 

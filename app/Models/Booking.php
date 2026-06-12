@@ -9,7 +9,7 @@ class Booking extends Model
     protected $fillable = [
         'penyewa_id',
         'fasilitas_id',
-        'nomor_kamar',
+        'nomor_lapangan',
         'allocated_rooms',
         'tgl_mulai',
         'tgl_selesai',
@@ -27,7 +27,7 @@ class Booking extends Model
         'expired_at'        => 'datetime',
         'checkin_at'        => 'datetime',
         'allocated_rooms'   => 'array',
-        'nomor_kamar'       => 'array',
+        'nomor_lapangan'       => 'array',
         'selected_packages' => 'array',
         'tgl_mulai'         => 'date',
         'tgl_selesai'       => 'date',

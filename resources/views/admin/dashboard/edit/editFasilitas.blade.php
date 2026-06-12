@@ -385,7 +385,7 @@
                                     :disabled="jumlahLapangan <= 1"
                                     :aria-label="'Kurangi ' + (tipe === 'lapangan' ? 'lapangan' : 'kolam')">−</button>
                                 <input type="number"
-                                    name="jumlah_kamar"
+                                    name="jumlah_lapangan"
                                     x-model.number="jumlahLapangan"
                                     min="1" max="999"
                                     class="kamar-stepper-input"
@@ -690,10 +690,10 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('facilityEditor', () => ({
                 tipe: '{{ $fasilitas->tipe ?? 'lapangan' }}',
-                jumlahLapangan: {{ $fasilitas->jumlah_kamar ?? 1 }},
+                jumlahLapangan: {{ $fasilitas->jumlah_lapangan ?? 1 }},
                 rooms: @json($rooms),
                 currentRoomIndex: 0,
-                allSame: {{ $fasilitas->jumlah_kamar <= 1 ? 'true' : ($fasilitas->all_same ? 'true' : 'false') }},
+                allSame: {{ $fasilitas->jumlah_lapangan <= 1 ? 'true' : ($fasilitas->all_same ? 'true' : 'false') }},
                 customRoomType: '',
                 showCustomRoomInput: false,
 
@@ -732,8 +732,8 @@
                         if (!r.foto) {
                             r.foto = [];
                         }
-                        if (!r.nomor_kamar) {
-                            r.nomor_kamar = [];
+                        if (!r.nomor_lapangan) {
+                            r.nomor_lapangan = [];
                         }
 
                         if (typeof r.tipe === 'string') {
@@ -812,7 +812,7 @@
                     return {
                         tipe: [],
                         jumlah: 1,
-                        nomor_kamar: [],
+                        nomor_lapangan: [],
                         kode_blok: '',
                         foto: [],
                         fotoPreviews: [null, null, null],
@@ -837,7 +837,7 @@
                             ...src,
                             tipe: [...(src.tipe || [])],
                             foto: [...(src.foto || [])],
-                            nomor_kamar: [...(src.nomor_kamar || [])],
+                            nomor_lapangan: [...(src.nomor_lapangan || [])],
                             fotoPreviews: [...(src.fotoPreviews || [null, null, null])],
                             fasilitas: { ...(src.fasilitas || {}) },
                         };

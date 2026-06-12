@@ -54,8 +54,8 @@
         /* ── Status Colors (Mirrored from Admin) ── */
         /* ── Status Colors (Unified Status) ── */
         .status-ready       { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; } /* GREEN */
-        .status-pending     { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; } /* YELLOW (Pending) */
-        .status-booked      { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; } /* BLUE (Booked) */
+        .status-pending     { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; } /* YELLOW */
+        .status-booked      { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; } /* BLUE */
         .status-blocked     { background: #1e293b; color: #f1f5f9; border: 1px solid #0f172a; } /* BLACK */
         .status-maintenance { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; } /* RED */
         .status-past        { background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; } /* GREY */
@@ -168,7 +168,7 @@
                             <div class="w-4 h-4 rounded-full bg-blue-400 border border-blue-300 shadow-[0_0_10px_rgba(96,165,250,0.3)]"></div>
                             <div class="flex flex-col">
                                 <span class="text-[11px] font-black text-blue-50 uppercase tracking-widest">Sudah Terbooking</span>
-                                <span class="text-[9px] text-white/40 font-medium italic">Jadwal telah dikonfirmasi dan tidak tersedia.</span>
+                                <span class="text-[9px] text-white/40 font-medium italic">Semua unit sudah terisi pada tanggal ini.</span>
                             </div>
                         </div>
                         <div class="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
@@ -409,22 +409,34 @@
                         return { statusClass: 'status-past', tooltip: 'Tanggal Terlewati' };
                     }
 
+                    // Prioritaskan blokir/maintenance (tidak terpengaruh kapasitas)
                     for (const ev of this.events) {
-                        const start = new Date(ev.tgl_mulai); start.setHours(0,0,0,0);
-                        const end   = new Date(ev.tgl_selesai); end.setHours(23,59,59,999);
-                        
-                        if (date >= start && date <= end) {
-                            if (ev.color === 'yellow') {
-                                return { statusClass: 'status-pending', tooltip: 'Pending Konfirmasi' };
+                        if (ev.type === 'blokir') {
+                            const start = new Date(ev.tgl_mulai); start.setHours(0,0,0,0);
+                            const end   = new Date(ev.tgl_selesai); end.setHours(23,59,59,999);
+                            if (date >= start && date <= end) {
+                                if (ev.color === 'black') {
+                                    return { statusClass: 'status-blocked', tooltip: 'Diblokir / Locked' };
+                                }
+                                if (ev.color === 'red') {
+                                    return { statusClass: 'status-maintenance', tooltip: 'Maintenance: ' + (ev.reason || 'Perbaikan') };
+                                }
                             }
-                            if (ev.color === 'blue') {
-                                return { statusClass: 'status-booked', tooltip: 'Sudah Terbooking' };
-                            }
-                            if (ev.color === 'black') {
-                                return { statusClass: 'status-blocked', tooltip: 'Diblokir / Locked' };
-                            }
-                            if (ev.color === 'red') {
-                                return { statusClass: 'status-maintenance', tooltip: 'Maintenance: ' + (ev.reason || 'Perbaikan') };
+                        }
+                    }
+
+                    // Booking events individual
+                    for (const ev of this.events) {
+                        if (ev.type === 'booking') {
+                            const start = new Date(ev.tgl_mulai); start.setHours(0,0,0,0);
+                            const end   = new Date(ev.tgl_selesai); end.setHours(23,59,59,999);
+                            if (date >= start && date <= end) {
+                                if (ev.color === 'yellow') {
+                                    return { statusClass: 'status-pending', tooltip: 'Pending Konfirmasi' };
+                                }
+                                if (ev.color === 'blue') {
+                                    return { statusClass: 'status-booked', tooltip: 'Sudah Terbooking' };
+                                }
                             }
                         }
                     }

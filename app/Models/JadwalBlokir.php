@@ -19,14 +19,14 @@ class JadwalBlokir extends Model
         'durasi',
         'catatan',
         'tujuan',
-        'nomor_kamar',
+        'nomor_lapangan',
         'created_by',
     ];
 
     protected $casts = [
         'tgl_mulai'   => 'date',
         'tgl_selesai' => 'date',
-        'nomor_kamar' => 'array',
+        'nomor_lapangan' => 'array',
     ];
 
     public function fasilitas()

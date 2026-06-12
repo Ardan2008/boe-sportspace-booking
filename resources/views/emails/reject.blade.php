@@ -53,11 +53,11 @@
                                     <td style="font-size:14px;color:#555;padding:5px 0;">Tanggal Selesai</td>
                                     <td style="font-size:14px;color:#333;font-weight:700;padding:5px 0;">{{ \Carbon\Carbon::parse($booking->tgl_selesai)->format('d F Y') }}</td>
                                 </tr>
-                                @if($booking->nomor_kamar)
+                                @if($booking->nomor_lapangan)
                                 <tr>
                                     <td style="font-size:14px;color:#555;padding:5px 0;">Nomor Lapangan</td>
                                     <td style="font-size:14px;color:#333;font-weight:700;padding:5px 0;">
-                                        {{ is_array($booking->nomor_kamar) ? implode(', ', $booking->nomor_kamar) : $booking->nomor_kamar }}
+                                        {{ is_array($booking->nomor_lapangan) ? implode(', ', $booking->nomor_lapangan) : $booking->nomor_lapangan }}
                                     </td>
                                 </tr>
                                 @endif

@@ -73,7 +73,7 @@
                 if (!data || !Array.isArray(data)) return [];
                 const list = [];
                 data.forEach(rt => {
-                    const rooms = Array.isArray(rt.nomor_kamar) ? rt.nomor_kamar : [];
+                    const rooms = Array.isArray(rt.nomor_lapangan) ? rt.nomor_lapangan : [];
                     rooms.forEach(nr => {
                         const tipeLabel = Array.isArray(rt.tipe) ? rt.tipe.join(', ') : (rt.tipe || 'Tipe');
                         list.push({ room: nr, type: tipeLabel, blok: rt.kode_blok || '' });
@@ -128,7 +128,7 @@
                     tujuan: this.maintData.reason
                 };
                 if (!this.selectAllRooms && this.selectedRooms.length > 0) {
-                    body.nomor_kamar = this.selectedRooms;
+                    body.nomor_lapangan = this.selectedRooms;
                 }
                 Swal.fire({
                     title: 'Memproses...',

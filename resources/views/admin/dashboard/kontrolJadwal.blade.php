@@ -522,17 +522,37 @@
         // Check past
         if (date < today) return { statusClass: 'status-past', tooltipText: 'Tanggal Lewat', eventData: null };
 
-        // Find matching event
+        // Separate events by type
+        let blokirEvent = null;
+        let bookingEvents = [];
+
         for (const ev of calendarEvents) {
             const start = new Date(ev.tgl_mulai); start.setHours(0,0,0,0);
             const end   = new Date(ev.tgl_selesai); end.setHours(23,59,59,999);
-            if (date >= start && date <= end) {
-                if (ev.color === 'yellow')   return { statusClass: 'status-pending',     tooltipText: '🕐 Pending — ' + ev.nama,   eventData: ev };
-                if (ev.color === 'blue')     return { statusClass: 'status-booked',      tooltipText: '✅ Booked — ' + ev.nama,    eventData: ev };
-                if (ev.color === 'purple')   return { statusClass: 'status-booked',      tooltipText: '🏠 Booked — ' + ev.nama,    eventData: ev };
-                if (ev.color === 'black')    return { statusClass: 'status-blocked',     tooltipText: '🔒 Blocked',               eventData: ev };
-                if (ev.color === 'red')      return { statusClass: 'status-maintenance', tooltipText: '🔧 Maintenance',               eventData: ev };
+            if (!(date >= start && date <= end)) continue;
+
+            if (ev.type === 'blokir') {
+                blokirEvent = ev;
+            } else if (ev.type === 'booking') {
+                bookingEvents.push(ev);
             }
+        }
+
+        // Priority 1: Blokir / Maintenance — always shown regardless of capacity
+        if (blokirEvent) {
+            const isBlack = blokirEvent.color === 'black';
+            return {
+                statusClass: isBlack ? 'status-blocked' : 'status-maintenance',
+                tooltipText: isBlack ? '🔒 Blocked' : '🔧 Maintenance',
+                eventData: blokirEvent
+            };
+        }
+
+        // Priority 2: Individual booking events
+        for (const ev of bookingEvents) {
+            if (ev.color === 'yellow')   return { statusClass: 'status-pending',     tooltipText: '🕐 Pending — ' + ev.nama,   eventData: ev };
+            if (ev.color === 'blue')     return { statusClass: 'status-booked',      tooltipText: '✅ Booked — ' + ev.nama,    eventData: ev };
+            if (ev.color === 'purple')   return { statusClass: 'status-booked',      tooltipText: '🏠 Booked — ' + ev.nama,    eventData: ev };
         }
 
         return { statusClass: 'status-ready', tooltipText: 'Klik untuk blokir', eventData: null };

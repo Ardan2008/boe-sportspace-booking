@@ -29,10 +29,10 @@ class HomeController extends Controller
             $totalKamar = 0;
             if (is_array($item->paket_harian)) {
                 foreach ($item->paket_harian as $rt) {
-                    $totalKamar += count($rt['nomor_kamar'] ?? []);
+                    $totalKamar += count($rt['nomor_lapangan'] ?? []);
                 }
             }
-            if ($totalKamar === 0) $totalKamar = $item->jumlah_kamar ?? 0;
+            if ($totalKamar === 0) $totalKamar = $item->jumlah_lapangan ?? 0;
 
             // Hitung jumlah kamar yang sedang dibooking hari ini
             $activeBookings = Booking::where('fasilitas_id', $item->id)
@@ -65,7 +65,7 @@ class HomeController extends Controller
             $blockedRooms = [];
             $fullMaintenance = false;
             foreach ($activeMaintenance as $m) {
-                $rooms = $m->nomor_kamar;
+                $rooms = $m->nomor_lapangan;
                 if (empty($rooms)) {
                     $fullMaintenance = true;
                     break;

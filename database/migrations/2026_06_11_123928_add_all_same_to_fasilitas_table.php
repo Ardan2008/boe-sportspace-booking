@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('fasilitas', function (Blueprint $table) {
-            $table->boolean('all_same')->default(false)->after('jumlah_kamar');
+            $table->boolean('all_same')->default(false)->after('jumlah_lapangan');
         });
     }
 

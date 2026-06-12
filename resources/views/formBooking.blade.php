@@ -921,6 +921,7 @@ document.addEventListener('alpine:init', () => {
             this.$watch('selectedFacilityId', () => { this.fetchCalendarData(); });
             this.$watch('selectedDate', () => { this.availabilityFetched = false; this.fetchRoomAvailability(); });
             this.$watch('duration', () => { this.fetchRoomAvailability(); });
+            this.$watch('startHour', () => { this.availabilityFetched = false; this.fetchRoomAvailability(); });
             this.$watch('step', val => {
                 if (val === 3) {
                     if (this.step4Provinces.length === 0) this.s4LoadProvinces();
@@ -966,7 +967,7 @@ document.addEventListener('alpine:init', () => {
         get maxRoomsFromFacility() {
             const f = this.currentFacility;
             if (!f || f.tipe !== 'lapangan') return 999;
-            return f.jumlah_kamar || 999;
+            return f.jumlah_lapangan || 999;
         },
 
         get totalDays() {
@@ -1090,8 +1091,18 @@ document.addEventListener('alpine:init', () => {
             // 2. Date selection
             if (!this.selectedDate) { ok = false; }
             if (this.selectedDate && this.hasConflictInRange) { ok = false; }
-            if (!this.selectedDate) { ok = false; }
-            if (this.selectedDate && this.hasConflictInRange) { ok = false; }
+
+            // 3. Check room availability for lapangan multi-room with harian
+            if (this.isLapanganHarian && this.maxStock === 0 && this.availabilityFetched) {
+                this.step2Errors.duration = true;
+                Swal.fire({
+                    title: 'Lapangan Penuh',
+                    text: 'Semua lapangan sudah terbooking di jam ' + this.formattedStartTime + '-' + this.formattedEndTime + ':00 pada tanggal ini. Silakan pilih jam atau tanggal yang berbeda.',
+                    icon: 'warning',
+                    confirmButtonColor: '#1265A8'
+                });
+                ok = false;
+            }
 
             if (!ok) return;
             this.step++;
@@ -1205,13 +1216,15 @@ document.addEventListener('alpine:init', () => {
                     fasilitas_id: this.selectedFacilityId,
                     check_in_date: this.formatDateLocal(this.selectedDate),
                     check_out_date: this.formatDateLocal(this.endDate),
+                    start_hour: this.isLapanganHarian ? this.startHour : '',
+                    duration: this.isLapanganHarian ? parseInt(this.duration || 1) : '',
                 });
                 const res = await fetch('/api/check-room-availability?' + params.toString());
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
                 if (data.success) {
-                    this.maxStock = data.total_kamar_tersedia || 0;
-                    this.availableRooms = data.nomor_kamar_tersedia || [];
+                    this.maxStock = data.total_lapangan_tersedia || 0;
+                    this.availableRooms = data.nomor_lapangan_tersedia || [];
                     this.availabilityFetched = true;
                 } else {
                     this.availableRooms = [];
@@ -1236,14 +1249,24 @@ document.addEventListener('alpine:init', () => {
                 const sd = jsDay === 0 ? 7 : jsDay;
                 if (!this.selectedDays.includes(sd)) return 'closed';
             }
+            // Cek blokir/maintenance dulu (tertinggi)
             for (const ev of this.calendarEvents) {
+                if (ev.type !== 'blokir' && ev.type !== 'booking') continue;
+                const s = new Date(ev.tgl_mulai); s.setHours(0,0,0,0);
+                const e = new Date(ev.tgl_selesai); e.setHours(0,0,0,0);
+                if (d >= s && d <= e) {
+                    if (ev.color === 'black')  return 'blocked';
+                    if (ev.color === 'red')    return 'maintenance';
+                }
+            }
+            // Booking events individual
+            for (const ev of this.calendarEvents) {
+                if (ev.type !== 'booking') continue;
                 const s = new Date(ev.tgl_mulai); s.setHours(0,0,0,0);
                 const e = new Date(ev.tgl_selesai); e.setHours(0,0,0,0);
                 if (d >= s && d <= e) {
                     if (ev.color === 'yellow') return 'pending';
                     if (ev.color === 'blue')   return 'booked';
-                    if (ev.color === 'black')  return 'blocked';
-                    if (ev.color === 'red')    return 'maintenance';
                 }
             }
             return 'ready';
@@ -1252,11 +1275,12 @@ document.addEventListener('alpine:init', () => {
         getDayInfo(date) {
             if (!date) return '';
             const d = new Date(date); d.setHours(0,0,0,0);
+            // Booking individual / blokir
             for (const ev of this.calendarEvents) {
                 const s = new Date(ev.tgl_mulai); s.setHours(0,0,0,0);
                 const e = new Date(ev.tgl_selesai); e.setHours(0,0,0,0);
                 if (d >= s && d <= e) {
-                    if (ev.status === 'maintenance') return 'Perbaikan: ' + (ev.reason || 'Maintenance');
+                    if (ev.color === 'red') return 'Perbaikan: ' + (ev.reason || 'Maintenance');
                     return ev.status.toUpperCase();
                 }
             }

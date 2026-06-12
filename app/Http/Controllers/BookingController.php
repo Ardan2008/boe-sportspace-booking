@@ -116,14 +116,14 @@ class BookingController extends Controller
         $allRoomNumbers = [];
         if ($fasilitas->paket_harian) {
             foreach ($fasilitas->paket_harian as $item) {
-                $rooms = $item['nomor_kamar'] ?? [];
+                $rooms = $item['nomor_lapangan'] ?? [];
                 foreach ($rooms as $r) {
                     $allRoomNumbers[] = $r;
                 }
             }
         }
         $allRoomNumbers = array_unique($allRoomNumbers);
-        $totalKamar = count($allRoomNumbers) > 0 ? count($allRoomNumbers) : ($fasilitas->jumlah_kamar ?: 1);
+        $totalKamar = count($allRoomNumbers) > 0 ? count($allRoomNumbers) : ($fasilitas->jumlah_lapangan ?: 1);
         $isMultipleSameSpec = ($fasilitas->tipe === 'lapangan' && $fasilitas->all_same && $totalKamar > 1);
 
         foreach ($existingBookings as $eb) {
@@ -180,15 +180,21 @@ class BookingController extends Controller
 
         if (!empty($allRoomNumbers)) {
             $alreadyAllocated = $overlappingBookings->flatMap(fn ($b) => $b->allocated_rooms ?? [])->unique()->values()->toArray();
-            $maintenanceRooms = $blockedRecords->flatMap(fn ($m) => $m->nomor_kamar ?? [])->unique()->values()->toArray();
+            // Booking tanpa allocated_rooms tetap dihitung sebagai placeholder
+            $placeholderCount = $overlappingBookings->sum(function ($b) {
+                return empty($b->allocated_rooms) ? (int) ($b->selected_packages['rooms'] ?? 1) : 0;
+            });
+            $maintenanceRooms = $blockedRecords->flatMap(fn ($m) => $m->nomor_lapangan ?? [])->unique()->values()->toArray();
             
-            $hasFullMaintenance = $blockedRecords->whereNull('nomor_kamar')->isNotEmpty();
+            $hasFullMaintenance = $blockedRecords->whereNull('nomor_lapangan')->isNotEmpty();
             
             if ($hasFullMaintenance) {
                 $isBlocked = true;
             } else {
                 $excluded = array_unique(array_merge($alreadyAllocated, $maintenanceRooms));
                 $available = array_values(array_diff($allRoomNumbers, $excluded));
+                // Kurangi dengan placeholder (booking tanpa allocated_rooms tertentu)
+                $effectiveAvailable = count($available) - $placeholderCount;
 
                 if (!empty($frontendAllocated) && is_array($frontendAllocated)) {
                     $requestedRooms = array_slice($frontendAllocated, 0, $roomsNeeded);
@@ -199,19 +205,19 @@ class BookingController extends Controller
                         $allocatedRooms = $requestedRooms;
                     }
                 } else {
-                    if (count($available) < $roomsNeeded) {
+                    if ($effectiveAvailable < $roomsNeeded) {
                         $isOverlapping = true;
                     } else {
-                        $allocatedRooms = array_slice($available, 0, $roomsNeeded);
+                        $allocatedRooms = array_slice($available, $placeholderCount, $roomsNeeded);
                     }
                 }
             }
         } else {
             foreach ($blockedRecords as $br) {
-                if (empty($br->nomor_kamar)) { $isBlocked = true; break; }
+                if (empty($br->nomor_lapangan)) { $isBlocked = true; break; }
             }
             
-            $totalKapasitas = $fasilitas->jumlah_kamar ?: 1;
+            $totalKapasitas = $fasilitas->jumlah_lapangan ?: 1;
             $totalDipakai = $overlappingBookings->sum(function($b) {
                 return (int) ($b->selected_packages['rooms'] ?? count($b->allocated_rooms ?: [1]));
             });
@@ -261,7 +267,7 @@ class BookingController extends Controller
         $booking = \App\Models\Booking::create([
             'penyewa_id'       => $penyewa->id,
             'fasilitas_id'     => $request->fasilitas_id,
-            'nomor_kamar'      => !empty($allocatedRooms) ? $allocatedRooms : null,
+            'nomor_lapangan'      => !empty($allocatedRooms) ? $allocatedRooms : null,
             'allocated_rooms'  => !empty($allocatedRooms) ? $allocatedRooms : null,
             'tgl_mulai'        => $request->tgl_mulai,
             'tgl_selesai'      => $tgl_selesai,
@@ -297,7 +303,7 @@ class BookingController extends Controller
 
             $allRoomNumbers = [];
             foreach (($fasilitas->paket_harian ?: []) as $item) {
-                $rooms = $item['nomor_kamar'] ?? [];
+                $rooms = $item['nomor_lapangan'] ?? [];
                 foreach ($rooms as $r) {
                     $allRoomNumbers[] = $r;
                 }
@@ -325,7 +331,7 @@ class BookingController extends Controller
 
                 if (!empty($allocated)) {
                     $updateData['allocated_rooms'] = $allocated;
-                    $updateData['nomor_kamar']     = $allocated;
+                    $updateData['nomor_lapangan']     = $allocated;
                 }
             }
         }
@@ -455,13 +461,13 @@ class BookingController extends Controller
                 $allSame        = (bool) ($booking->fasilitas->all_same ?? false);
 
                 if (!empty($allocatedRooms) && !$allSame) {
-                    // Filter hanya rooms yang nomor_kamarnya bersinggungan dengan allocated_rooms
+                    // Filter hanya rooms yang nomor_lapangannya bersinggungan dengan allocated_rooms
                     $rooms_data = array_values(array_filter($allRooms, function ($room) use ($allocatedRooms) {
-                        $nomorKamar = $room['nomor_kamar'] ?? [];
+                        $nomorKamar = $room['nomor_lapangan'] ?? [];
                         if (empty($nomorKamar)) return false;
                         return count(array_intersect((array)$nomorKamar, (array)$allocatedRooms)) > 0;
                     }));
-                    // Kalau tidak ada yang match (nomor_kamar belum diisi), fallback semua
+                    // Kalau tidak ada yang match (nomor_lapangan belum diisi), fallback semua
                     if (empty($rooms_data)) {
                         $rooms_data = $allRooms;
                     }
@@ -505,9 +511,9 @@ class BookingController extends Controller
                 'total' => 'Rp ' . number_format($booking->total_harga, 0, ',', '.'),
                 'details' => $booking->selected_packages ?? [],
                 'rooms_data' => $rooms_data,
-                'nomor_kamar' => is_array($booking->nomor_kamar)
-                    ? implode(', ', $booking->nomor_kamar)
-                    : ($booking->nomor_kamar ?? '-'),
+                'nomor_lapangan' => is_array($booking->nomor_lapangan)
+                    ? implode(', ', $booking->nomor_lapangan)
+                    : ($booking->nomor_lapangan ?? '-'),
                 'allocated_rooms' => $booking->allocated_rooms ?? [],
                 'created_at' => $booking->created_at ? $booking->created_at->format('d F Y, H:i') . ' WIB' : '-',
                 'checkin_at' => $booking->checkin_at ? $booking->checkin_at->format('d F Y, H:i') . ' WIB' : null,

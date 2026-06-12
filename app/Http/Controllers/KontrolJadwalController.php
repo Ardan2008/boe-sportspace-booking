@@ -47,7 +47,24 @@ class KontrolJadwalController extends Controller
 
         $events = [];
 
-        // ── 1. Booking events (Pending = Kuning, Booked = Biru, Occupied = Ungu) ──
+        $fasilitas = Fasilitas::find($fasilitasId);
+        $isMultipleSameSpec = false;
+        $allRoomNumbers = [];
+        $totalKamar = 1;
+        if ($fasilitas) {
+            $paket = $fasilitas->paket_harian ?: [];
+            foreach ($paket as $item) {
+                $rooms = $item['nomor_lapangan'] ?? [];
+                foreach ($rooms as $r) {
+                    $allRoomNumbers[] = $r;
+                }
+            }
+            $allRoomNumbers = array_unique($allRoomNumbers);
+            $totalKamar = count($allRoomNumbers) > 0 ? count($allRoomNumbers) : ($fasilitas->jumlah_lapangan ?: 1);
+            $isMultipleSameSpec = ($fasilitas->tipe === 'lapangan' && $fasilitas->all_same && $totalKamar > 1);
+        }
+
+        // ── 1. Booking events (Pending = Kuning, Booked = Biru) ──
         $bookings = Booking::with(['penyewa', 'fasilitas'])
             ->where('fasilitas_id', $fasilitasId)
             ->whereIn('status', ['pending', 'confirmed', 'booked'])
@@ -61,6 +78,7 @@ class KontrolJadwalController extends Controller
             })
             ->get();
 
+        // Booking events (all facility types, including multi-room same-spec)
         foreach ($bookings as $b) {
             $color = 'blue';
             if ($b->status === 'pending') {
@@ -77,7 +95,6 @@ class KontrolJadwalController extends Controller
                 'color'        => $color,
                 'tgl_mulai'    => $b->tgl_mulai,
                 'tgl_selesai'  => $b->tgl_selesai,
-                // detail data
                 'booking_id'   => '#BOE-' . str_pad($b->id, 4, '0', STR_PAD_LEFT),
                 'id'           => $b->id,
                 'nama'         => $b->penyewa->nama ?? '-',
@@ -91,7 +108,7 @@ class KontrolJadwalController extends Controller
             ];
         }
 
-        // ── 2. JadwalBlokir events (Blocked = Hitam, Maintenance = Oranye) ──
+        // ── 2. JadwalBlokir events (Blocked = Hitam, Maintenance = Merah) ──
         $blokirs = JadwalBlokir::where('fasilitas_id', $fasilitasId)
             ->where(function ($q) use ($start, $end) {
                 $q->whereBetween('tgl_mulai', [$start, $end])
@@ -141,23 +158,19 @@ class KontrolJadwalController extends Controller
         $fasilitas = Fasilitas::find($fasilitasId);
         $isMultipleSameSpec = false;
         if ($fasilitas) {
-            $allRoomNumbers = [];
             $paket = $fasilitas->paket_harian ?: [];
+            $allRoomNumbers = [];
             foreach ($paket as $item) {
-                $rooms = $item['nomor_kamar'] ?? [];
-                foreach ($rooms as $r) {
+                foreach (($item['nomor_lapangan'] ?? []) as $r) {
                     $allRoomNumbers[] = $r;
                 }
             }
             $allRoomNumbers = array_unique($allRoomNumbers);
-            $totalKamar = count($allRoomNumbers) > 0 ? count($allRoomNumbers) : ($fasilitas->jumlah_kamar ?: 1);
+            $totalKamar = count($allRoomNumbers) > 0 ? count($allRoomNumbers) : ($fasilitas->jumlah_lapangan ?: 1);
             $isMultipleSameSpec = ($fasilitas->tipe === 'lapangan' && $fasilitas->all_same && $totalKamar > 1);
         }
 
-        // 1. Booking events (Sanitized)
-        // Hanya tampilkan event booking di kalender publik jika BUKAN multiple-same-spec lapangan.
-        // Jika multiple-same-spec, biarkan kalender tetap hijau (Ready) agar user bisa memilih jam.
-        if (!$isMultipleSameSpec) {
+        // 1. Booking events (Sanitized) — only for single-room / different-spec
         $bookings = Booking::where('fasilitas_id', $fasilitasId)
             ->whereIn('status', ['pending', 'confirmed', 'booked'])
             ->where(function ($q) use ($start, $end) {
@@ -168,27 +181,29 @@ class KontrolJadwalController extends Controller
                          ->where('tgl_selesai', '>=', $end);
                   });
             })
-            ->select('id', 'fasilitas_id', 'tgl_mulai', 'tgl_selesai', 'status', 'expired_at')
+            ->select('id', 'fasilitas_id', 'tgl_mulai', 'tgl_selesai', 'status', 'expired_at', 'allocated_rooms')
             ->get();
 
-        foreach ($bookings as $b) {
-            $color = 'blue';
-            if ($b->status === 'pending') {
-                $color = 'yellow';
-            } elseif ($b->status === 'confirmed' && $b->expired_at && $b->expired_at->isFuture()) {
-                $color = 'yellow';
-            } elseif ($b->status === 'booked') {
+        if (!$isMultipleSameSpec) {
+            // Single-room / different-spec: tampilkan event booking individual
+            foreach ($bookings as $b) {
                 $color = 'blue';
-            }
+                if ($b->status === 'pending') {
+                    $color = 'yellow';
+                } elseif ($b->status === 'confirmed' && $b->expired_at && $b->expired_at->isFuture()) {
+                    $color = 'yellow';
+                } elseif ($b->status === 'booked') {
+                    $color = 'blue';
+                }
 
-            $events[] = [
-                'type'        => 'booking',
-                'status'      => $b->status,
-                'color'       => $color,
-                'tgl_mulai'   => $b->tgl_mulai,
-                'tgl_selesai' => $b->tgl_selesai,
-            ];
-        }
+                $events[] = [
+                    'type'        => 'booking',
+                    'status'      => $b->status,
+                    'color'       => $color,
+                    'tgl_mulai'   => $b->tgl_mulai,
+                    'tgl_selesai' => $b->tgl_selesai,
+                ];
+            }
         }
 
         // 2. JadwalBlokir events (Sanitized)
