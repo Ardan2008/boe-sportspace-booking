@@ -109,6 +109,14 @@
                 <h3 class="font-bold text-slate-700 text-sm">Menunggu Verifikasi Admin</h3>
             </div>
 
+            @php
+                $showLapanganCol = $pendingBookings->contains(function ($b) {
+                    $tipe = $b->fasilitas?->tipe ?? 'kolam_renang';
+                    $fasAllSame = (bool) ($b->fasilitas?->all_same ?? true);
+                    $fasJumlah = (int) ($b->fasilitas?->jumlah_kamar ?? 1);
+                    return $tipe === 'lapangan' && $fasJumlah > 1 && !$fasAllSame;
+                });
+            @endphp
             <div class="overflow-x-auto scrollbar-hide">
                 <table class="w-full border-collapse min-w-[1200px]">
                     <thead>
@@ -116,7 +124,9 @@
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-24">ID</th>
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-52">Pemesan</th>
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-56">Fasilitas &amp; Paket</th>
+                            @if($showLapanganCol)
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-56">Lapangan</th>
+                            @endif
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black w-36">Tagihan</th>
                             <th class="p-5 text-center text-[10px] uppercase tracking-wider text-slate-400 font-black w-20">KTP</th>
                             <th class="p-5 text-left text-[10px] uppercase tracking-wider text-slate-400 font-black">Aksi</th>
@@ -245,6 +255,7 @@
                             </td>
 
                             {{-- TIPE LAPANGAN — hanya untuk >1 lapangan beda spesifikasi --}}
+                            @if($showLapanganCol)
                             <td class="p-5">
                                 @if($showTipeCol)
                                     @if(!empty($allocatedNamas))
@@ -263,6 +274,7 @@
                                     <span class="text-[11px] text-slate-400 font-semibold">-</span>
                                 @endif
                             </td>
+                            @endif
 
                             {{-- TAGIHAN --}}
                             <td class="p-5">
@@ -331,7 +343,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="p-16 text-center">
+                            <td colspan="{{ $showLapanganCol ? 7 : 6 }}" class="p-16 text-center">
                                 <div class="flex flex-col items-center justify-center text-slate-300">
                                     <svg class="w-14 h-14 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -892,12 +904,12 @@
                                 x-text="detailPayload.package"></span>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <span class="block text-[10px] uppercase text-slate-400 font-bold mb-1">Tgl Check-In</span>
+                            <span class="block text-[10px] uppercase text-slate-400 font-bold mb-1">Tgl & Waktu Check-In</span>
                             <span class="font-bold text-slate-700 text-sm"
                                 x-text="formatDate(detailPayload.tgl_mulai)"></span>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <span class="block text-[10px] uppercase text-slate-400 font-bold mb-1">Tgl Check-Out</span>
+                            <span class="block text-[10px] uppercase text-slate-400 font-bold mb-1">Tgl & Waktu Check-Out</span>
                             <span class="font-bold text-slate-700 text-sm"
                                 x-text="formatDate(detailPayload.tgl_selesai)"></span>
                         </div>
@@ -1067,9 +1079,12 @@
         // ── Helpers ───────────────────────────────────────────────────────────────
         function formatDate(dateStr) {
             if (!dateStr) return '-';
-            return new Date(dateStr).toLocaleDateString('id-ID', {
+            const parts = dateStr.split(' ');
+            const date = new Date(parts[0] + 'T00:00:00');
+            const locale = date.toLocaleDateString('id-ID', {
                 day: 'numeric', month: 'long', year: 'numeric'
             });
+            return parts[1] ? locale + ' (' + parts[1] + ')' : locale;
         }
 
         function openDetailModal(id, dataPayload) {

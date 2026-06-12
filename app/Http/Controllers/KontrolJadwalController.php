@@ -138,7 +138,26 @@ class KontrolJadwalController extends Controller
 
         $events = [];
 
+        $fasilitas = Fasilitas::find($fasilitasId);
+        $isMultipleSameSpec = false;
+        if ($fasilitas) {
+            $allRoomNumbers = [];
+            $paket = $fasilitas->paket_harian ?: [];
+            foreach ($paket as $item) {
+                $rooms = $item['nomor_kamar'] ?? [];
+                foreach ($rooms as $r) {
+                    $allRoomNumbers[] = $r;
+                }
+            }
+            $allRoomNumbers = array_unique($allRoomNumbers);
+            $totalKamar = count($allRoomNumbers) > 0 ? count($allRoomNumbers) : ($fasilitas->jumlah_kamar ?: 1);
+            $isMultipleSameSpec = ($fasilitas->tipe === 'lapangan' && $fasilitas->all_same && $totalKamar > 1);
+        }
+
         // 1. Booking events (Sanitized)
+        // Hanya tampilkan event booking di kalender publik jika BUKAN multiple-same-spec lapangan.
+        // Jika multiple-same-spec, biarkan kalender tetap hijau (Ready) agar user bisa memilih jam.
+        if (!$isMultipleSameSpec) {
         $bookings = Booking::where('fasilitas_id', $fasilitasId)
             ->whereIn('status', ['pending', 'confirmed', 'booked'])
             ->where(function ($q) use ($start, $end) {
@@ -169,6 +188,7 @@ class KontrolJadwalController extends Controller
                 'tgl_mulai'   => $b->tgl_mulai,
                 'tgl_selesai' => $b->tgl_selesai,
             ];
+        }
         }
 
         // 2. JadwalBlokir events (Sanitized)
@@ -300,7 +320,7 @@ class KontrolJadwalController extends Controller
     // ─────────────────────────────────────────
     // DESTROY — Release a blokir record
     // ─────────────────────────────────────────
-    public function destroyBlokir($id)
+    public function destroyBlokir(string $id)
     {
         $blokir = JadwalBlokir::with('fasilitas')->findOrFail($id);
         $fasilitasNama = $blokir->fasilitas->nama ?? '-';
@@ -324,7 +344,7 @@ class KontrolJadwalController extends Controller
     // ─────────────────────────────────────────
     // DOWNLOAD receipt PDF for a booking
     // ─────────────────────────────────────────
-    public function downloadReceipt($id)
+    public function downloadReceipt(string $id)
     {
         $booking = Booking::with(['penyewa', 'fasilitas'])->findOrFail($id);
         $pdf = Pdf::loadView('pdf.receipt', compact('booking'));

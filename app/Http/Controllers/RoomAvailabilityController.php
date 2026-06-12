@@ -38,6 +38,15 @@ class RoomAvailabilityController extends Controller
             ->where('tgl_selesai', '>=', $checkIn)
             ->whereNotNull('allocated_rooms')
             ->get()
+            ->filter(function ($b) use ($fasilitas, $allRoomNumbers) {
+                $totalKamar = count($allRoomNumbers) > 0 ? count($allRoomNumbers) : ($fasilitas->jumlah_kamar ?: 1);
+                $isMultipleSameSpec = ($fasilitas->tipe === 'lapangan' && $fasilitas->all_same && $totalKamar > 1);
+                
+                if ($isMultipleSameSpec && $b->package_type === 'harian') {
+                    return false;
+                }
+                return true;
+            })
             ->flatMap(fn ($b) => $b->allocated_rooms ?? [])
             ->unique()
             ->values()

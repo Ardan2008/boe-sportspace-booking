@@ -624,10 +624,13 @@
         }
 
         function formatDate(dateStr) {
-            if(!dateStr) return '-';
-            const date = new Date(dateStr);
-            const options = { day: 'numeric', month: 'long', year: 'numeric' };
-            return date.toLocaleDateString('id-ID', options);
+            if (!dateStr) return '-';
+            const parts = dateStr.split(' ');
+            const date = new Date(parts[0] + 'T00:00:00');
+            const locale = date.toLocaleDateString('id-ID', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            });
+            return parts[1] ? locale + ' (' + parts[1] + ')' : locale;
         }
 
         function openDetailModal(id, dataPayload) {

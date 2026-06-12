@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Mail\ApproveBookingMail;
 use App\Mail\RejectBookingMail;
 use App\Models\AuditLog;
+use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
 {
@@ -91,8 +92,11 @@ class BookingController extends Controller
             $tgl_selesai = \Carbon\Carbon::parse($tgl_mulai)->addYears($duration)->subDay()->format('Y-m-d');
         }
 
-        // --- VALIDASI OVERLAP (per selected day) ---
+        // --- VALIDASI OVERLAP & ALOKASI KAMAR ---
         $isOverlapping = false;
+        $allocatedRooms = [];
+        $roomsNeeded = (int) $request->rooms_count;
+
         $existingBookings = \App\Models\Booking::where('fasilitas_id', $request->fasilitas_id)
             ->whereIn('status', ['pending', 'confirmed', 'booked'])
             ->where(function ($q) use ($tgl_mulai, $tgl_selesai) {
@@ -107,6 +111,20 @@ class BookingController extends Controller
 
         $startDate = \Carbon\Carbon::parse($tgl_mulai);
         $endDate = \Carbon\Carbon::parse($tgl_selesai);
+        $overlappingBookings = collect();
+
+        $allRoomNumbers = [];
+        if ($fasilitas->paket_harian) {
+            foreach ($fasilitas->paket_harian as $item) {
+                $rooms = $item['nomor_kamar'] ?? [];
+                foreach ($rooms as $r) {
+                    $allRoomNumbers[] = $r;
+                }
+            }
+        }
+        $allRoomNumbers = array_unique($allRoomNumbers);
+        $totalKamar = count($allRoomNumbers) > 0 ? count($allRoomNumbers) : ($fasilitas->jumlah_kamar ?: 1);
+        $isMultipleSameSpec = ($fasilitas->tipe === 'lapangan' && $fasilitas->all_same && $totalKamar > 1);
 
         foreach ($existingBookings as $eb) {
             $ebDays = $eb->selected_days
@@ -117,17 +135,35 @@ class BookingController extends Controller
 
             $check = $startDate->copy()->max($ebStart);
             $overlapEnd = $endDate->copy()->min($ebEnd);
-
+            
+            $dayOverlap = false;
             while ($check <= $overlapEnd) {
-                if (in_array($check->dayOfWeekIso(), $selectedDays)
-                    && in_array($check->dayOfWeekIso(), $ebDays)) {
-                    $isOverlapping = true;
-                    break 2;
+                if (in_array($check->isoWeekday(), $selectedDays) && in_array($check->isoWeekday(), $ebDays)) {
+                    $dayOverlap = true;
+                    break;
                 }
                 $check->addDay();
             }
+
+            if ($dayOverlap) {
+                // Untuk Lapangan Harian vs Harian, cek jam HANYA JIKA > 1 lapangan dan spesifikasi sama
+                if ($isMultipleSameSpec && $request->package_type === 'harian' && $eb->package_type === 'harian') {
+                    $reqStartH = (int) $request->start_hour;
+                    $reqEndH = $reqStartH + $duration;
+                    
+                    $ebStartH = (int) ($eb->selected_packages['start_hour'] ?? 0);
+                    $ebEndH = $ebStartH + (int) ($eb->selected_packages['duration'] ?? 1);
+                    
+                    // Kalau rentang jam tidak bersinggungan, skip
+                    if ($reqEndH <= $ebStartH || $reqStartH >= $ebEndH) {
+                        continue;
+                    }
+                }
+                $overlappingBookings->push($eb);
+            }
         }
 
+        // --- CEK JADWAL BLOKIR / MAINTENANCE ---
         $blockedRecords = \App\Models\JadwalBlokir::where('fasilitas_id', $request->fasilitas_id)
             ->where(function ($q) use ($tgl_mulai, $tgl_selesai) {
                 $q->whereBetween('tgl_mulai', [$tgl_mulai, $tgl_selesai])
@@ -140,29 +176,55 @@ class BookingController extends Controller
             ->get();
 
         $isBlocked = false;
-        $requestedRooms = $request->input('allocated_rooms', []);
-        foreach ($blockedRecords as $br) {
-            $brRooms = $br->nomor_kamar;
-            if (empty($brRooms)) {
+        $frontendAllocated = $request->input('allocated_rooms', []);
+
+        if (!empty($allRoomNumbers)) {
+            $alreadyAllocated = $overlappingBookings->flatMap(fn ($b) => $b->allocated_rooms ?? [])->unique()->values()->toArray();
+            $maintenanceRooms = $blockedRecords->flatMap(fn ($m) => $m->nomor_kamar ?? [])->unique()->values()->toArray();
+            
+            $hasFullMaintenance = $blockedRecords->whereNull('nomor_kamar')->isNotEmpty();
+            
+            if ($hasFullMaintenance) {
                 $isBlocked = true;
-                break;
-            }
-            if (!empty($requestedRooms)) {
-                $conflict = array_intersect($brRooms, $requestedRooms);
-                if (!empty($conflict)) {
-                    $isBlocked = true;
-                    break;
-                }
             } else {
-                $isBlocked = true;
-                break;
+                $excluded = array_unique(array_merge($alreadyAllocated, $maintenanceRooms));
+                $available = array_values(array_diff($allRoomNumbers, $excluded));
+
+                if (!empty($frontendAllocated) && is_array($frontendAllocated)) {
+                    $requestedRooms = array_slice($frontendAllocated, 0, $roomsNeeded);
+                    $conflict = array_intersect($requestedRooms, $excluded);
+                    if (!empty($conflict) || count($requestedRooms) < $roomsNeeded) {
+                        $isOverlapping = true;
+                    } else {
+                        $allocatedRooms = $requestedRooms;
+                    }
+                } else {
+                    if (count($available) < $roomsNeeded) {
+                        $isOverlapping = true;
+                    } else {
+                        $allocatedRooms = array_slice($available, 0, $roomsNeeded);
+                    }
+                }
+            }
+        } else {
+            foreach ($blockedRecords as $br) {
+                if (empty($br->nomor_kamar)) { $isBlocked = true; break; }
+            }
+            
+            $totalKapasitas = $fasilitas->jumlah_kamar ?: 1;
+            $totalDipakai = $overlappingBookings->sum(function($b) {
+                return (int) ($b->selected_packages['rooms'] ?? count($b->allocated_rooms ?: [1]));
+            });
+            
+            if (($totalDipakai + $roomsNeeded) > $totalKapasitas) {
+                $isOverlapping = true;
             }
         }
 
         if ($isOverlapping || $isBlocked) {
             return response()->json([
                 'success' => false,
-                'message' => 'Maaf, rentang tanggal yang Anda pilih sudah tidak tersedia atau telah digunakan oleh pemesan lain.'
+                'message' => 'Maaf, lapangan pada tanggal dan jam yang Anda pilih sudah terisi penuh. Silakan pilih jam atau tanggal yang berbeda.'
             ], 422);
         }
 
@@ -183,41 +245,6 @@ class BookingController extends Controller
                         'message' => $result['message']
                     ], 422);
                 }
-            }
-        }
-
-        // --- AUTO-ALLOCATE ROOMS at submission time ---
-        $allocatedRooms = [];
-        $frontendAllocated = $request->input('allocated_rooms', []);
-
-        if (!empty($frontendAllocated) && is_array($frontendAllocated)) {
-            $roomsNeeded    = (int) $request->rooms_count;
-            $allocatedRooms = array_slice($frontendAllocated, 0, $roomsNeeded);
-        } elseif ($fasilitas->paket_harian) {
-            $allRoomNumbers = [];
-            foreach ($fasilitas->paket_harian as $item) {
-                $rooms = $item['nomor_kamar'] ?? [];
-                foreach ($rooms as $r) {
-                    $allRoomNumbers[] = $r;
-                }
-            }
-            $allRoomNumbers = array_unique($allRoomNumbers);
-
-            if (!empty($allRoomNumbers)) {
-                $alreadyAllocated = \App\Models\Booking::where('fasilitas_id', $request->fasilitas_id)
-                    ->whereIn('status', ['pending', 'confirmed', 'booked'])
-                    ->where('tgl_mulai', '<', $tgl_selesai)
-                    ->where('tgl_selesai', '>', $tgl_mulai)
-                    ->whereNotNull('allocated_rooms')
-                    ->get()
-                    ->flatMap(fn ($b) => $b->allocated_rooms ?? [])
-                    ->unique()
-                    ->values()
-                    ->toArray();
-
-                $available      = array_values(array_diff($allRoomNumbers, $alreadyAllocated));
-                $roomsNeeded    = (int) $request->rooms_count;
-                $allocatedRooms = array_slice($available, 0, $roomsNeeded);
             }
         }
 
@@ -259,7 +286,7 @@ class BookingController extends Controller
     }
 
 
-    public function approve($id)
+    public function approve(string $id)
     {
         $booking = \App\Models\Booking::with(['penyewa', 'fasilitas'])->findOrFail($id);
 
@@ -322,7 +349,7 @@ class BookingController extends Controller
             try {
                 Mail::to($penyewaEmail)->send(new ApproveBookingMail($booking, $actionDate));
             } catch (\Exception $e) {
-                \Log::error("Failed to send approval email for booking #{$id}: " . $e->getMessage());
+                Log::error("Failed to send approval email for booking #{$id}: " . $e->getMessage());
             }
         }
 
@@ -350,7 +377,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function reject(Request $request, $id)
+    public function reject(Request $request, string $id)
     {
         $request->validate([
             'reason' => 'required|string|max:500'
@@ -372,7 +399,7 @@ class BookingController extends Controller
             try {
                 Mail::to($penyewaEmail)->send(new RejectBookingMail($booking, $request->reason, $actionDate));
             } catch (\Exception $e) {
-                \Log::error("Failed to send rejection email for booking #{$id}: " . $e->getMessage());
+                Log::error("Failed to send rejection email for booking #{$id}: " . $e->getMessage());
             }
         }
 
@@ -397,7 +424,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function publicReceipt($id)
+    public function publicReceipt(string $id)
     {
         // Public method to stream the receipt for sharing via WA link
         $booking = \App\Models\Booking::with(['penyewa', 'fasilitas'])->findOrFail($id);
@@ -411,7 +438,7 @@ class BookingController extends Controller
         return $pdf->stream('Kwitansi_BOE_' . $booking->id . '.pdf');
     }
 
-    public function show($id)
+    public function show(string $id)
     {
         try {
             $booking = \App\Models\Booking::with(['penyewa', 'fasilitas'])->findOrFail($id);
@@ -444,6 +471,22 @@ class BookingController extends Controller
                 }
             }
 
+            $startHour = (int) ($booking->selected_packages['start_hour'] ?? 0);
+            $duration = (int) ($booking->selected_packages['duration'] ?? 1);
+            $endHour = $startHour + $duration;
+
+            $tglMulaiFormatted = $booking->tgl_mulai
+                ? \Carbon\Carbon::parse($booking->tgl_mulai)->format('Y-m-d')
+                : null;
+            $tglSelesaiFormatted = $booking->tgl_selesai
+                ? \Carbon\Carbon::parse($booking->tgl_selesai)->format('Y-m-d')
+                : null;
+
+            if ($booking->package_type === 'harian' && $startHour > 0) {
+                $tglMulaiFormatted .= sprintf(' %02d.00', $startHour);
+                $tglSelesaiFormatted .= sprintf(' %02d.00', $endHour);
+            }
+
             return response()->json([
                 'success' => true,
                 'id_raw' => $booking->id,
@@ -453,8 +496,8 @@ class BookingController extends Controller
                 'whatsapp' => $booking->penyewa?->whatsapp ?? '-',
                 'provinsi' => $booking->penyewa?->provinsi ?? 'Belum Diatur',
                 'kabupaten' => $booking->penyewa?->kabupaten ?? 'Belum Diatur',
-                'tgl_mulai' => $booking->tgl_mulai ? \Carbon\Carbon::parse($booking->tgl_mulai)->format('Y-m-d') : null,
-                'tgl_selesai' => $booking->tgl_selesai ? \Carbon\Carbon::parse($booking->tgl_selesai)->format('Y-m-d') : null,
+                'tgl_mulai' => $tglMulaiFormatted,
+                'tgl_selesai' => $tglSelesaiFormatted,
                 'fasilitas' => $booking->fasilitas?->nama ?? 'Fasilitas Hilang',
                 'fasilitas_tipe' => $booking->fasilitas?->tipe ?? '-',
                 'package' => $booking->package_type,
@@ -503,7 +546,7 @@ class BookingController extends Controller
         return view('admin.dashboard.managementBooking', compact('pendingBookings', 'confirmedBookings', 'bookedBookings'));
     }
 
-    public function cancel($id)
+    public function cancel(string $id)
     {
         $booking = \App\Models\Booking::with('penyewa')->findOrFail($id);
         
@@ -539,7 +582,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function extend($id)
+    public function extend(string $id)
     {
         $booking = \App\Models\Booking::with('penyewa')->findOrFail($id);
         
@@ -572,7 +615,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function checkIn($id)
+    public function checkIn(string $id)
     {
         $booking = \App\Models\Booking::with(['penyewa', 'fasilitas'])->findOrFail($id);
         
@@ -594,7 +637,7 @@ class BookingController extends Controller
         return response()->json(['success' => true, 'message' => 'Check-In berhasil! Status beralih ke Booked.']);
     }
 
-    public function checkOut($id)
+    public function checkOut(string $id)
     {
         $booking = \App\Models\Booking::with(['penyewa', 'fasilitas'])->findOrFail($id);
         
@@ -613,7 +656,7 @@ class BookingController extends Controller
         return response()->json(['success' => true, 'message' => 'Check-Out berhasil! Data telah diarsipkan ke Riwayat.']);
     }
 
-    public function extendStay(Request $request, $id)
+    public function extendStay(Request $request, string $id)
     {
         $booking = \App\Models\Booking::with(['penyewa', 'fasilitas'])->findOrFail($id);
         
