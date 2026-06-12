@@ -188,6 +188,8 @@ class FasilitasController extends Controller
 
         $data['paket_harian'] = $paket_harian;
 
+        \Log::info('[UPDATE] foto data final: ' . json_encode(array_map(fn($r) => $r['foto'] ?? [], $paket_harian)));
+
         if ($request->hasFile('image')) {
             $oldPath = public_path('storage/fasilitas/' . $fasilitas->image);
             if (File::exists($oldPath)) File::delete($oldPath);
@@ -238,6 +240,7 @@ class FasilitasController extends Controller
         $paketHarian = $fasilitas->paket_harian;
         if (is_array($paketHarian) && !empty($paketHarian)) {
             $rooms = $paketHarian;
+            \Log::info('[EDIT] foto data from DB: ' . json_encode(array_map(fn($r) => $r['foto'] ?? [], $rooms)));
             // Ensure nomor_lapangan and temp_input exist on each room
             foreach ($rooms as &$room) {
                 if (!isset($room['nomor_lapangan'])) $room['nomor_lapangan'] = [];
@@ -351,6 +354,24 @@ class FasilitasController extends Controller
             $paket_harian = $request->paket_harian ? json_decode($request->paket_harian, true) : [];
             if (!is_array($paket_harian)) $paket_harian = [];
 
+            \Log::info('[STORE] paket_harian from request count: ' . count($paket_harian));
+            \Log::info('[STORE] hasFile room_fotos: ' . ($request->hasFile('room_fotos') ? 'yes' : 'no'));
+            \Log::info('[STORE] _FILES keys: ' . json_encode(array_keys($_FILES ?? [])));
+            \Log::info('[STORE] _FILES room_fotos: ' . json_encode(isset($_FILES['room_fotos']) ? 'SET' : 'NOT SET'));
+            if (isset($_FILES['room_fotos'])) {
+                \Log::info('[STORE] _FILES room_fotos structure: ' . json_encode([
+                    'name' => $_FILES['room_fotos']['name'] ?? null,
+                    'tmp_name' => $_FILES['room_fotos']['tmp_name'] ?? null,
+                    'error' => $_FILES['room_fotos']['error'] ?? null,
+                ]));
+            }
+            if ($request->hasFile('room_fotos')) {
+                foreach ($request->file('room_fotos') as $ri => $files) {
+                    $count = is_array($files) ? count($files) : 1;
+                    \Log::info("[STORE] room_fotos[$ri]: $count files received");
+                }
+            }
+
             // Handle Room Photos — merge uploaded files into each room's foto array
             if ($request->hasFile('room_fotos')) {
                 $roomFotosRaw = $request->file('room_fotos');
@@ -369,6 +390,8 @@ class FasilitasController extends Controller
                     $paket_harian[$roomIdx]['foto'] = array_values(array_filter($fotos));
                 }
             }
+
+            \Log::info('[STORE] foto data after merge: ' . json_encode(array_map(fn($r) => $r['foto'] ?? [], $paket_harian)));
 
             if (!empty($paket_harian[0]['foto']) && count($paket_harian) > 1) {
                 $anyOtherHasFotos = false;

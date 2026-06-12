@@ -696,19 +696,7 @@
                                 {{-- Tipe — hanya muncul jika lebih dari 1 dan spesifikasi beda --}}
                                 <div x-show="jumlahLapangan > 1 && !allSame">
                                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2" x-text="tipe === 'lapangan' ? 'Tipe Lapangan' : 'Tipe Kolam'"></label>
-                                    <div class="flex flex-col gap-2">
-                                        <div class="flex flex-wrap gap-1.5" x-show="rooms[rIdx].tipe.length">
-                                            <template x-for="(tag, tIdx) in rooms[rIdx].tipe" :key="tIdx">
-                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 group/tag">
-                                                    <span x-text="tag"></span>
-                                                    <button type="button" @click="removeTipeTag(rooms[rIdx], tIdx)" class="text-red-300 hover:text-red-600 opacity-0 group-hover/tag:opacity-100 transition-opacity">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                    </button>
-                                                </span>
-                                            </template>
-                                        </div>
-                                        <input type="text" @keydown.enter.prevent="addTipeTag(rooms[rIdx], $event)" @input.stop placeholder="Ketik lalu Enter..." class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] transition-all">
-                                    </div>
+                                    <input type="text" x-model="rooms[rIdx].tipe" placeholder="Tipe..." class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] transition-all">
                                 </div>
 
                                 {{-- Ukuran --}}
@@ -883,19 +871,7 @@
                                 {{-- Tipe — hanya muncul jika lebih dari 1 dan spesifikasi beda --}}
                                 <div x-show="jumlahLapangan > 1 && !allSame">
                                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2" x-text="tipe === 'lapangan' ? 'Tipe Lapangan' : 'Tipe Kolam'"></label>
-                                    <div class="flex flex-col gap-2">
-                                        <div class="flex flex-wrap gap-1.5" x-show="rooms[rIdx].tipe.length">
-                                            <template x-for="(tag, tIdx) in rooms[rIdx].tipe" :key="tIdx">
-                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 group/tag">
-                                                    <span x-text="tag"></span>
-                                                    <button type="button" @click="removeTipeTag(rooms[rIdx], tIdx)" class="text-red-300 hover:text-red-600 opacity-0 group-hover/tag:opacity-100 transition-opacity">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                    </button>
-                                                </span>
-                                            </template>
-                                        </div>
-                                        <input type="text" @keydown.enter.prevent="addTipeTag(rooms[rIdx], $event)" @input.stop placeholder="Ketik lalu Enter..." class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] transition-all">
-                                    </div>
+                                    <input type="text" x-model="rooms[rIdx].tipe" placeholder="Tipe..." class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] transition-all">
                                 </div>
 
                                 {{-- Ukuran --}}
@@ -1703,7 +1679,7 @@
                 const fas = {};
                 fasKeys.forEach(f => { fas[f.key] = 0; });
                 return {
-                    tipe: [], jumlah: 1, kode_blok: '', foto: [], fotoPreviews: [null, null, null],
+                    tipe: '', jumlah: 1, kode_blok: '', foto: [], fotoPreviews: [null, null, null],
                     harga_harian: '', harga_mingguan: '', harga_bulanan: '', harga_tahunan: '',
                     keunggulan: '', panjang: '', lebar: '', newFasilitasLabel: '',
                     fasilitas: fas, fasilitasKeys: [...fasKeys],
@@ -1768,7 +1744,7 @@
                 for (let i = 1; i < this.rooms.length; i++) {
                     this.rooms[i] = {
                         ...src,
-                        tipe: [...(src.tipe || [])],
+                        tipe: src.tipe || '',
                         foto: [...(src.foto || [])],
                         nomor_lapangan: [...(src.nomor_lapangan || [])],
                         fotoPreviews: [...(src.fotoPreviews || [null, null, null])],
@@ -1787,7 +1763,6 @@
                     rest.harga_mingguan = rest.harga_mingguan !== '' && rest.harga_mingguan != null ? Number(rest.harga_mingguan) : 0;
                     rest.harga_bulanan  = rest.harga_bulanan  !== '' && rest.harga_bulanan  != null ? Number(rest.harga_bulanan)  : 0;
                     rest.harga_tahunan  = rest.harga_tahunan  !== '' && rest.harga_tahunan  != null ? Number(rest.harga_tahunan)  : 0;
-                    if (!Array.isArray(rest.tipe)) rest.tipe = rest.tipe ? [rest.tipe] : [];
                     return rest;
                 });
                 const el = document.getElementById('paketHarianInput');
@@ -1806,22 +1781,6 @@
                 if (this.currentRoomIndex < this.rooms.length - 1) {
                     this.currentRoomIndex++;
                 }
-            },
-
-            addTipeTag(room, event) {
-                const val = event.target.value.trim();
-                if (!val) return;
-                if (!Array.isArray(room.tipe)) room.tipe = [];
-                if (!room.tipe.includes(val)) {
-                    room.tipe.push(val);
-                    this.syncPaketHarian();
-                }
-                event.target.value = '';
-            },
-            removeTipeTag(room, idx) {
-                if (!Array.isArray(room.tipe)) return;
-                room.tipe.splice(idx, 1);
-                this.syncPaketHarian();
             },
 
             handleRoomFoto(event, roomIndex, fotoIndex) {
@@ -1850,13 +1809,11 @@
                 reader.onload = (e) => {
                     const room = this.rooms[roomIndex];
                     if (!room) return;
-                    const previews = Array.isArray(room.fotoPreviews)
-                        ? [...room.fotoPreviews]
-                        : [null, null, null];
-                    while (previews.length < 3) previews.push(null);
-                    previews[fotoIndex] = e.target.result;
-                    this.rooms[roomIndex] = { ...this.rooms[roomIndex], fotoPreviews: previews };
-                    this.syncPaketHarian();
+                    if (!room.fotoPreviews) {
+                        room.fotoPreviews = [null, null, null];
+                    }
+                    while (room.fotoPreviews.length < 3) room.fotoPreviews.push(null);
+                    room.fotoPreviews[fotoIndex] = e.target.result;
                 };
                 reader.readAsDataURL(file);
             },

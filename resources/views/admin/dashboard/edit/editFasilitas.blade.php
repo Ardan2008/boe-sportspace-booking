@@ -517,24 +517,12 @@
                                         x-transition:enter="transition ease-out duration-300"
                                         x-transition:enter-start="opacity-0 translate-x-8"
                                         x-transition:enter-end="opacity-100 translate-x-0"
-                                        :data-room-index="ri"
+                                         :data-room-index="ri"
                                          class="bg-white rounded-2xl border border-slate-200/80 p-5" @change="syncPaketHarian()" @input="syncPaketHarian()">
 
                                         <div x-show="jumlahLapangan > 1 && !allSame">
                                             <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5" x-text="tipe === 'lapangan' ? 'Tipe Lapangan' : 'Tipe Kolam'"></label>
-                                            <div class="flex flex-col gap-2">
-                                                <div class="flex flex-wrap gap-1.5" x-show="rooms[ri].tipe.length">
-                                                    <template x-for="(tag, tIdx) in rooms[ri].tipe" :key="tIdx">
-                                                        <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 group/tag">
-                                                            <span x-text="tag"></span>
-                                                            <button type="button" @click="removeTipeTag(rooms[ri], tIdx)" class="text-red-300 hover:text-red-600 opacity-0 group-hover/tag:opacity-100 transition-opacity">
-                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                            </button>
-                                                        </span>
-                                                    </template>
-                                                </div>
-                                                <input type="text" @keydown.enter.prevent="addTipeTag(rooms[ri], $event)" @input.stop placeholder="Ketik lalu Enter..." class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] transition-all">
-                                            </div>
+                                            <input type="text" x-model="rooms[ri].tipe" placeholder="Tipe..." class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] transition-all">
                                         </div>
 
                                         <div>
@@ -737,7 +725,7 @@
                         }
 
                         if (typeof r.tipe === 'string') {
-                            r.tipe = r.tipe ? [r.tipe] : [];
+                            r.tipe = r.tipe || '';
                         }
                         if (r.keunggulan === undefined) {
                             r.keunggulan = '';
@@ -810,7 +798,7 @@
                     const fas = {};
                     fasKeys.forEach(f => { fas[f.key] = 0; });
                     return {
-                        tipe: [],
+                        tipe: '',
                         jumlah: 1,
                         nomor_lapangan: [],
                         kode_blok: '',
@@ -835,7 +823,7 @@
                     for (let i = 1; i < this.rooms.length; i++) {
                         this.rooms[i] = {
                             ...src,
-                            tipe: [...(src.tipe || [])],
+                            tipe: src.tipe || '',
                             foto: [...(src.foto || [])],
                             nomor_lapangan: [...(src.nomor_lapangan || [])],
                             fotoPreviews: [...(src.fotoPreviews || [null, null, null])],
@@ -898,22 +886,6 @@
                 adjustKamar(delta) {
                     const next = Math.min(999, Math.max(1, this.jumlahLapangan + delta));
                     this.jumlahLapangan = next;
-                },
-
-                addTipeTag(room, event) {
-                    const val = event.target.value.trim();
-                    if (!val) return;
-                    if (!Array.isArray(room.tipe)) room.tipe = [];
-                    if (!room.tipe.includes(val)) {
-                        room.tipe.push(val);
-                        this.syncPaketHarian();
-                    }
-                    event.target.value = '';
-                },
-                removeTipeTag(room, idx) {
-                    if (!Array.isArray(room.tipe)) return;
-                    room.tipe.splice(idx, 1);
-                    this.syncPaketHarian();
                 },
 
                 nextRoom() {
@@ -991,13 +963,11 @@
                     reader.onload = (e) => {
                         const room = this.rooms[roomIndex];
                         if (!room) return;
-                        const previews = Array.isArray(room.fotoPreviews)
-                            ? [...room.fotoPreviews]
-                            : [null, null, null];
-                        while (previews.length < 3) previews.push(null);
-                        previews[fotoIndex] = e.target.result;
-                        this.rooms[roomIndex] = { ...this.rooms[roomIndex], fotoPreviews: previews };
-                        this.syncPaketHarian();
+                        if (!room.fotoPreviews) {
+                            room.fotoPreviews = [null, null, null];
+                        }
+                        while (room.fotoPreviews.length < 3) room.fotoPreviews.push(null);
+                        room.fotoPreviews[fotoIndex] = e.target.result;
                     };
                     reader.readAsDataURL(file);
                 },
