@@ -9,8 +9,9 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <style>
+        [x-cloak] { display: none !important; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; overflow-x: hidden; }
 
         /* ── Calendar Grid ── */
@@ -60,33 +61,6 @@
         }
         .cal-day:hover .status-tooltip { opacity: 1; }
 
-        /* ── Modals ── */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(15,23,42,.55);
-            backdrop-filter: blur(5px); z-index: 100;
-            display: flex; align-items: flex-end; justify-content: center;
-            opacity: 0; pointer-events: none;
-            transition: opacity .3s;
-        }
-        @media (min-width: 640px) {
-            .modal-overlay { align-items: center; }
-        }
-        .modal-overlay.open { opacity: 1; pointer-events: all; }
-
-        .modal-box {
-            background: #fff; border-radius: 28px 28px 0 0; width: 100%; max-width: 480px;
-            padding: 28px 24px 32px;
-            transform: translateY(60px); transition: transform .35s cubic-bezier(.4,0,.2,1);
-            max-height: 90vh; overflow-y: auto;
-        }
-        @media (min-width: 640px) {
-            .modal-box { border-radius: 28px; transform: scale(.92) translateY(0); max-height: 85vh; }
-        }
-        .modal-overlay.open .modal-box { transform: translateY(0); }
-        @media (min-width: 640px) {
-            .modal-overlay.open .modal-box { transform: scale(1) translateY(0); }
-        }
-
         /* ── Legend dots ── */
         .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 
@@ -96,15 +70,6 @@
             border-radius: 999px; font-size: 10px; font-weight: 800;
             text-transform: uppercase; letter-spacing: .06em;
         }
-
-        /* ── Input style ── */
-        .form-input {
-            width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px;
-            padding: 10px 14px; font-size: 13px; font-family: inherit;
-            transition: border-color .2s, box-shadow .2s; outline: none;
-            background: #f8fafc;
-        }
-        .form-input:focus { border-color: #1265A8; box-shadow: 0 0 0 3px rgba(18,101,168,.12); }
 
         /* ── Quick Block Bubble ── */
         .quick-block-bubble {
@@ -136,7 +101,11 @@
 <body class="flex min-h-screen">
     @include('admin.dashboard.layouts.sidebar')
 
-    <main class="flex-1 w-full md:ml-64 p-4 md:p-8 transition-all duration-500 min-h-screen">
+    <main class="flex-1 w-full md:ml-64 p-4 md:p-10 transition-all duration-500 min-h-screen"
+        x-data="{
+            showModalDetail: false,
+            showModalBlocked: false
+        }">
 
         {{-- ═══ HEADER ═══ --}}
         @include('admin.dashboard.layouts.header', [
@@ -186,7 +155,7 @@
         </div>
 
         {{-- ═══ CALENDAR CARD ═══ --}}
-        <div class="bg-white rounded-[1.8rem] border border-slate-100 shadow-sm p-4 md:p-6 mb-6">
+        <div class="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm p-4 md:p-6 mb-6">
             {{-- Day-of-week headers --}}
             <div class="grid grid-cols-7 gap-1 mb-2">
                 @foreach(['Min','Sen','Sel','Rab','Kam','Jum','Sab'] as $d)
@@ -212,100 +181,18 @@
     </main>
 
     {{-- ══════════════════════════════════════════════
-         MODAL 1: Quick Block (Ready → Blocked/Maintenance)
+         MODAL: Booking Detail (Pending / Booked)
     ══════════════════════════════════════════════ --}}
-    <div id="modalBlock" class="modal-overlay" onclick="closeModal('modalBlock', event)">
-        <div class="modal-box" onclick="event.stopPropagation()">
-            <div class="flex items-center justify-between mb-5">
-                <div>
-                    <h3 class="text-lg font-black text-slate-800">Quick Block</h3>
-                    <p id="blockDateLabel" class="text-xs text-slate-400 font-medium mt-0.5"></p>
-                </div>
-                <button onclick="closeModal('modalBlock')" class="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-
-            {{-- Tipe toggle --}}
-            <div class="flex gap-2 mb-5">
-                <button id="btnTypeBlocked" onclick="setBlockType('blocked')"
-                    class="flex-1 py-2.5 rounded-xl text-xs font-black border-2 transition-all border-slate-200 text-slate-500">
-                    🔒 Blocked (Internal)
-                </button>
-                <button id="btnTypeMaint" onclick="setBlockType('Maintenance')"
-                    class="flex-1 py-2.5 rounded-xl text-xs font-black border-2 transition-all border-slate-200 text-slate-500">
-                    🔧 Maintenance
-                </button>
-            </div>
-
-            <form id="formBlock" onsubmit="submitBlock(event)" class="space-y-3">
-                <input type="hidden" id="blockFasilitasId">
-                <input type="hidden" id="blockTglMulai">
-                <input type="hidden" id="blockTglSelesai">
-                <input type="hidden" id="blockTipe" value="blocked">
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-500 mb-1 block">Tanggal Mulai</label>
-                        <input type="date" id="blockTglMulaiInput" class="form-input" required onchange="syncBlockDates()">
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-500 mb-1 block">Tanggal Selesai</label>
-                        <input type="date" id="blockTglSelesaiInput" class="form-input" required onchange="syncBlockDates()">
-                    </div>
-                </div>
-
-                <div id="blockedExtraFields" class="space-y-3">
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-500 mb-1 block">Nama PIC *</label>
-                        <input type="text" id="blockNama" class="form-input" placeholder="Nama petugas internal">
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-500 mb-1 block">Divisi</label>
-                            <input type="text" id="blockDivisi" class="form-input" placeholder="Divisi/unit">
-                        </div>
-                        <div>
-                            <label class="text-[11px] font-bold text-slate-500 mb-1 block">WhatsApp</label>
-                            <input type="text" id="blockWA" class="form-input" placeholder="08xx">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-500 mb-1 block">Durasi (hari)</label>
-                        <input type="number" id="blockDurasi" class="form-input" placeholder="Otomatis terhitung" min="1" readonly>
-                    </div>
-                </div>
-
-                <div id="maintExtraFields" class="hidden space-y-3">
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-500 mb-1 block">Catatan Perbaikan</label>
-                        <textarea id="blockCatatan" class="form-input resize-none" rows="3" placeholder="Deskripsi kegiatan Maintenance..."></textarea>
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-500 mb-1 block">Penanggung Jawab</label>
-                        <input type="text" id="blockNamaMaint" class="form-input" placeholder="Nama PJ Maintenance">
-                    </div>
-                </div>
-
-                <button type="submit" id="btnSubmitBlock"
-                    class="w-full mt-2 py-3 rounded-2xl text-sm font-black bg-slate-900 text-white hover:bg-[#1265A8] transition-all active:scale-95 shadow-lg">
-                    Blokir Jadwal
-                </button>
-            </form>
-        </div>
-    </div>
-
-    {{-- ══════════════════════════════════════════════
-         MODAL 2: Booking Detail (Pending / Booked)
-    ══════════════════════════════════════════════ --}}
-    <div id="modalDetail" class="modal-overlay" onclick="closeModal('modalDetail', event)">
-        <div class="modal-box" onclick="event.stopPropagation()">
+    <div x-cloak x-show="showModalDetail" x-transition.opacity.duration.300ms
+        class="fixed inset-0 z-50 flex items-center sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
+        @click.self="showModalDetail = false">
+        <div class="bg-white rounded-[1.5rem] w-full max-w-md p-6 shadow-2xl" @click.stop>
             <div class="flex items-center justify-between mb-5">
                 <div>
                     <h3 class="text-lg font-black text-slate-800">Detail Penyewa</h3>
                     <p id="detailDateLabel" class="text-xs text-slate-400 font-medium mt-0.5"></p>
                 </div>
-                <button onclick="closeModal('modalDetail')" class="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all">
+                <button @click="showModalDetail = false" class="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -370,11 +257,13 @@
     {{-- ══════════════════════════════════════════════
          MODAL 3: Blocked Detail (Hapus / Info)
     ══════════════════════════════════════════════ --}}
-    <div id="modalBlocked" class="modal-overlay" onclick="closeModal('modalBlocked', event)">
-        <div class="modal-box" onclick="event.stopPropagation()">
+    <div x-cloak x-show="showModalBlocked" x-transition.opacity.duration.300ms
+        class="fixed inset-0 z-50 flex items-center sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
+        @click.self="showModalBlocked = false">
+        <div class="bg-white rounded-[1.5rem] w-full max-w-md p-6 shadow-2xl" @click.stop>
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-black text-slate-800" id="modalBlockedTitle">Detail Blokir</h3>
-                <button onclick="closeModal('modalBlocked')" class="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all">
+                <button @click="showModalBlocked = false" class="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -408,6 +297,7 @@
     // ════════════════════════════════════════════════════
     //  STATE
     // ════════════════════════════════════════════════════
+    const $alpine = () => document.querySelector('main').__x.$data;
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     let currentYear  = {{ now()->year }};
     let currentMonth = {{ now()->month }};
@@ -550,7 +440,7 @@
 
         // Priority 2: Individual booking events
         for (const ev of bookingEvents) {
-            if (ev.color === 'yellow')   return { statusClass: 'status-pending',     tooltipText: '🕐 Pending — ' + ev.nama,   eventData: ev };
+            if (ev.color === 'yellow')   return { statusClass: 'status-pending',     tooltipText: '🕐 Pending',              eventData: ev };
             if (ev.color === 'blue')     return { statusClass: 'status-booked',      tooltipText: '✅ Booked — ' + ev.nama,    eventData: ev };
             if (ev.color === 'purple')   return { statusClass: 'status-booked',      tooltipText: '🏠 Booked — ' + ev.nama,    eventData: ev };
         }
@@ -643,112 +533,6 @@
     }
 
     // ════════════════════════════════════════════════════
-    //  MODAL: QUICK BLOCK
-    // ════════════════════════════════════════════════════
-    function openBlockModal(dateStr) {
-        document.getElementById('blockDateLabel').textContent = 'Tanggal: ' + formatDateID(dateStr);
-        document.getElementById('blockTglMulai').value = dateStr;
-        document.getElementById('blockTglSelesai').value = dateStr;
-        document.getElementById('blockTglMulaiInput').value = dateStr;
-        document.getElementById('blockTglSelesaiInput').value = dateStr;
-        document.getElementById('blockTglMulaiInput').min = dateStr;
-        document.getElementById('blockTglSelesaiInput').min = dateStr;
-        document.getElementById('blockFasilitasId').value = currentFasilitasId;
-        document.getElementById('blockNama').value = '';
-        document.getElementById('blockDivisi').value = '';
-        document.getElementById('blockWA').value = '';
-        document.getElementById('blockCatatan').value = '';
-        document.getElementById('blockNamaMaint').value = '';
-        syncBlockDates();
-        setBlockType('blocked');
-        openModal('modalBlock');
-    }
-
-    function setBlockType(type) {
-        document.getElementById('blockTipe').value = type;
-        const btnB = document.getElementById('btnTypeBlocked');
-        const btnM = document.getElementById('btnTypeMaint');
-        const extraB = document.getElementById('blockedExtraFields');
-        const extraM = document.getElementById('maintExtraFields');
-
-        if (type === 'blocked') {
-            btnB.classList.replace('border-slate-200','border-slate-900');
-            btnB.classList.replace('text-slate-500','text-slate-900');
-            btnM.classList.remove('border-orange-500','text-orange-600');
-            btnM.classList.add('border-slate-200','text-slate-500');
-            extraB.classList.remove('hidden');
-            extraM.classList.add('hidden');
-            document.getElementById('btnSubmitBlock').textContent = '🔒 Blokir Jadwal';
-        } else {
-            btnM.classList.replace('border-slate-200','border-orange-500');
-            btnM.classList.replace('text-slate-500','text-orange-600');
-            btnB.classList.remove('border-slate-900','text-slate-900');
-            btnB.classList.add('border-slate-200','text-slate-500');
-            extraM.classList.remove('hidden');
-            extraB.classList.add('hidden');
-            document.getElementById('btnSubmitBlock').textContent = '🔧 Tandai Maintenance';
-        }
-    }
-
-    function syncBlockDates() {
-        const s = document.getElementById('blockTglMulaiInput').value;
-        const e = document.getElementById('blockTglSelesaiInput').value;
-        document.getElementById('blockTglMulai').value = s;
-        document.getElementById('blockTglSelesai').value = e;
-        if (s && e) {
-            const diff = Math.round((new Date(e) - new Date(s)) / 86400000) + 1;
-            document.getElementById('blockDurasi').value = diff > 0 ? diff : 1;
-        }
-    }
-
-    async function submitBlock(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btnSubmitBlock');
-        btn.disabled = true;
-        btn.innerHTML = '<svg class="btn-spin w-4 h-4 inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Menyimpan...';
-
-        const tipe = document.getElementById('blockTipe').value;
-        const payload = {
-            fasilitas_id : document.getElementById('blockFasilitasId').value,
-            tgl_mulai    : document.getElementById('blockTglMulai').value,
-            tgl_selesai  : document.getElementById('blockTglSelesai').value,
-            tipe         : tipe,
-            durasi       : document.getElementById('blockDurasi').value,
-        };
-
-        if (tipe === 'blocked') {
-            payload.nama_pic = document.getElementById('blockNama').value;
-            payload.divisi   = document.getElementById('blockDivisi').value;
-            payload.whatsapp = document.getElementById('blockWA').value;
-        } else {
-            payload.catatan  = document.getElementById('blockCatatan').value;
-            payload.nama_pic = document.getElementById('blockNamaMaint').value;
-        }
-
-        try {
-            const res = await fetch('/admin/jadwal/blokir', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-
-            if (data.success) {
-                closeModal('modalBlock');
-                Swal.fire({ title: 'Berhasil!', text: data.message, icon: 'success', timer: 1800, showConfirmButton: false, customClass: { popup: 'rounded-[1.5rem]' } })
-                    .then(() => renderCalendar());
-            } else {
-                Swal.fire('Gagal', data.message || 'Terjadi kesalahan.', 'error');
-            }
-        } catch(err) {
-            Swal.fire('Error', 'Koneksi bermasalah.', 'error');
-        }
-
-        btn.disabled = false;
-        btn.textContent = 'Blokir Jadwal';
-    }
-
-    // ════════════════════════════════════════════════════
     //  MODAL: BOOKING DETAIL
     // ════════════════════════════════════════════════════
     function openDetailModal(ev) {
@@ -780,7 +564,7 @@
         if (ev.status === 'pending') badge.className += 'bg-amber-50 text-amber-600 border-amber-200 animate-pulse';
         else badge.className += 'bg-blue-50 text-[#1265A8] border-blue-200';
 
-        openModal('modalDetail');
+        $alpine().showModalDetail = true;
     }
 
     // ════════════════════════════════════════════════════
@@ -801,7 +585,7 @@
         document.getElementById('blockedPIC').textContent = ev.nama_pic !== '-' ? ev.nama_pic + (ev.divisi !== '-' ? ' (' + ev.divisi + ')' : '') : ev.catatan;
         document.getElementById('blockedCreated').textContent = ev.created_at;
 
-        openModal('modalBlocked');
+        $alpine().showModalBlocked = true;
     }
 
     async function hapusBlokir() {
@@ -825,12 +609,12 @@
             });
             const data = await res.json();
             if (data.success) {
-                closeModal('modalBlocked');
+                $alpine().showModalBlocked = false;
                 Swal.fire({ title: 'Berhasil!', text: data.message, icon: 'success', timer: 1600, showConfirmButton: false, customClass: { popup: 'rounded-[1.5rem]' } })
                     .then(() => renderCalendar());
             }
         } catch(err) {
-            Swal.fire('Error', 'Koneksi bermasalah.', 'error');
+            Swal.fire({ title: 'Error', text: 'Koneksi bermasalah.', icon: 'error', customClass: { popup: 'rounded-[1.5rem]' } });
         }
     }
 
@@ -870,18 +654,7 @@
         `).join('');
     }
 
-    // ════════════════════════════════════════════════════
-    //  MODAL HELPERS
-    // ════════════════════════════════════════════════════
-    function openModal(id) {
-        document.getElementById(id).classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
-    function closeModal(id, event) {
-        if (event && event.target !== document.getElementById(id)) return;
-        document.getElementById(id).classList.remove('open');
-        document.body.style.overflow = '';
-    }
+
 
     // ════════════════════════════════════════════════════
     //  UTILS
