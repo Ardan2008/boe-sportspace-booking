@@ -978,17 +978,13 @@
                                         Tidak ada fasilitas khusus untuk lapangan ini
                                     </div>
 
-                                    {{-- Room photos --}}
-                                    <template x-if="room.foto && room.foto.filter(f => f).length">
+                                    {{-- Room photo --}}
+                                    <template x-if="room.foto && room.foto[0]">
                                         <div class="mt-3 pt-3 border-t border-slate-200">
                                             <span class="block text-[9px] uppercase text-slate-400 font-bold mb-2">Foto Tipe Lapangan</span>
-                                            <div class="flex flex-wrap gap-2">
-                                                <template x-for="(f, fi) in room.foto.filter(f => f)" :key="fi">
-                                                    <img :src="'/storage/fasilitas/rooms/' + f"
-                                                         class="w-20 h-16 object-cover rounded-lg border border-slate-200 hover:scale-105 transition-transform cursor-pointer shadow-sm"
-                                                         @click="window.open('/storage/fasilitas/rooms/' + f, '_blank')">
-                                                </template>
-                                            </div>
+                                            <img :src="'/storage/fasilitas/rooms/' + room.foto[0]"
+                                                 class="w-28 h-20 object-cover rounded-lg border border-slate-200 hover:scale-105 transition-transform cursor-pointer shadow-sm"
+                                                 @click="window.open('/storage/fasilitas/rooms/' + room.foto[0], '_blank')">
                                         </div>
                                     </template>
                                 </div>

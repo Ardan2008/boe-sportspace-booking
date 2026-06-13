@@ -543,25 +543,7 @@
                                             </div>
                                         </div>
 
-                                        <div x-show="jumlahLapangan > 1 && !allSame">
-                                            <div class="grid grid-cols-3 gap-3">
-                                                <template x-for="fi in [0, 1, 2]" :key="fi">
-                                                    <div class="relative overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#1265A8] transition-all duration-300 h-20 flex items-center justify-center group/foto cursor-pointer">
-                                                        <img :src="rooms[ri].fotoPreviews[fi]" class="absolute inset-0 w-full h-full object-cover z-10" x-show="rooms[ri].fotoPreviews[fi]">
-                                                        <div class="absolute inset-0 bg-black/30 opacity-0 group-hover/foto:opacity-100 transition-opacity z-20 flex items-center justify-center" x-show="rooms[ri].fotoPreviews[fi]">
-                                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                                        </div>
-                                                        <div class="relative z-20 flex flex-col items-center" x-show="!rooms[ri].fotoPreviews[fi]">
-                                                            <svg class="w-4 h-4 text-slate-300 group-hover/foto:text-[#1265A8] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                                                        </div>
-                                                        <input type="file" accept="image/*"
-                                                            :name="'room_fotos[' + ri + '][' + fi + ']'"
-                                                            class="absolute inset-0 opacity-0 cursor-pointer z-30"
-                                                            @change="handleRoomFoto($event, ri, fi)">
-                                                    </div>
-                                                </template>
-                                            </div>
-                                        </div>
+
 
                                         {{-- Fasilitas --}}
                                         <div x-show="jumlahLapangan > 1" class="space-y-3">
@@ -706,17 +688,6 @@
                     }
 
                     this.rooms.forEach(r => {
-                        // Hydrate fotoPreviews from saved DB foto paths
-                        if (!r.fotoPreviews) {
-                            r.fotoPreviews = [null, null, null];
-                        }
-                        if (Array.isArray(r.foto) && r.foto.length > 0) {
-                            r.foto.forEach((filename, fi) => {
-                                if (filename && !r.fotoPreviews[fi]) {
-                                    r.fotoPreviews[fi] = '/storage/fasilitas/rooms/' + filename;
-                                }
-                            });
-                        }
                         if (!r.foto) {
                             r.foto = [];
                         }
@@ -769,6 +740,7 @@
                         this.syncPaketHarian();
                     });
 
+
                     if (this.rooms.length > 0) {
                         this.syncPaketHarian();
                     }
@@ -803,7 +775,6 @@
                         nomor_lapangan: [],
                         kode_blok: '',
                         foto: [],
-                        fotoPreviews: [null, null, null],
                         harga_harian: index === 0 ? '{{ $fasilitas->harga }}' : '',
                         harga_mingguan: '',
                         harga_bulanan: index === 0 ? '{{ $fasilitas->harga_bulanan }}' : '',
@@ -826,7 +797,6 @@
                             tipe: src.tipe || '',
                             foto: [...(src.foto || [])],
                             nomor_lapangan: [...(src.nomor_lapangan || [])],
-                            fotoPreviews: [...(src.fotoPreviews || [null, null, null])],
                             fasilitas: { ...(src.fasilitas || {}) },
                         };
                     }
@@ -867,7 +837,7 @@
                         this.syncAllSame();
                     }
                     const payload = this.rooms.map(r => {
-                        const { fotoPreviews, fasilitasKeys, newFasilitasLabel, ...rest } = r;
+                        const { fasilitasKeys, newFasilitasLabel, ...rest } = r;
                         // Ensure prices are stored as numbers, not empty strings
                         rest.harga_harian   = rest.harga_harian   !== '' && rest.harga_harian   != null ? Number(rest.harga_harian)   : 0;
                         rest.harga_mingguan = rest.harga_mingguan !== '' && rest.harga_mingguan != null ? Number(rest.harga_mingguan) : 0;
@@ -937,40 +907,7 @@
                     reader.readAsDataURL(file);
                 },
 
-                handleRoomFoto(event, roomIndex, fotoIndex) {
-                    const file = event.target.files[0];
-                    if (!file) return;
 
-                    const MAX = 2 * 1024 * 1024;
-                    if (file.size > MAX) {
-                        Swal.fire({
-                            title: 'File Terlalu Besar',
-                            text: 'Foto lapangan maksimal 2 MB.',
-                            icon: 'warning',
-                            confirmButtonColor: '#1265A8',
-                            confirmButtonText: 'OK',
-                            customClass: { popup: 'rounded-[2.5rem] p-8' }
-                        });
-                        event.target.value = '';
-                        return;
-                    }
-
-                    if (!this._pendingFotos) this._pendingFotos = {};
-                    if (!this._pendingFotos[roomIndex]) this._pendingFotos[roomIndex] = {};
-                    this._pendingFotos[roomIndex][fotoIndex] = file;
-
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const room = this.rooms[roomIndex];
-                        if (!room) return;
-                        if (!room.fotoPreviews) {
-                            room.fotoPreviews = [null, null, null];
-                        }
-                        while (room.fotoPreviews.length < 3) room.fotoPreviews.push(null);
-                        room.fotoPreviews[fotoIndex] = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                },
 
                 confirmTypeChange(newType) {
                     if (this.tipe === newType) return;
@@ -1269,13 +1206,6 @@
                         overlay.classList.remove('hidden');
 
                         const formData = new FormData(form);
-
-                        const pending = window.__alpineRoot?._pendingFotos || {};
-                        Object.entries(pending).forEach(([rIdx, slots]) => {
-                            Object.entries(slots).forEach(([fIdx, file]) => {
-                                formData.set('room_fotos[' + rIdx + '][' + fIdx + ']', file, file.name);
-                            });
-                        });
 
                         fetch(form.action, {
                             method: 'POST',

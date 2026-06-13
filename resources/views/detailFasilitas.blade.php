@@ -306,11 +306,9 @@
             @foreach($fasilitas->paket_harian as $rtIdx => $rt)
             @php
                 $photos = [];
-                $raw    = $rt['foto'] ?? [];
-                $first  = collect($raw)->first(fn($p) => $p);
-                for ($i = 0; $i < 3; $i++) {
-                    $src = (!empty($raw[$i]) && trim($raw[$i])) ? $raw[$i] : $first;
-                    if ($src) $photos[] = asset('storage/fasilitas/rooms/' . $src);
+                $foto   = $rt['foto'][0] ?? null;
+                if ($foto) {
+                    $photos[] = asset('storage/fasilitas/rooms/' . $foto);
                 }
                 $photosJson = json_encode($photos);
                 $fas        = $rt['fasilitas'] ?? [];

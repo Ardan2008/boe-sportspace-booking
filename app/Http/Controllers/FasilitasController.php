@@ -138,53 +138,10 @@ class FasilitasController extends Controller
             'harga_thumbnail' => $harga_thumbnail,
         ];
 
-        // Handle Room Photos — merge per-slot: only replace a slot if a new file was uploaded for it.
-        // Always fall back to the existing DB path for each slot that has no new upload.
-        $existingPaket = $fasilitas->paket_harian ?? [];
-        foreach ($paket_harian as $roomIdx => &$room) {
-            // Start from existing saved photos for this room (3-element array)
-            $existingFoto = isset($existingPaket[$roomIdx]['foto']) && is_array($existingPaket[$roomIdx]['foto'])
-                ? $existingPaket[$roomIdx]['foto']
-                : [null, null, null];
-
-            // Pad to 3 slots so index access is always safe
-            while (count($existingFoto) < 3) {
-                $existingFoto[] = null;
-            }
-
-            $newFiles = $request->file('room_fotos.' . $roomIdx) ?? [];
-            $newFiles = is_array($newFiles) ? $newFiles : [$newFiles];
-
-            for ($fotoIdx = 0; $fotoIdx < 3; $fotoIdx++) {
-                $file = $newFiles[$fotoIdx] ?? null;
-                if ($file && $file->isValid()) {
-                    // New upload for this slot — store on public disk under fasilitas/rooms
-                    $name = time() . '_room_' . $roomIdx . '_' . $fotoIdx . '.' . $file->getClientOriginalExtension();
-                    $file->storeAs('fasilitas/rooms', $name, 'public');
-                    $existingFoto[$fotoIdx] = $name;
-                }
-                // else: keep $existingFoto[$fotoIdx] as-is (preserve old path)
-            }
-
-            $room['foto'] = array_values(array_filter($existingFoto, fn($v) => $v !== null && $v !== ''));
+        foreach ($paket_harian as &$room) {
+            $room['foto'] = array_values(array_filter($room['foto'] ?? [], fn($v) => $v !== null && $v !== ''));
         }
         unset($room);
-
-        if (!empty($paket_harian[0]['foto']) && count($paket_harian) > 1) {
-            $anyOtherHasFotos = false;
-            for ($i = 1; $i < count($paket_harian); $i++) {
-                if (!empty($paket_harian[$i]['foto'])) {
-                    $anyOtherHasFotos = true;
-                    break;
-                }
-            }
-            if (!$anyOtherHasFotos) {
-                $foto0 = $paket_harian[0]['foto'];
-                for ($i = 1; $i < count($paket_harian); $i++) {
-                    $paket_harian[$i]['foto'] = $foto0;
-                }
-            }
-        }
 
         $data['paket_harian'] = $paket_harian;
 
@@ -240,8 +197,6 @@ class FasilitasController extends Controller
         $paketHarian = $fasilitas->paket_harian;
         if (is_array($paketHarian) && !empty($paketHarian)) {
             $rooms = $paketHarian;
-            \Log::info('[EDIT] foto data from DB: ' . json_encode(array_map(fn($r) => $r['foto'] ?? [], $rooms)));
-            // Ensure nomor_lapangan and temp_input exist on each room
             foreach ($rooms as &$room) {
                 if (!isset($room['nomor_lapangan'])) $room['nomor_lapangan'] = [];
                 if (!isset($room['temp_input']))   $room['temp_input']  = '';
@@ -329,8 +284,6 @@ class FasilitasController extends Controller
                 'paket_harian' => 'nullable|string',
                 'rooms_data'   => 'nullable|string',
                 'labels' => 'nullable|array',
-                'room_fotos' => 'nullable|array',
-                'room_fotos.*.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             ]);
 
             $imageName = null;
@@ -354,60 +307,10 @@ class FasilitasController extends Controller
             $paket_harian = $request->paket_harian ? json_decode($request->paket_harian, true) : [];
             if (!is_array($paket_harian)) $paket_harian = [];
 
-            \Log::info('[STORE] paket_harian from request count: ' . count($paket_harian));
-            \Log::info('[STORE] hasFile room_fotos: ' . ($request->hasFile('room_fotos') ? 'yes' : 'no'));
-            \Log::info('[STORE] _FILES keys: ' . json_encode(array_keys($_FILES ?? [])));
-            \Log::info('[STORE] _FILES room_fotos: ' . json_encode(isset($_FILES['room_fotos']) ? 'SET' : 'NOT SET'));
-            if (isset($_FILES['room_fotos'])) {
-                \Log::info('[STORE] _FILES room_fotos structure: ' . json_encode([
-                    'name' => $_FILES['room_fotos']['name'] ?? null,
-                    'tmp_name' => $_FILES['room_fotos']['tmp_name'] ?? null,
-                    'error' => $_FILES['room_fotos']['error'] ?? null,
-                ]));
+            foreach ($paket_harian as &$room) {
+                $room['foto'] = array_values(array_filter($room['foto'] ?? [], fn($v) => $v !== null && $v !== ''));
             }
-            if ($request->hasFile('room_fotos')) {
-                foreach ($request->file('room_fotos') as $ri => $files) {
-                    $count = is_array($files) ? count($files) : 1;
-                    \Log::info("[STORE] room_fotos[$ri]: $count files received");
-                }
-            }
-
-            // Handle Room Photos — merge uploaded files into each room's foto array
-            if ($request->hasFile('room_fotos')) {
-                $roomFotosRaw = $request->file('room_fotos');
-                foreach ($roomFotosRaw as $roomIdx => $fotoFiles) {
-                    if (!isset($paket_harian[$roomIdx])) continue;
-                    $fotos = $paket_harian[$roomIdx]['foto'] ?? [];
-                    $fotos = is_array($fotos) ? $fotos : [];
-                    $fotoFilesArr = is_array($fotoFiles) ? $fotoFiles : [$fotoFiles];
-                    foreach ($fotoFilesArr as $fotoIdx => $file) {
-                        if ($file && $file->isValid()) {
-                            $name = time() . '_room_' . $roomIdx . '_' . $fotoIdx . '.' . $file->getClientOriginalExtension();
-                            $file->storeAs('fasilitas/rooms', $name, 'public');
-                            $fotos[$fotoIdx] = $name;
-                        }
-                    }
-                    $paket_harian[$roomIdx]['foto'] = array_values(array_filter($fotos));
-                }
-            }
-
-            \Log::info('[STORE] foto data after merge: ' . json_encode(array_map(fn($r) => $r['foto'] ?? [], $paket_harian)));
-
-            if (!empty($paket_harian[0]['foto']) && count($paket_harian) > 1) {
-                $anyOtherHasFotos = false;
-                for ($i = 1; $i < count($paket_harian); $i++) {
-                    if (!empty($paket_harian[$i]['foto'])) {
-                        $anyOtherHasFotos = true;
-                        break;
-                    }
-                }
-                if (!$anyOtherHasFotos) {
-                    $foto0 = $paket_harian[0]['foto'];
-                    for ($i = 1; $i < count($paket_harian); $i++) {
-                        $paket_harian[$i]['foto'] = $foto0;
-                    }
-                }
-            }
+            unset($room);
 
             // Get prices from first room in paket_harian
             $firstRoom = $paket_harian[0] ?? [];

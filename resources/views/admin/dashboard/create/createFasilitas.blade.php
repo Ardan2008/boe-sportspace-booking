@@ -434,23 +434,6 @@
             font-weight: 800;
         }
 
-        /* Room foto grid */
-        .room-foto-slot {
-            position: relative;
-            overflow: hidden;
-            border-radius: 1rem;
-            border: 2px dashed #e2e8f0;
-            background: #fafafa;
-            height: 8rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: border-color .3s;
-        }
-        .room-foto-slot:hover {
-            border-color: #1d6fa5;
-        }
     </style>
 </head>
 <body class="bg-[#F8FAFC] font-sans antialiased text-slate-800">
@@ -714,23 +697,7 @@
                                     </div>
                                 </div>
 
-                                {{-- Foto --}}
-                                <div class="grid grid-cols-3 gap-2" x-show="jumlahLapangan > 1 && !allSame">
-                                    <template x-for="fIdx in [0, 1, 2]" :key="fIdx">
-                                        <div class="room-foto-slot">
-                                            <img :src="room.fotoPreviews[fIdx]" class="absolute inset-0 w-full h-full object-cover z-10 rounded-[inherit]" x-show="room.fotoPreviews[fIdx]" alt="">
-                                            <div class="relative z-20 flex flex-col items-center" x-show="!room.fotoPreviews[fIdx]">
-                                                <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                                                </svg>
-                                            </div>
-                                            <input type="file" accept="image/*"
-                                                :name="'room_fotos[' + rIdx + '][' + fIdx + ']'"
-                                                class="room-foto-input absolute inset-0 opacity-0 cursor-pointer z-30"
-                                                @change="handleRoomFoto($event, rIdx, fIdx)">
-                                        </div>
-                                    </template>
-                                </div>
+
 
                                 {{-- Fasilitas --}}
                                 <div x-show="jumlahLapangan > 1" class="space-y-3">
@@ -889,23 +856,7 @@
                                     </div>
                                 </div>
 
-                                {{-- Foto --}}
-                                <div class="grid grid-cols-3 gap-2" x-show="jumlahLapangan > 1 && !allSame">
-                                    <template x-for="fIdx in [0, 1, 2]" :key="fIdx">
-                                        <div class="room-foto-slot">
-                                            <img :src="room.fotoPreviews[fIdx]" class="absolute inset-0 w-full h-full object-cover z-10 rounded-[inherit]" x-show="room.fotoPreviews[fIdx]" alt="">
-                                            <div class="relative z-20 flex flex-col items-center" x-show="!room.fotoPreviews[fIdx]">
-                                                <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                                                </svg>
-                                            </div>
-                                            <input type="file" accept="image/*"
-                                                :name="'room_fotos[' + rIdx + '][' + fIdx + ']'"
-                                                class="room-foto-input absolute inset-0 opacity-0 cursor-pointer z-30"
-                                                @change="handleRoomFoto($event, rIdx, fIdx)">
-                                        </div>
-                                    </template>
-                                </div>
+
 
                                 {{-- Fasilitas --}}
                                 <div x-show="jumlahLapangan > 1" class="space-y-3">
@@ -1197,9 +1148,6 @@
                 const g = $('galleryInput' + i);
                 if (g && g.files[0]) total += g.files[0].size;
             }
-            document.querySelectorAll('.room-foto-input').forEach(el => {
-                if (el.files[0]) total += el.files[0].size;
-            });
             return total;
         }
 
@@ -1560,15 +1508,6 @@
 
             const formData = new FormData(form);
 
-            const pending = (window.__alpineRoot && window.__alpineRoot._pendingFotos) ? window.__alpineRoot._pendingFotos : {};
-            Object.keys(pending).forEach(function(rIdx) {
-                Object.keys(pending[rIdx]).forEach(function(fIdx) {
-                    var file = pending[rIdx][fIdx];
-                    var key  = 'room_fotos[' + rIdx + '][' + fIdx + ']';
-                    formData.set(key, file, file.name);
-                });
-            });
-
             fetch('/admin/fasilitas/store', {
                 method: 'POST',
                 body: formData,
@@ -1679,7 +1618,7 @@
                 const fas = {};
                 fasKeys.forEach(f => { fas[f.key] = 0; });
                 return {
-                    tipe: '', jumlah: 1, kode_blok: '', foto: [], fotoPreviews: [null, null, null],
+                    tipe: '', jumlah: 1, kode_blok: '', foto: [],
                     harga_harian: '', harga_mingguan: '', harga_bulanan: '', harga_tahunan: '',
                     keunggulan: '', panjang: '', lebar: '', newFasilitasLabel: '',
                     fasilitas: fas, fasilitasKeys: [...fasKeys],
@@ -1747,7 +1686,7 @@
                         tipe: src.tipe || '',
                         foto: [...(src.foto || [])],
                         nomor_lapangan: [...(src.nomor_lapangan || [])],
-                        fotoPreviews: [...(src.fotoPreviews || [null, null, null])],
+
                         fasilitas: { ...(src.fasilitas || {}) },
                     };
                 }
@@ -1758,7 +1697,7 @@
                     this.syncAllSame();
                 }
                 const payload = this.rooms.map(r => {
-                    const { fotoPreviews, fasilitasKeys, newFasilitasLabel, ...rest } = r;
+                    const { fasilitasKeys, newFasilitasLabel, ...rest } = r;
                     rest.harga_harian   = rest.harga_harian   !== '' && rest.harga_harian   != null ? Number(rest.harga_harian)   : 0;
                     rest.harga_mingguan = rest.harga_mingguan !== '' && rest.harga_mingguan != null ? Number(rest.harga_mingguan) : 0;
                     rest.harga_bulanan  = rest.harga_bulanan  !== '' && rest.harga_bulanan  != null ? Number(rest.harga_bulanan)  : 0;
@@ -1783,40 +1722,7 @@
                 }
             },
 
-            handleRoomFoto(event, roomIndex, fotoIndex) {
-                const file = event.target.files[0];
-                if (!file) return;
 
-                const MAX = 2 * 1024 * 1024;
-                if (file.size > MAX) {
-                    Swal.fire({
-                        title: 'File Terlalu Besar',
-                        text: 'Foto lapangan maksimal 2 MB.',
-                        icon: 'warning',
-                        confirmButtonColor: '#1265A8',
-                        confirmButtonText: 'OK',
-                        customClass: { popup: 'rounded-[2.5rem] p-8' }
-                    });
-                    event.target.value = '';
-                    return;
-                }
-
-                if (!this._pendingFotos) this._pendingFotos = {};
-                if (!this._pendingFotos[roomIndex]) this._pendingFotos[roomIndex] = {};
-                this._pendingFotos[roomIndex][fotoIndex] = file;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const room = this.rooms[roomIndex];
-                    if (!room) return;
-                    if (!room.fotoPreviews) {
-                        room.fotoPreviews = [null, null, null];
-                    }
-                    while (room.fotoPreviews.length < 3) room.fotoPreviews.push(null);
-                    room.fotoPreviews[fotoIndex] = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            },
 
             addCustomLabel() {
                 if (this.customLabel.trim() !== '') {
