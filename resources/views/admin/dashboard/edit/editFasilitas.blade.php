@@ -543,7 +543,26 @@
                                             </div>
                                         </div>
 
-
+                                        {{-- Foto Preview --}}
+                                        <div x-show="!allSame" class="space-y-2">
+                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Foto Preview</label>
+                                            <div class="grid grid-cols-3 gap-2">
+                                                <template x-for="fi in [0, 1, 2]" :key="fi">
+                                                    <div class="relative overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#1265A8] transition-all duration-300 h-20 flex items-center justify-center group cursor-pointer">
+                                                        <img :src="fotoPreviews[ri]?.[fi]" class="absolute inset-0 w-full h-full object-cover z-10" x-show="fotoPreviews[ri]?.[fi]">
+                                                        <div class="relative z-20 flex flex-col items-center" x-show="!fotoPreviews[ri]?.[fi]">
+                                                            <svg class="w-4 h-4 text-slate-300 group-hover:text-[#1265A8] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                                                            </svg>
+                                                        </div>
+                                                        <input type="file" accept="image/*"
+                                                            :name="'room_fotos[' + ri + '][' + fi + ']'"
+                                                            class="absolute inset-0 opacity-0 cursor-pointer z-30"
+                                                            @change="handleRoomFoto($event, ri, fi)">
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
 
                                         {{-- Fasilitas --}}
                                         <div x-show="jumlahLapangan > 1" class="space-y-3">
@@ -679,6 +698,12 @@
                     @if(isset($fasilitas->gallery[2])) '{{ asset('storage/fasilitas/gallery/' . $fasilitas->gallery[2]) }}' @else null @endif
                 ],
                 galleryErrors: [false, false, false],
+                fotoPreviews: @json(
+                    collect($rooms)->map(fn($r) =>
+                        collect($r['foto'] ?? [])->map(fn($f) => $f ? asset('storage/fasilitas/rooms/' . $f) : null)
+                            ->pad(3, null)->toArray()
+                    )->toArray()
+                ),
 
                 init() {
                     window.__alpineRoot = this;
@@ -688,9 +713,6 @@
                     }
 
                     this.rooms.forEach(r => {
-                        if (!r.foto) {
-                            r.foto = [];
-                        }
                         if (!r.nomor_lapangan) {
                             r.nomor_lapangan = [];
                         }
@@ -712,7 +734,6 @@
                         }
                         r.fasilitasKeys = Object.keys(r.fasilitas).map(k => ({ key: k, label: k.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') }));
                         r.newFasilitasLabel = '';
-                        // Ensure numeric prices are stored as numbers (not strings) to avoid 0 display bug
                         r.harga_harian   = r.harga_harian   !== '' && r.harga_harian   != null ? Number(r.harga_harian)   : '';
                         r.harga_mingguan = r.harga_mingguan !== '' && r.harga_mingguan != null ? Number(r.harga_mingguan) : '';
                         r.harga_bulanan  = r.harga_bulanan  !== '' && r.harga_bulanan  != null ? Number(r.harga_bulanan)  : '';
@@ -730,6 +751,7 @@
                                 this.currentRoomIndex = Math.max(0, newVal - 1);
                             }
                         }
+                        this.initFotoPreviews();
                         this.syncPaketHarian();
                     });
 
@@ -744,6 +766,8 @@
                     if (this.rooms.length > 0) {
                         this.syncPaketHarian();
                     }
+
+                    this.initFotoPreviews();
                 },
 
                 defaultFasKeys() {
@@ -774,7 +798,6 @@
                         jumlah: 1,
                         nomor_lapangan: [],
                         kode_blok: '',
-                        foto: [],
                         harga_harian: index === 0 ? '{{ $fasilitas->harga }}' : '',
                         harga_mingguan: '',
                         harga_bulanan: index === 0 ? '{{ $fasilitas->harga_bulanan }}' : '',
@@ -785,6 +808,7 @@
                         fasilitas: fas,
                         newFasilitasLabel: '',
                         fasilitasKeys: [...fasKeys],
+                        foto: [],
                     };
                 },
 
@@ -795,7 +819,6 @@
                         this.rooms[i] = {
                             ...src,
                             tipe: src.tipe || '',
-                            foto: [...(src.foto || [])],
                             nomor_lapangan: [...(src.nomor_lapangan || [])],
                             fasilitas: { ...(src.fasilitas || {}) },
                         };
@@ -832,12 +855,58 @@
                     delete room.fasilitas[item.key];
                 },
 
+                initFotoPreviews() {
+                    const arr = [];
+                    for (let i = 0; i < this.rooms.length; i++) {
+                        if (this.fotoPreviews[i]) {
+                            arr[i] = [...this.fotoPreviews[i]];
+                            while (arr[i].length < 3) arr[i].push(null);
+                        } else if (this.rooms[i].foto && Array.isArray(this.rooms[i].foto)) {
+                            arr[i] = this.rooms[i].foto.map(f => f ? '/storage/fasilitas/rooms/' + f : null);
+                            while (arr[i].length < 3) arr[i].push(null);
+                        } else {
+                            arr[i] = [null, null, null];
+                        }
+                    }
+                    this.fotoPreviews = arr;
+                },
+
+                handleRoomFoto(event, roomIdx, fotoIdx) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const MAX = 2 * 1024 * 1024;
+                    if (file.size > MAX) {
+                        event.target.value = '';
+                        Swal.fire({
+                            title: 'File Terlalu Besar',
+                            text: 'Foto ' + (fotoIdx + 1) + ' melebihi batas 2MB.',
+                            icon: 'warning',
+                            confirmButtonColor: '#1265A8',
+                            confirmButtonText: 'OK',
+                            customClass: { popup: 'rounded-[2.5rem] p-8' }
+                        });
+                        return;
+                    }
+
+                    if (!this.fotoPreviews[roomIdx]) {
+                        this.fotoPreviews[roomIdx] = [null, null, null];
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.fotoPreviews[roomIdx][fotoIdx] = e.target.result;
+                        this.fotoPreviews = [...this.fotoPreviews];
+                    };
+                    reader.readAsDataURL(file);
+                },
+
                 syncPaketHarian() {
                     if (this.allSame && this.jumlahLapangan > 1) {
                         this.syncAllSame();
                     }
                     const payload = this.rooms.map(r => {
-                        const { fasilitasKeys, newFasilitasLabel, ...rest } = r;
+                        const { fasilitasKeys, newFasilitasLabel, fotoPreviews, ...rest } = r;
                         // Ensure prices are stored as numbers, not empty strings
                         rest.harga_harian   = rest.harga_harian   !== '' && rest.harga_harian   != null ? Number(rest.harga_harian)   : 0;
                         rest.harga_mingguan = rest.harga_mingguan !== '' && rest.harga_mingguan != null ? Number(rest.harga_mingguan) : 0;

@@ -856,7 +856,26 @@
                                     </div>
                                 </div>
 
-
+                                {{-- Foto Preview --}}
+                                <div class="space-y-2">
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Foto Preview</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <template x-for="fi in [0, 1, 2]" :key="fi">
+                                            <div class="relative overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#1d6fa5] transition-all duration-300 h-20 flex items-center justify-center group cursor-pointer">
+                                                <img :src="fotoPreviews[rIdx]?.[fi]" class="absolute inset-0 w-full h-full object-cover z-10" x-show="fotoPreviews[rIdx]?.[fi]">
+                                                <div class="relative z-20 flex flex-col items-center" x-show="!fotoPreviews[rIdx]?.[fi]">
+                                                    <svg class="w-4 h-4 text-slate-300 group-hover:text-[#1d6fa5] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                                                    </svg>
+                                                </div>
+                                                <input type="file" accept="image/*"
+                                                    :name="'room_fotos[' + rIdx + '][' + fi + ']'"
+                                                    class="absolute inset-0 opacity-0 cursor-pointer z-30"
+                                                    @change="handleRoomFoto($event, rIdx, fi)">
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
 
                                 {{-- Fasilitas --}}
                                 <div x-show="jumlahLapangan > 1" class="space-y-3">
@@ -1143,11 +1162,10 @@
 
         function checkTotalSize() {
             let total = 0;
-            if ($('fileInput').files[0]) total += $('fileInput').files[0].size;
-            for (let i = 0; i < 3; i++) {
-                const g = $('galleryInput' + i);
-                if (g && g.files[0]) total += g.files[0].size;
-            }
+            const allFileInputs = document.querySelectorAll('input[type="file"]');
+            allFileInputs.forEach(inp => {
+                if (inp.files && inp.files[0]) total += inp.files[0].size;
+            });
             return total;
         }
 
@@ -1378,6 +1396,10 @@
             return true;
         };
 
+        window.__showRoomFotoError = function (msg) {
+            showToast('warning', 'Foto terlalu besar', msg);
+        };
+
         /* ── FORM SUBMIT ── */
         $('mainForm').addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -1588,6 +1610,7 @@
             selectedLabels: [],
             customLabel: '',
             galleryPreviews: [null, null, null],
+            fotoPreviews: [],
 
             jumlahLapangan: 1,
             rooms: [],
@@ -1618,16 +1641,18 @@
                 const fas = {};
                 fasKeys.forEach(f => { fas[f.key] = 0; });
                 return {
-                    tipe: '', jumlah: 1, kode_blok: '', foto: [],
+                    tipe: '', jumlah: 1, kode_blok: '',
                     harga_harian: '', harga_mingguan: '', harga_bulanan: '', harga_tahunan: '',
                     keunggulan: '', panjang: '', lebar: '', newFasilitasLabel: '',
                     fasilitas: fas, fasilitasKeys: [...fasKeys],
+                    foto: [],
                 };
             },
 
             init() {
                 window.__alpineRoot = this;
                 this.rooms = [this.createEmptyRoom()];
+                this.initFotoPreviews();
 
                 this.$watch('tipe', (newVal) => {
                     this.rooms = [this.createEmptyRoom()];
@@ -1674,6 +1699,7 @@
                 if (this.currentRoomIndex >= this.rooms.length) {
                     this.currentRoomIndex = Math.max(0, this.rooms.length - 1);
                 }
+                this.initFotoPreviews();
                 this.syncPaketHarian();
             },
 
@@ -1684,7 +1710,6 @@
                     this.rooms[i] = {
                         ...src,
                         tipe: src.tipe || '',
-                        foto: [...(src.foto || [])],
                         nomor_lapangan: [...(src.nomor_lapangan || [])],
 
                         fasilitas: { ...(src.fasilitas || {}) },
@@ -1697,7 +1722,7 @@
                     this.syncAllSame();
                 }
                 const payload = this.rooms.map(r => {
-                    const { fasilitasKeys, newFasilitasLabel, ...rest } = r;
+                    const { fasilitasKeys, newFasilitasLabel, fotoPreviews, ...rest } = r;
                     rest.harga_harian   = rest.harga_harian   !== '' && rest.harga_harian   != null ? Number(rest.harga_harian)   : 0;
                     rest.harga_mingguan = rest.harga_mingguan !== '' && rest.harga_mingguan != null ? Number(rest.harga_mingguan) : 0;
                     rest.harga_bulanan  = rest.harga_bulanan  !== '' && rest.harga_bulanan  != null ? Number(rest.harga_bulanan)  : 0;
@@ -1708,6 +1733,43 @@
                 if (el) el.value = JSON.stringify(payload);
                 const rd = document.getElementById('roomsDataInput');
                 if (rd) rd.value = JSON.stringify(payload);
+            },
+
+            initFotoPreviews() {
+                const arr = [];
+                for (let i = 0; i < this.rooms.length; i++) {
+                    if (this.rooms[i].foto && Array.isArray(this.rooms[i].foto)) {
+                        arr[i] = this.rooms[i].foto.map(f => f ? '/storage/fasilitas/rooms/' + f : null);
+                    } else {
+                        arr[i] = [null, null, null];
+                    }
+                }
+                this.fotoPreviews = arr;
+            },
+
+            handleRoomFoto(event, roomIdx, fotoIdx) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const MAX = 2 * 1024 * 1024;
+                if (file.size > MAX) {
+                    event.target.value = '';
+                    if (window.__showRoomFotoError) {
+                        window.__showRoomFotoError('Foto ' + (fotoIdx + 1) + ' melebihi batas 2MB.');
+                    }
+                    return;
+                }
+
+                if (!this.fotoPreviews[roomIdx]) {
+                    this.fotoPreviews[roomIdx] = [null, null, null];
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.fotoPreviews[roomIdx][fotoIdx] = e.target.result;
+                    this.fotoPreviews = [...this.fotoPreviews];
+                };
+                reader.readAsDataURL(file);
             },
 
             prevRoom() {

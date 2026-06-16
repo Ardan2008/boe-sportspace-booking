@@ -978,13 +978,19 @@
                                         Tidak ada fasilitas khusus untuk lapangan ini
                                     </div>
 
-                                    {{-- Room photo --}}
-                                    <template x-if="room.foto && room.foto[0]">
+                                    {{-- Room photos --}}
+                                    <template x-if="room.foto && room.foto.length">
                                         <div class="mt-3 pt-3 border-t border-slate-200">
-                                            <span class="block text-[9px] uppercase text-slate-400 font-bold mb-2">Foto Tipe Lapangan</span>
-                                            <img :src="'/storage/fasilitas/rooms/' + room.foto[0]"
-                                                 class="w-28 h-20 object-cover rounded-lg border border-slate-200 hover:scale-105 transition-transform cursor-pointer shadow-sm"
-                                                 @click="window.open('/storage/fasilitas/rooms/' + room.foto[0], '_blank')">
+                                            <span class="block text-[9px] uppercase text-slate-400 font-bold mb-2">
+                                                Foto Tipe Lapangan
+                                            </span>
+                                            <div class="flex flex-wrap gap-2">
+                                                <template x-for="(f, fIdx) in room.foto" :key="fIdx">
+                                                    <img :src="'/uploads/fasilitas/rooms/' + f"
+                                                         class="w-20 h-16 object-cover rounded-lg border border-slate-200 hover:scale-105 transition-transform cursor-pointer shadow-sm"
+                                                         @click="window.open('/uploads/fasilitas/rooms/' + f, '_blank')">
+                                                </template>
+                                            </div>
                                         </div>
                                     </template>
                                 </div>

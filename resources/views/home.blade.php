@@ -587,7 +587,7 @@
         const fmt = (n) => new Intl.NumberFormat('id-ID').format(n);
 
         rooms.forEach((rt, idx) => {
-            const photos = rt.foto && rt.foto[0] ? ['/storage/fasilitas/rooms/' + rt.foto[0]] : [];
+            const photos = rt.foto && rt.foto.length ? rt.foto.map(f => '/uploads/fasilitas/rooms/' + f) : [];
 
             // Build fasilitas chips — unified slate theme
             const fasMap = [

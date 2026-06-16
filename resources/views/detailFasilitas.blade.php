@@ -65,6 +65,7 @@
         }
      }"
      @keydown.escape.window="lbOpen = false"
+     @open-lightbox.window="openLightbox($event.detail.photos, $event.detail.idx)"
      class="pt-12 pb-20 px-4 md:px-6">
 
     <div class="max-w-4xl mx-auto">
@@ -305,12 +306,6 @@
             <div class="space-y-4">
             @foreach($fasilitas->paket_harian as $rtIdx => $rt)
             @php
-                $photos = [];
-                $foto   = $rt['foto'][0] ?? null;
-                if ($foto) {
-                    $photos[] = asset('storage/fasilitas/rooms/' . $foto);
-                }
-                $photosJson = json_encode($photos);
                 $fas        = $rt['fasilitas'] ?? [];
                 $fasKeys    = array_keys($fas);
                 $fasMap     = array_map(fn($k) => [$k, str_replace('_', ' ', ucwords($k, '_'))], $fasKeys);
@@ -321,46 +316,29 @@
                     'bulanan'  => ['label' => 'Bulan',  'val' => $rt['harga_bulanan']  ?? null],
                     'tahunan'  => ['label' => 'Tahun',  'val' => $rt['harga_tahunan']  ?? null],
                 ];
+                $fotoUrls = collect($rt['foto'] ?? [])
+                    ->map(fn($f) => asset('storage/fasilitas/rooms/' . $f))
+                    ->values()->toArray();
+                $fotoJson = json_encode($fotoUrls);
             @endphp
 
-            <div class="border-2 border-slate-100 hover:border-blue-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all"
-                 x-data="{
-                     hovered: false,
-                     photos: {{ $photosJson }},
-                     triggerLightbox(e) {
-                         e.stopPropagation();
-                         $dispatch('open-detail-lb', { photos: this.photos, idx: 0 });
-                     }
-                 }"
-                 @open-detail-lb.window="openLightbox($event.detail.photos, $event.detail.idx)">
+            <div class="border-2 border-slate-100 hover:border-blue-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all">
                 <div class="flex flex-col sm:flex-row">
 
-                    {{-- Foto thumbnail — hanya jika ada foto --}}
-                    @if(count($photos) > 0)
-                    <div class="relative w-full sm:w-48 aspect-[4/3] shrink-0 overflow-hidden bg-gray-100 rounded-t-2xl sm:rounded-none sm:rounded-l-2xl cursor-pointer"
-                         @mouseenter="hovered = true"
-                         @mouseleave="hovered = false"
-                         @click.stop="triggerLightbox($event)">
-                        <img src="{{ $photos[0] }}"
-                             alt="Foto Lapangan"
-                             :class="hovered ? 'blur-sm brightness-75 scale-105' : ''"
-                             class="w-full h-full object-cover transition-all duration-300">
-                        @if(count($photos) > 1)
-                        <div class="absolute top-2 right-2 bg-black/50 text-white text-[9px] font-black px-2 py-0.5 rounded-full z-10 pointer-events-none">
-                            {{ count($photos) }} foto
-                        </div>
-                        @endif
-                        <div x-show="hovered"
-                             x-transition:enter="transition ease-out duration-150"
-                             x-transition:enter-start="opacity-0 scale-75"
-                             x-transition:enter-end="opacity-100 scale-100"
-                             class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                            <div class="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-xl">
-                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    @if(!empty($rt['foto']))
+                    <div class="sm:w-48 sm:min-w-[12rem] h-48 sm:h-auto bg-slate-100 relative overflow-hidden group cursor-pointer flex-shrink-0">
+                        <img src="{{ asset('storage/fasilitas/rooms/' . $rt['foto'][0]) }}"
+                             alt="{{ is_array($rt['tipe'] ?? null) ? implode(', ', $rt['tipe']) : ($rt['tipe'] ?? 'Lapangan') }}"
+                             class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <button type="button"
+                                    @click="openLightbox({{ $fotoJson }}, 0)"
+                                    class="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+                                <svg class="w-5 h-5 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                 </svg>
-                            </div>
+                            </button>
                         </div>
                     </div>
                     @endif

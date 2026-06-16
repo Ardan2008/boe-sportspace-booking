@@ -29,7 +29,7 @@ class FasilitasController extends Controller
         return view('admin.dashboard.dataFasilitas', compact('facilities'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
         $fasilitas = Fasilitas::findOrFail($id);
 
@@ -50,12 +50,13 @@ class FasilitasController extends Controller
             'jam_operasional' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'room_fotos' => 'nullable|array',
+            'room_fotos.*' => 'nullable|array',
+            'room_fotos.*.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'paket_harian' => 'nullable|string',
             'rooms_data'   => 'nullable|string',
             'jumlah_lapangan' => 'nullable|integer|min:1',
             'labels' => 'nullable|array',
-            'room_fotos' => 'nullable|array',
-            'room_fotos.*.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         $oldHarga = $fasilitas->harga;
@@ -133,19 +134,36 @@ class FasilitasController extends Controller
             'jam_operasional' => $request->jam_operasional,
             'jumlah_lapangan' => $request->jumlah_lapangan ? (int) $request->jumlah_lapangan : $fasilitas->jumlah_lapangan,
             'all_same' => filter_var($request->input('all_same', true), FILTER_VALIDATE_BOOLEAN),
-            'paket_harian' => $paket_harian,
             'labels' => $request->labels ?? [],
             'harga_thumbnail' => $harga_thumbnail,
         ];
 
-        foreach ($paket_harian as &$room) {
-            $room['foto'] = array_values(array_filter($room['foto'] ?? [], fn($v) => $v !== null && $v !== ''));
+        $roomFotoFiles = $request->file('room_fotos');
+        if (is_array($roomFotoFiles)) {
+            foreach ($roomFotoFiles as $roomIdx => $fotos) {
+                if (isset($paket_harian[$roomIdx])) {
+                    $existingFoto = isset($paket_harian[$roomIdx]['foto']) && is_array($paket_harian[$roomIdx]['foto'])
+                        ? $paket_harian[$roomIdx]['foto']
+                        : [];
+
+                    foreach ($fotos as $fIdx => $file) {
+                        if ($file && $file->isValid()) {
+                            if (isset($existingFoto[$fIdx])) {
+                                $oldPath = public_path('storage/fasilitas/rooms/' . $existingFoto[$fIdx]);
+                                if (File::exists($oldPath)) File::delete($oldPath);
+                            }
+                            $name = time() . '_room_' . $roomIdx . '_' . $fIdx . '.' . $file->getClientOriginalExtension();
+                            $file->move(public_path('storage/fasilitas/rooms'), $name);
+                            $existingFoto[$fIdx] = $name;
+                        }
+                    }
+
+                    $paket_harian[$roomIdx]['foto'] = array_values(array_filter($existingFoto));
+                }
+            }
         }
-        unset($room);
 
         $data['paket_harian'] = $paket_harian;
-
-        \Log::info('[UPDATE] foto data final: ' . json_encode(array_map(fn($r) => $r['foto'] ?? [], $paket_harian)));
 
         if ($request->hasFile('image')) {
             $oldPath = public_path('storage/fasilitas/' . $fasilitas->image);
@@ -190,7 +208,7 @@ class FasilitasController extends Controller
         return redirect()->route('fasilitas.index')->with('success', 'Data berhasil diperbarui!');
     }
 
-    public function edit($id) {
+    public function edit(int $id) {
         $fasilitas = Fasilitas::findOrFail($id);
 
         $rooms = [];
@@ -213,7 +231,6 @@ class FasilitasController extends Controller
                     'temp_input' => '',
                     'max_dewasa' => $fasilitas->max_dewasa ?? 1,
                     'max_anak' => $fasilitas->max_anak ?? 0,
-                    'foto' => [],
                     'harga_harian' => $i === 0 ? $fasilitas->harga : '',
                     'harga_mingguan' => '',
                     'harga_bulanan' => $i === 0 ? $fasilitas->harga_bulanan : '',
@@ -240,7 +257,7 @@ class FasilitasController extends Controller
         return view('admin.dashboard.edit.editFasilitas', compact('fasilitas', 'rooms'));
     }
 
-    public function destroy($id) {
+    public function destroy(int $id) {
         $fasilitas = Fasilitas::findOrFail($id);
         if ($fasilitas->image) {
             Storage::delete('public/fasilitas/' . $fasilitas->image);
@@ -249,6 +266,16 @@ class FasilitasController extends Controller
         if ($fasilitas->gallery) {
             foreach ($fasilitas->gallery as $img) {
                 Storage::delete('public/fasilitas/gallery/' . $img);
+            }
+        }
+        // Also delete room spesifikasi images
+        if ($fasilitas->paket_harian) {
+            foreach ($fasilitas->paket_harian as $room) {
+                if (isset($room['foto']) && is_array($room['foto'])) {
+                    foreach ($room['foto'] as $foto) {
+                        Storage::delete('public/fasilitas/rooms/' . $foto);
+                    }
+                }
             }
         }
         $fasilitas->delete();
@@ -281,6 +308,9 @@ class FasilitasController extends Controller
                 'jam_operasional' => 'nullable|string',
                 'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
                 'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'room_fotos' => 'nullable|array',
+                'room_fotos.*' => 'nullable|array',
+                'room_fotos.*.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
                 'paket_harian' => 'nullable|string',
                 'rooms_data'   => 'nullable|string',
                 'labels' => 'nullable|array',
@@ -307,10 +337,25 @@ class FasilitasController extends Controller
             $paket_harian = $request->paket_harian ? json_decode($request->paket_harian, true) : [];
             if (!is_array($paket_harian)) $paket_harian = [];
 
-            foreach ($paket_harian as &$room) {
-                $room['foto'] = array_values(array_filter($room['foto'] ?? [], fn($v) => $v !== null && $v !== ''));
+            $roomFotoFiles = $request->file('room_fotos');
+            if (is_array($roomFotoFiles)) {
+                foreach ($roomFotoFiles as $roomIdx => $fotos) {
+                    if (isset($paket_harian[$roomIdx])) {
+                        $saved = [];
+                        foreach ($fotos as $fIdx => $file) {
+                            if ($file && $file->isValid()) {
+                                $name = time() . '_room_' . $roomIdx . '_' . $fIdx . '.' . $file->getClientOriginalExtension();
+                                $file->move(public_path('storage/fasilitas/rooms'), $name);
+                                $saved[$fIdx] = $name;
+                            }
+                        }
+                        $saved = array_values(array_filter($saved));
+                        if (!empty($saved)) {
+                            $paket_harian[$roomIdx]['foto'] = $saved;
+                        }
+                    }
+                }
             }
-            unset($room);
 
             // Get prices from first room in paket_harian
             $firstRoom = $paket_harian[0] ?? [];
@@ -391,7 +436,7 @@ class FasilitasController extends Controller
             ], 500);
         }
     }
-    public function updatePaketHarian(Request $request, $id)
+    public function updatePaketHarian(Request $request, int $id)
     {
         $fasilitas = Fasilitas::findOrFail($id);
 
@@ -406,7 +451,7 @@ class FasilitasController extends Controller
         return redirect()->back()->with('success', 'Paket harian berhasil diperbarui!');
     }
 
-    public function storeMaintenance(Request $request, $id)
+    public function storeMaintenance(Request $request, int $id)
     {
         try {
             $request->validate([
@@ -478,7 +523,7 @@ class FasilitasController extends Controller
         }
     }
 
-    public function cancelMaintenance($id)
+    public function cancelMaintenance(int $id)
     {
         try {
             $fasilitas = Fasilitas::findOrFail($id);
