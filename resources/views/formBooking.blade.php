@@ -1563,6 +1563,7 @@ document.addEventListener('alpine:init', () => {
             fd.append('duration', this.duration);
             fd.append('start_hour', this.isLapanganHarian ? this.startHour : '');
             fd.append('rooms_count', this.rooms);
+            fd.append('tipe_id', this.selectedTipeIdx !== null ? this.selectedTipeIdx : '');
             fd.append('max_per_room', 2);
             if (this.availableRooms && this.availableRooms.length > 0) {
                 const allocated = this.availableRooms.slice(0, this.rooms);

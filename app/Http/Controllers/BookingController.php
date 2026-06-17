@@ -279,7 +279,7 @@ class BookingController extends Controller
                 'rooms'       => $request->rooms_count,
                 'start_hour'  => $request->start_hour,
                 'kode_blok'   => $request->selected_kode_blok ?? null,
-                'tipe_id'     => $request->tipe_id !== null ? (int)$request->tipe_id : null,
+                'tipe_id'     => $request->filled('tipe_id') ? (int)$request->tipe_id : null,
             ],
             'total_harga' => $totalPrice,
             'status'      => 'pending',
@@ -471,9 +471,15 @@ class BookingController extends Controller
                     if (empty($rooms_data)) {
                         $rooms_data = $allRooms;
                     }
+                } elseif ($allSame) {
+                    $rooms_data = [$allRooms[0]];
                 } else {
-                    // allSame atau tidak ada allocated_rooms → tampilkan room[0] saja sebagai representasi
-                    $rooms_data = $allSame ? [$allRooms[0]] : $allRooms;
+                    $tipeId = $booking->selected_packages['tipe_id'] ?? null;
+                    if ($tipeId !== null && isset($allRooms[$tipeId])) {
+                        $rooms_data = [$allRooms[$tipeId]];
+                    } else {
+                        $rooms_data = $allRooms;
+                    }
                 }
             }
 
@@ -506,6 +512,9 @@ class BookingController extends Controller
                 'tgl_selesai' => $tglSelesaiFormatted,
                 'fasilitas' => $booking->fasilitas?->nama ?? 'Fasilitas Hilang',
                 'fasilitas_tipe' => $booking->fasilitas?->tipe ?? '-',
+                'fasilitas_image_url' => $booking->fasilitas?->image
+                    ? asset('storage/fasilitas/' . $booking->fasilitas->image)
+                    : null,
                 'package' => $booking->package_type,
                 'status' => $booking->status,
                 'total' => 'Rp ' . number_format($booking->total_harga, 0, ',', '.'),

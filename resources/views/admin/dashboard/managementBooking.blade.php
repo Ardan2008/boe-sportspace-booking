@@ -896,9 +896,15 @@
                     </h4>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                         <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 col-span-2 md:col-span-4 flex flex-wrap justify-between items-center gap-3">
-                            <div>
-                                <span class="block text-[10px] uppercase text-blue-400 font-bold mb-1">Fasilitas</span>
-                                <span class="font-black text-[#1265A8] text-base" x-text="detailPayload.fasilitas"></span>
+                            <div class="flex items-center gap-3">
+                                <template x-if="detailPayload.fasilitas_image_url">
+                                    <img :src="detailPayload.fasilitas_image_url"
+                                         class="w-12 h-12 object-cover rounded-lg border border-blue-200 shadow-sm flex-shrink-0">
+                                </template>
+                                <div>
+                                    <span class="block text-[10px] uppercase text-blue-400 font-bold mb-1">Fasilitas</span>
+                                    <span class="font-black text-[#1265A8] text-base" x-text="detailPayload.fasilitas"></span>
+                                </div>
                             </div>
                             <span class="bg-[#1265A8] text-white px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider"
                                 x-text="detailPayload.package"></span>
@@ -986,9 +992,9 @@
                                             </span>
                                             <div class="flex flex-wrap gap-2">
                                                 <template x-for="(f, fIdx) in room.foto" :key="fIdx">
-                                                    <img :src="'/uploads/fasilitas/rooms/' + f"
+                                                    <img :src="'/storage/fasilitas/rooms/' + f"
                                                          class="w-20 h-16 object-cover rounded-lg border border-slate-200 hover:scale-105 transition-transform cursor-pointer shadow-sm"
-                                                         @click="window.open('/uploads/fasilitas/rooms/' + f, '_blank')">
+                                                         @click="window.open('/storage/fasilitas/rooms/' + f, '_blank')">
                                                 </template>
                                             </div>
                                         </div>
