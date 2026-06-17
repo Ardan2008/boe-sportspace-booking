@@ -298,10 +298,10 @@
 
             @else
             {{-- ═══════════════════════════════════════════════════
-                 CASE B — allSame = false
-                 Setiap lapangan punya spesifikasi berbeda →
-                 tampilkan satu kartu per lapangan dengan foto,
-                 tipe, dan harga masing-masing.
+                CASE B — allSame = false
+                Setiap lapangan punya spesifikasi berbeda →
+                tampilkan satu kartu per lapangan dengan foto,
+                tipe, dan harga masing-masing.
             ═══════════════════════════════════════════════════ --}}
             <div class="space-y-4">
             @foreach($fasilitas->paket_harian as $rtIdx => $rt)
@@ -326,19 +326,23 @@
                 <div class="flex flex-col sm:flex-row">
 
                     @if(!empty($rt['foto']))
-                    <div class="sm:w-48 sm:min-w-[12rem] h-48 sm:h-auto bg-slate-100 relative overflow-hidden group cursor-pointer flex-shrink-0">
+                    {{-- KUNCI PERUBAHAN: @click dipasang di div pembungkus utama gambar lapangan --}}
+                    <div @click="openLightbox({{ $fotoJson }}, 0)" 
+                        class="sm:w-48 sm:min-w-[12rem] h-48 sm:h-auto bg-slate-100 relative overflow-hidden group cursor-pointer flex-shrink-0">
+                        
                         <img src="{{ asset('storage/fasilitas/rooms/' . $rt['foto'][0]) }}"
-                             alt="{{ is_array($rt['tipe'] ?? null) ? implode(', ', $rt['tipe']) : ($rt['tipe'] ?? 'Lapangan') }}"
-                             class="w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <button type="button"
-                                    @click="openLightbox({{ $fotoJson }}, 0)"
-                                    class="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+                            alt="{{ is_array($rt['tipe'] ?? null) ? implode(', ', $rt['tipe']) : ($rt['tipe'] ?? 'Lapangan') }}"
+                            class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+                        
+                        {{-- Overlay hitam tipis saat hover agar efek transisi terasa halus --}}
+                        <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            {{-- Tombol mata tetap di tengah sebagai indikator visual tambahan --}}
+                            <div class="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
                                 <svg class="w-5 h-5 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                 </svg>
-                            </button>
+                            </div>
                         </div>
                     </div>
                     @endif
@@ -395,7 +399,7 @@
                         {{-- Booking CTA --}}
                         <div class="mt-auto pt-3 border-t border-slate-100">
                             <a href="{{ $bookUrl }}"
-                               class="inline-flex items-center gap-2 bg-[#1d6fa5] hover:bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-xl transition-all shadow-sm hover:shadow-md">
+                            class="inline-flex items-center gap-2 bg-[#1d6fa5] hover:bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-xl transition-all shadow-sm hover:shadow-md">
                                 Booking Lapangan Ini
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
