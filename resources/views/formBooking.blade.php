@@ -460,7 +460,7 @@
                         </span>
                     </div>
                     <p x-show="step4Errors.name" x-transition class="text-[10px] text-red-500 font-semibold mt-1.5 ml-1">Nama minimal 3 karakter, sesuai dengan nama di KTP</p>
-                    <p x-show="step4Success.name" x-transition class="text-[10px] text-emerald-600 font-semibold mt-1.5 ml-1">Nama sesuai KTP ✓</p>
+                    <p x-show="step4Success.name" x-transition class="text-[10px] text-emerald-600 font-semibold mt-1.5 ml-1">Nama Valid ✓</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative" style="z-index:50;">
