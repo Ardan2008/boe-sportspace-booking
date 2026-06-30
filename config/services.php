@@ -14,10 +14,6 @@ return [
     |
     */
 
-    'admin' => [
-        'secret' => env('ADMIN_LOGIN_SECRET'),
-    ],
-
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

@@ -1,6 +1,6 @@
 User-agent: *
 Allow: /
-Disallow: /{{ $disallowAdmin }}
+Disallow: /admin/formLogin
 Disallow: /admin/
 Disallow: /receipt/public/
 

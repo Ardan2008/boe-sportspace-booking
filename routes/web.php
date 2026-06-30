@@ -108,8 +108,7 @@ Route::get('/sitemap.xml', function () {
 })->name('sitemap');
 
 Route::get('/robots.txt', function () {
-    $disallowAdmin = config('services.admin.secret') ?: 'admin/login-page';
-    return response()->view('robots', compact('disallowAdmin'))->header('Content-Type', 'text/plain');
+    return response()->view('robots', ['disallowAdmin' => 'admin/formLogin'])->header('Content-Type', 'text/plain');
 })->name('robots');
 
 // --- ROUTE ASLI KAMU (TIDAK DIUBAH) ---
@@ -149,12 +148,11 @@ Route::get('/api/validate-whatsapp', [ValidationController::class, 'whatsapp'])-
 Route::get('/api/validate-email', [ValidationController::class, 'email'])->name('api.validate.email');
 
 // Bagian Admin
-// -- form login
-// ambil kode rahasia dari config (yang terhubung ke .env)
-$secretUrl = config('services.admin.secret') ?: 'admin/login-page';
-
-Route::get('/' . $secretUrl, function () {
-    return view('admin.formLogin');
+Route::get('/admin/formLogin', function (\Illuminate\Http\Request $request) {
+    $ip = $request->ip();
+    $blockedUntil = \Illuminate\Support\Facades\Cache::get('login_blocked_until:' . $ip);
+    $blocked = $blockedUntil && now()->timestamp < $blockedUntil ? $blockedUntil - now()->timestamp : 0;
+    return view('admin.formLogin', compact('blocked'));
 })->name('formLogin');
 
 // Auth Admin

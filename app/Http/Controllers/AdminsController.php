@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Admins;
 use App\Models\Fasilitas;
 use App\Models\Booking;
@@ -13,6 +14,21 @@ class AdminsController extends Controller
 {
     public function login(Request $request)
     {
+        $ip = $request->ip();
+        $attemptsKey = 'login_attempts:' . $ip;
+        $blockedKey = 'login_blocked_until:' . $ip;
+
+        // Cek apakah IP diblokir
+        $blockedUntil = Cache::get($blockedKey);
+        if ($blockedUntil && now()->timestamp < $blockedUntil) {
+            $remaining = $blockedUntil - now()->timestamp;
+            return response()->json([
+                'success' => false,
+                'errors' => [
+                    'login' => ['Terlalu banyak percobaan login. Coba lagi dalam ' . $remaining . ' detik.']
+                ]
+            ], 429);
+        }
 
         $request->validate([
             'username' => 'required|string',
@@ -40,6 +56,10 @@ class AdminsController extends Controller
                 $admin->update(['force_logout' => false, 'logout_type' => null]);
             }
 
+            // Hapus riwayat percobaan login
+            Cache::forget($attemptsKey);
+            Cache::forget($blockedKey);
+
             // Simpan session
             $request->session()->put('id_log', $admin->id_log);
             $request->session()->put('nama', $admin->nama);
@@ -52,10 +72,25 @@ class AdminsController extends Controller
             ]);
         }
 
+        // Login gagal — increment counter
+        $attempts = (int) Cache::get($attemptsKey, 0) + 1;
+        Cache::put($attemptsKey, $attempts, 600);
+
+        if ($attempts >= 5) {
+            Cache::put($blockedKey, now()->addSeconds(30)->timestamp, 60);
+            Cache::forget($attemptsKey);
+            return response()->json([
+                'success' => false,
+                'errors' => [
+                    'login' => ['Terlalu banyak percobaan login. Silakan coba lagi dalam 30 detik.']
+                ]
+            ], 429);
+        }
+
         return response()->json([
             'success' => false,
             'errors' => [
-                'login' => ['Username atau password salah!']
+                'login' => ['Username atau password salah! (Percobaan ' . $attempts . '/5)']
             ]
         ], 422);
     }

@@ -518,15 +518,15 @@
                                         x-transition:enter-start="opacity-0 translate-x-8"
                                         x-transition:enter-end="opacity-100 translate-x-0"
                                          :data-room-index="ri"
-                                         class="bg-white rounded-2xl border border-slate-200/80 p-5" @change="syncPaketHarian()" @input="syncPaketHarian()">
+                                         class="bg-white rounded-2xl border border-slate-200/80 p-6 space-y-5" @change="syncPaketHarian()" @input="syncPaketHarian()">
 
                                         <div x-show="jumlahLapangan > 1 && !allSame">
-                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5" x-text="tipe === 'lapangan' ? 'Tipe Lapangan' : 'Tipe Kolam'"></label>
+                                            <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 ml-0.5" x-text="tipe === 'lapangan' ? 'Tipe Lapangan' : 'Tipe Kolam'"></label>
                                             <input type="text" x-model="rooms[ri].tipe" placeholder="Tipe..." class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#1265A8] transition-all">
                                         </div>
 
                                         <div>
-                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Ukuran</label>
+                                            <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 ml-0.5">Ukuran</label>
                                             <div class="flex items-center gap-2">
                                                 <div class="relative flex-1">
                                                     <input type="number" x-model="rooms[ri].panjang" min="0" step="0.1"
@@ -545,7 +545,7 @@
 
                                         {{-- Foto Preview --}}
                                         <div x-show="!allSame" class="space-y-2">
-                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-0.5">Foto Preview</label>
+                                            <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 ml-0.5">Foto Preview</label>
                                             <div class="grid grid-cols-3 gap-2">
                                                 <template x-for="fi in [0, 1, 2]" :key="fi">
                                                     <div class="relative overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:border-[#1265A8] transition-all duration-300 h-20 flex items-center justify-center group cursor-pointer">
@@ -569,7 +569,7 @@
                                             <div class="grid grid-cols-5 sm:grid-cols-5 gap-1.5">
                                                 <template x-for="(item, fIdx) in rooms[ri].fasilitasKeys" :key="item.key">
                                                     <div class="relative group flex flex-col items-center bg-white border border-slate-200 rounded-xl px-1.5 py-2.5 transition-all duration-200 hover:border-[#1265A8] hover:shadow-sm">
-                                                        <span class="text-[7px] font-black text-slate-500 uppercase tracking-wider mb-0.5 leading-tight text-center" x-text="item.label"></span>
+                                                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-tight text-center" x-text="item.label"></span>
                                                         <input type="number" x-model.number="rooms[ri].fasilitas[item.key]" min="0" placeholder="0"
                                                             class="w-11 h-6 text-center bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-[#1265A8] outline-none font-bold text-xs">
                                                         <button type="button" @click="removeFasilitas(ri, fIdx)"
@@ -587,10 +587,10 @@
                                         </div>
 
                                         <div>
-                                            <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-0.5">Harga Sewa</label>
+                                            <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2.5 ml-0.5">Harga Sewa</label>
                                             <div class="grid grid-cols-2 gap-3">
                                                 <div>
-                                                    <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-0.5"><span x-text="tipe === 'lapangan' ? 'Jam' : 'Harian'"></span> <span class="text-red-400">*</span></label>
+                                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-0.5"><span x-text="tipe === 'lapangan' ? 'Jam' : 'Harian'"></span> <span class="text-red-400">*</span></label>
                                                     <div class="relative">
                                                         <span class="absolute left-3 top-1/2 -translate-y-1/2 font-black text-[#1265A8] text-xs">Rp</span>
                                                         <input type="text"
@@ -603,7 +603,7 @@
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-0.5">Mingguan <span class="text-red-400">*</span></label>
+                                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-0.5">Mingguan <span class="text-red-400">*</span></label>
                                                     <div class="relative">
                                                         <span class="absolute left-3 top-1/2 -translate-y-1/2 font-black text-[#1265A8] text-xs">Rp</span>
                                                         <input type="text"
@@ -616,7 +616,7 @@
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-0.5">Bulanan <span class="text-red-400">*</span></label>
+                                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-0.5">Bulanan <span class="text-red-400">*</span></label>
                                                     <div class="relative">
                                                         <span class="absolute left-3 top-1/2 -translate-y-1/2 font-black text-[#1265A8] text-xs">Rp</span>
                                                         <input type="text"
@@ -629,7 +629,7 @@
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-0.5">Tahunan <span class="text-red-400">*</span></label>
+                                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-0.5">Tahunan <span class="text-red-400">*</span></label>
                                                     <div class="relative">
                                                         <span class="absolute left-3 top-1/2 -translate-y-1/2 font-black text-[#1265A8] text-xs">Rp</span>
                                                         <input type="text"
@@ -1282,18 +1282,22 @@
                         })
                         .then(async res => {
                             const ct = res.headers.get('content-type') || '';
+                            overlay.classList.add('hidden');
                             if (ct.includes('application/json')) {
                                 const data = await res.json();
-                                overlay.classList.add('hidden');
                                 if (res.ok) {
-                                    Swal.fire({ title: 'Berhasil!', text: 'Data berhasil diperbarui.', icon: 'success', confirmButtonColor: '#1265A8', customClass: { popup: 'rounded-[2.5rem] p-8' } })
+                                    Swal.fire({ title: 'Berhasil!', text: 'Data berhasil diperbarui.', icon: 'success', showConfirmButton: false, timer: 1500, customClass: { popup: 'rounded-[2.5rem] p-8' } })
                                         .then(() => { window.location.href = '/admin/dashboard/dataFasilitas'; });
                                 } else {
                                     Swal.fire({ title: 'Gagal', text: data.message || 'Terjadi kesalahan.', icon: 'error', confirmButtonColor: '#1265A8', customClass: { popup: 'rounded-[2.5rem] p-8' } });
                                 }
                             } else {
-                                overlay.classList.add('hidden');
-                                window.location.href = '/admin/dashboard/dataFasilitas';
+                                if (res.ok) {
+                                    Swal.fire({ title: 'Berhasil!', text: 'Data berhasil diperbarui.', icon: 'success', showConfirmButton: false, timer: 1500, customClass: { popup: 'rounded-[2.5rem] p-8' } })
+                                        .then(() => { window.location.href = '/admin/dashboard/dataFasilitas'; });
+                                } else {
+                                    Swal.fire({ title: 'Gagal', text: 'Terjadi kesalahan saat memperbarui data.', icon: 'error', confirmButtonColor: '#1265A8', customClass: { popup: 'rounded-[2.5rem] p-8' } });
+                                }
                             }
                         })
                         .catch(err => {

@@ -68,18 +68,17 @@
                 <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Admin Portal</h1>
                 <p class="text-slate-500 text-sm mt-2 font-medium">Sistem Keamanan Otomatis Aktif</p>
                 
-                @if(session('error'))
-                <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3 animate-bounce">
-                    <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.268 17c-.77 1.333.192 3 1.732 3z" />
+                <div id="blockTimer" class="mt-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 {{ $blocked > 0 ? '' : 'hidden' }}">
+                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0-8v4m-2.357-5.921L4.572 5.457A2 2 0 003 7.343v6.75a10 10 0 005.101 8.71l4.242 2.357a1 1 0 001.314 0l4.242-2.356A10 10 0 0021 14.092V7.343a2 2 0 00-1.572-1.886l-5.071-1.378a2 2 0 00-1.357 0z" />
                         </svg>
                     </div>
-                    <p class="text-[11px] font-bold text-amber-800 text-left leading-tight uppercase tracking-wider">
-                        {{ session('error') }}
-                    </p>
+                    <div>
+                        <p class="text-[11px] font-bold text-red-800 text-left leading-tight uppercase tracking-wider">Akun Diblokir Sementara</p>
+                        <p class="text-[13px] font-semibold text-red-600 mt-1">Coba lagi dalam <span id="countdownDisplay">{{ $blocked }}</span> detik</p>
+                    </div>
                 </div>
-                @endif
             </div>
 
             <form action="{{ route('admin.login') }}" method="POST" class="space-y-6">
@@ -87,7 +86,7 @@
                 <div class="space-y-2">
                     <label class="text-xs font-bold text-slate-500 ml-1 uppercase tracking-widest">Identitas Admin</label>
                     <input id="userInput" name="username" placeholder="Masukkan Username" 
-                            class="w-full px-7 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-base font-medium" required>
+                            class="w-full px-7 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-base font-medium" required {{ $blocked > 0 ? 'disabled' : '' }}>
                 </div>
 
                 <div class="space-y-2">
@@ -96,7 +95,7 @@
                     </div>
                     <div class="relative">
                         <input id="pwInput" name="password" type="password" placeholder="••••••••" 
-                            class="w-full px-7 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-base font-medium" required>
+                            class="w-full px-7 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-base font-medium" required {{ $blocked > 0 ? 'disabled' : '' }}>
                         
                         <div id="capsLockAlert" class="absolute right-5 top-1/2 -translate-y-1/2 hidden">
                             <span class="text-[10px] font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">CAPS ON</span>
@@ -186,23 +185,49 @@
     const capsAlert = document.getElementById('capsLockAlert');
     const userInput = document.getElementById('userInput');
     const loginBtn = document.getElementById('btnLogin');
+    const blockTimer = document.getElementById('blockTimer');
+    const countdownDisplay = document.getElementById('countdownDisplay');
     let hideTimeout;
+    let countdownInterval;
 
     // --- FUNGSI BARU: RESET ERROR ---
     function resetError() {
         const errorDiv = document.querySelector('.login-error');
         if (errorDiv) {
-            errorDiv.remove(); // Menghapus elemen error dari DOM
+            errorDiv.remove();
         }
     }
 
-    function validateForm() {
-        // Setiap kali user mengetik, kita hapus pesan error yang lama
-        resetError(); 
+    function disableForm(disabled) {
+        userInput.disabled = disabled;
+        pwInput.disabled = disabled;
+        if (disabled) {
+            loginBtn.disabled = true;
+            loginBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            validateForm();
+        }
+    }
 
+    function startCountdown(seconds) {
+        blockTimer.classList.remove('hidden');
+        disableForm(true);
+        clearInterval(countdownInterval);
+        countdownInterval = setInterval(() => {
+            seconds--;
+            countdownDisplay.textContent = seconds;
+            if (seconds <= 0) {
+                clearInterval(countdownInterval);
+                blockTimer.classList.add('hidden');
+                disableForm(false);
+            }
+        }, 1000);
+    }
+
+    function validateForm() {
+        resetError();
         const isUserFilled = userInput.value.trim().length > 0;
         const isPwFilled = pwInput.value.trim().length > 0;
-
         if (isUserFilled && isPwFilled) {
             loginBtn.disabled = false;
             loginBtn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -217,7 +242,6 @@
     userInput.addEventListener('input', validateForm);
     pwInput.addEventListener('input', validateForm);
 
-    // Logika Password Peek (Intip)
     pwInput.addEventListener('input', () => {
         pwInput.type = 'text';
         clearTimeout(hideTimeout);
@@ -226,12 +250,10 @@
         }, 800);
     });
 
-    // Deteksi Caps Lock
     pwInput.addEventListener('keyup', (e) => {
         e.getModifierState('CapsLock') ? capsAlert.classList.remove('hidden') : capsAlert.classList.add('hidden');
     });
 
-    // Modal Utility
     function showModal(id) {
         const modal = document.getElementById(id);
         if (modal) {
@@ -245,8 +267,7 @@
     function hideModal(id) {
         const modal = document.getElementById(id);
         if (modal) {
-            // Reset error saat modal ditutup agar tidak muncul lagi saat dibuka nanti
-            resetError(); 
+            resetError();
             modal.classList.add('opacity-0');
             const content = modal.querySelector('div');
             if (content) content.classList.replace('scale-100', 'scale-95');
@@ -256,15 +277,12 @@
 
     function processLogin() {
         if (userInput.value.trim() === "" || pwInput.value.trim() === "") return;
-        
         const btn = document.getElementById('btnLogin');
         const text = btn.querySelector('.btn-text');
         const loader = btn.querySelector('.loader-container');
-
         text.classList.add('opacity-0', '-translate-y-4');
         loader.classList.remove('opacity-0', 'translate-y-4');
         btn.classList.add('pointer-events-none', 'brightness-90');
-
         setTimeout(() => {
             showModal('confirmLoginModal');
             setTimeout(() => {
@@ -276,17 +294,15 @@
     }
 
     function finalSubmit(el) {
-        resetError(); // Bersihkan error sebelum kirim request baru
+        resetError();
         const loginForm = document.querySelector('form');
         const formData = new FormData(loginForm);
-
         el.innerHTML = `
             <svg class="animate-spin h-4 w-4 text-white inline mr-2" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg> MEMPROSES...`;
         el.classList.add('pointer-events-none', 'opacity-80');
-
         fetch(loginForm.action, {
             method: 'POST',
             headers: {
@@ -300,7 +316,12 @@
             if (response.ok && data.success) {
                 window.location.href = data.redirect;
             } else {
-                showLoginError(data);
+                if (response.status === 429) {
+                    hideModal('confirmLoginModal');
+                    startCountdown(30);
+                } else {
+                    showLoginError(data);
+                }
                 el.innerHTML = "Ya, Masuk Sekarang";
                 el.classList.remove('pointer-events-none', 'opacity-80');
             }
@@ -315,14 +336,11 @@
     function showLoginError(data) {
         const modal = document.getElementById('confirmLoginModal');
         let errorDiv = modal.querySelector('.login-error');
-
         if (!errorDiv) {
             errorDiv = document.createElement('div');
             errorDiv.classList.add('login-error', 'text-red-500', 'text-xs', 'font-bold', 'mb-4', 'bg-red-50', 'py-2', 'rounded-xl', 'border', 'border-red-100');
-            modal.querySelector('.text-center p').after(errorDiv); // Letakkan setelah paragraf instruksi
+            modal.querySelector('.text-center p').after(errorDiv);
         }
-
-        // Ambil pesan error dari backend
         if (data.errors) {
             const firstError = Object.values(data.errors)[0][0];
             errorDiv.textContent = firstError;
@@ -333,7 +351,6 @@
         }
     }
 
-    // Fungsi Batal
     function processCancel() { showModal('cancelModal'); }
     function hideCancelModal() { hideModal('cancelModal'); }
     function handleActualCancel() {
@@ -342,6 +359,11 @@
         btnConfirm.classList.add('pointer-events-none', 'opacity-80');
         setTimeout(() => { window.location.href = '/'; }, 800);
     }
+
+    // Jalankan countdown jika sudah diblokir dari server
+    @if ($blocked > 0)
+    startCountdown({{ $blocked }});
+    @endif
 </script>
 </body>
 </html>

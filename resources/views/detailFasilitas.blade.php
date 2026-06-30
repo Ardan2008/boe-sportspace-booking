@@ -118,10 +118,14 @@
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-3">Informasi Operasional</p>
                         <div class="space-y-3 bg-slate-50 p-5 rounded-2xl border border-slate-100 mb-6">
-                            @if($fasilitas->tipe === 'lapangan' && $fasilitas->jumlah_lapangan)
+                            @if(in_array($fasilitas->tipe, ['lapangan', 'kolam_renang']) && $fasilitas->jumlah_lapangan)
                             <div class="flex items-center justify-between">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Jumlah Lapangan</span>
-                                <span class="text-xs font-black text-[#1d6fa5]">{{ $fasilitas->jumlah_lapangan }} Lapangan</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                    {{ $fasilitas->tipe === 'kolam_renang' ? 'Jumlah Kolam' : 'Jumlah Lapangan' }}
+                                </span>
+                                <span class="text-xs font-black text-[#1d6fa5]">
+                                    {{ $fasilitas->jumlah_lapangan }} {{ $fasilitas->tipe === 'kolam_renang' ? 'Kolam' : 'Lapangan' }}
+                                </span>
                             </div>
                             @endif
 
@@ -163,13 +167,15 @@
         </div>{{-- /hero card --}}
 
          {{-- ══════════════════════════════════════════════
-              ROOM TYPE CARDS  (lapangan only)
+              ROOM TYPE CARDS  (lapangan & kolam_renang)
               ══════════════════════════════════════════════ --}}
-        @if($fasilitas->tipe === 'lapangan' && $fasilitas->paket_harian && count($fasilitas->paket_harian))
+        @if(in_array($fasilitas->tipe, ['lapangan', 'kolam_renang']) && $fasilitas->paket_harian && count($fasilitas->paket_harian))
         <div class="mb-8">
             <div class="flex items-center gap-3 mb-6">
                 <div class="h-px flex-1 bg-slate-200"></div>
-                <h2 class="text-sm font-black uppercase tracking-[0.25em] text-[#1d6fa5] whitespace-nowrap">Tipe Lapangan Tersedia</h2>
+                <h2 class="text-sm font-black uppercase tracking-[0.25em] text-[#1d6fa5] whitespace-nowrap">
+                    {{ $fasilitas->tipe === 'kolam_renang' ? 'Tipe Kolam Tersedia' : 'Tipe Lapangan Tersedia' }}
+                </h2>
                 <div class="h-px flex-1 bg-slate-200"></div>
             </div>
 
@@ -238,7 +244,7 @@
                             <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
-                            {{ $roomCount }} lapangan tersedia
+                            {{ $roomCount }} {{ $fasilitas->tipe === 'kolam_renang' ? 'kolam tersedia' : 'lapangan tersedia' }}
                         </span>
                         @endif
                         @if(!empty($rt0['kode_blok']))
@@ -400,7 +406,7 @@
                         <div class="mt-auto pt-3 border-t border-slate-100">
                             <a href="{{ $bookUrl }}"
                             class="inline-flex items-center gap-2 bg-[#1d6fa5] hover:bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-5 py-3 rounded-xl transition-all shadow-sm hover:shadow-md">
-                                Booking Lapangan Ini
+                                {{ $fasilitas->tipe === 'kolam_renang' ? 'Booking Kolam Ini' : 'Booking Lapangan Ini' }}
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
                                 </svg>
